@@ -136,7 +136,7 @@ void ANN::SGD(const Matrix **training_input, const Matrix **training_output, int
                 training_output_batch[j] = training_output[shuffle[batch_counter]];
                 batch_counter++;
             }
-            SGD_batch_update(training_input_batch, training_output_batch, batch_len, eta, alpha);
+            SGD_batch_update(training_input_batch, training_output_batch, training_set_len, batch_len, eta, alpha);
         }
         std::cout << i << "..." << std::endl;
     }
@@ -145,7 +145,7 @@ void ANN::SGD(const Matrix **training_input, const Matrix **training_output, int
 }
 
 /* Stochastic Gradient Descent algorithm for a batch */
-void ANN::SGD_batch_update(const Matrix **training_input_batch, const Matrix **training_output_batch, int batch_len, double eta, double alpha) {
+void ANN::SGD_batch_update(const Matrix **training_input_batch, const Matrix **training_output_batch, int training_set_len, int batch_len, double eta, double alpha) {
     Matrix **nabla_W = new Matrix *[nb_right_layers];
     Matrix **nabla_B = new Matrix *[nb_right_layers];
     for(int i=0 ; i<nb_right_layers ; i++) {
@@ -167,7 +167,7 @@ void ANN::SGD_batch_update(const Matrix **training_input_batch, const Matrix **t
     for(int i=0 ; i<nb_right_layers ; i++) {
         nabla_W[i]->operator*(eta/static_cast<double>(batch_len));
         nabla_B[i]->operator*(eta/static_cast<double>(batch_len));
-        right_layers[i]->getWeights()->operator-(nabla_W[i]);
+        right_layers[i]->getWeights()->operator*(1-(alpha*eta)/static_cast<double>(training_set_len))->operator-(nabla_W[i]);
         right_layers[i]->getBiases()->operator-(nabla_B[i]);
         delete nabla_W[i];
         delete nabla_B[i];
