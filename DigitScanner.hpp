@@ -7,7 +7,7 @@ class DigitScanner {
 
     public:
 
-        DigitScanner();
+        DigitScanner(int *, int);
         ~DigitScanner();
 
         void load(std::string, std::string);

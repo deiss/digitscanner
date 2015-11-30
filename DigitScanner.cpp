@@ -1,8 +1,7 @@
 #include "DigitScanner.hpp"
 
-DigitScanner::DigitScanner() {
-    int nodes[] = {784, 30, 10};
-    ann         = new ANN(nodes, 2);
+DigitScanner::DigitScanner(int *nodes, int nb_right_layers)
+    : ann(new ANN(nodes, nb_right_layers)) {
 }
 
 DigitScanner::~DigitScanner() {
@@ -72,10 +71,10 @@ void DigitScanner::save(std::string folder, std::string filename) {
 
 void DigitScanner::test(std::string path_data, int nb_images, int nb_images_to_skip) {
     // training and test data file path
-    //std::string    test_images = path_data + "t10k-images.idx3-ubyte";
-    //std::string    test_labels = path_data + "t10k-labels.idx1-ubyte";
-    std::string    test_images = path_data + "train-images.idx3-ubyte";
-    std::string    test_labels = path_data + "train-labels.idx1-ubyte";
+    std::string    test_images = path_data + "t10k-images.idx3-ubyte";
+    std::string    test_labels = path_data + "t10k-labels.idx1-ubyte";
+    //std::string    test_images = path_data + "train-images.idx3-ubyte";
+    //std::string    test_labels = path_data + "train-labels.idx1-ubyte";
     std::ifstream  file_images(test_images, std::ifstream::in | std::ifstream::binary);
     std::ifstream  file_labels(test_labels, std::ifstream::in | std::ifstream::binary);
     const int      image_len = 784;
