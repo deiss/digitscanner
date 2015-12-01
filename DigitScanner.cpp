@@ -69,7 +69,7 @@ void DigitScanner::save(std::string folder, std::string filename) {
     file.close();
 }
 
-void DigitScanner::test(std::string path_data, int nb_images, int nb_images_to_skip) {
+void DigitScanner::test(std::string path_data, const int nb_images, const int nb_images_to_skip) {
     // training and test data file path
     std::string    test_images = path_data + "t10k-images.idx3-ubyte";
     std::string    test_labels = path_data + "t10k-labels.idx1-ubyte";
@@ -117,7 +117,7 @@ void DigitScanner::test(std::string path_data, int nb_images, int nb_images_to_s
     file_labels.close();
 }
 
-void DigitScanner::train(std::string path_data, int nb_images, int nb_images_to_skip, int nb_epoch, int batch_len, double eta, double alpha) {
+void DigitScanner::train(std::string path_data, const int nb_images, const int nb_images_to_skip, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
     // training and test data file path
     std::string    train_images = path_data + "train-images.idx3-ubyte";
     std::string    train_labels = path_data + "train-labels.idx1-ubyte";

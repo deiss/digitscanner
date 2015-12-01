@@ -27,7 +27,7 @@ ANN::~ANN() {
 }
 
 /* Backpropagation algorithm */
-ANN::nabla_pair *ANN::backpropagation(const Matrix *training_input, const Matrix *training_output) {
+ANN::nabla_pair *ANN::backpropagation_quadratic(const Matrix *training_input, const Matrix *training_output) {
     const Matrix **activations = feedforward_complete(training_input);
     const Matrix **delta       = new const Matrix*[nb_right_layers];
     const Matrix **nabla_W     = new const Matrix*[nb_right_layers];
@@ -42,6 +42,46 @@ ANN::nabla_pair *ANN::backpropagation(const Matrix *training_input, const Matrix
     delta[nb_right_layers-1] = d;
     delete sp;
     delete o;
+    // backward
+    for(int i=nb_right_layers-1 ; i>=1 ; i--) {
+        const Matrix *a  = activations[i];
+              Matrix *o  = Matrix::Ones(a->getI());
+              Matrix *d  = new Matrix(right_layers[i]->getWeights());
+              Matrix *sp = new Matrix(o);
+        sp->operator-(a)->element_wise_product(a);
+        d = d->transpose()->operator*(delta[i]);
+        d->element_wise_product(sp);
+        delta[i-1] = d;
+        delete sp;
+        delete o;
+    }
+    for(int i=nb_right_layers-1 ; i>=0 ; i--) {
+        Matrix *nw = new Matrix(delta[i]);
+        Matrix *at = new Matrix(activations[i]);
+        at->transpose();
+        nw = nw->operator*(at);
+        nabla_W[i] = nw;
+        nabla_B[i] = delta[i];
+        delete at;
+    }
+    for(int i=1 ; i<=nb_right_layers ; i++) delete activations[i];
+    delete [] activations; // activations[0]=input is not deleted
+    delete [] delta;       // the inner objects aren't deleted
+    nabla_pair *nabla = new nabla_pair(nabla_W, nabla_B);
+    return nabla;
+}
+
+/* Backpropagation algorithm */
+ANN::nabla_pair *ANN::backpropagation_cross_entropy(const Matrix *training_input, const Matrix *training_output) {
+    const Matrix **activations = feedforward_complete(training_input);
+    const Matrix **delta       = new const Matrix*[nb_right_layers];
+    const Matrix **nabla_W     = new const Matrix*[nb_right_layers];
+    const Matrix **nabla_B     = new const Matrix*[nb_right_layers];
+    // output error
+    const Matrix *a  = activations[nb_right_layers];
+          Matrix *d  = new Matrix(a);
+    d->operator-(training_output);
+    delta[nb_right_layers-1] = d;
     // backward
     for(int i=nb_right_layers-1 ; i>=1 ; i--) {
         const Matrix *a  = activations[i];
@@ -115,7 +155,7 @@ void ANN::random_init_values(ANNRightLayer *l) {
 }
 
 /* Stochastic Gradient Descent algorithm */
-void ANN::SGD(const Matrix **training_input, const Matrix **training_output, int training_set_len, int nb_epoch, int batch_len, double eta, double alpha) {
+void ANN::SGD(const Matrix **training_input, const Matrix **training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
     const Matrix **training_input_batch  = new const Matrix*[batch_len];
     const Matrix **training_output_batch = new const Matrix*[batch_len];
     // epoch
@@ -145,7 +185,7 @@ void ANN::SGD(const Matrix **training_input, const Matrix **training_output, int
 }
 
 /* Stochastic Gradient Descent algorithm for a batch */
-void ANN::SGD_batch_update(const Matrix **training_input_batch, const Matrix **training_output_batch, int training_set_len, int batch_len, double eta, double alpha) {
+void ANN::SGD_batch_update(const Matrix **training_input_batch, const Matrix **training_output_batch, const int training_set_len, const int batch_len, const double eta, const double alpha) {
     Matrix **nabla_W = new Matrix *[nb_right_layers];
     Matrix **nabla_B = new Matrix *[nb_right_layers];
     for(int i=0 ; i<nb_right_layers ; i++) {
@@ -153,7 +193,8 @@ void ANN::SGD_batch_update(const Matrix **training_input_batch, const Matrix **t
         nabla_B[i] = new Matrix(nb_nodes[i+1], 1);
     }
     for(int i=0 ; i<batch_len ; i++) {
-        std::pair<const Matrix **, const Matrix **> *delta_nabla = backpropagation(training_input_batch[i], training_output_batch[i]);
+        //std::pair<const Matrix **, const Matrix **> *delta_nabla = backpropagation_quadratic(training_input_batch[i], training_output_batch[i]);
+        std::pair<const Matrix **, const Matrix **> *delta_nabla = backpropagation_cross_entropy(training_input_batch[i], training_output_batch[i]);
         for(int j=0 ; j<nb_right_layers ; j++) {
             nabla_W[j]->operator+(delta_nabla->first[j]);
             nabla_B[j]->operator+(delta_nabla->second[j]);

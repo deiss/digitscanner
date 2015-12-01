@@ -12,8 +12,8 @@ class DigitScanner {
 
         void load(std::string, std::string);
         void save(std::string, std::string);
-        void train(std::string, int, int, int, int, double, double);
-        void test(std::string, int, int);
+        void train(std::string, const int, const int, const int, const int, const double, const double);
+        void test(std::string, const int, const int);
     
     private:
     

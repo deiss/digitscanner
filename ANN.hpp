@@ -33,9 +33,10 @@ class ANN {
         const Matrix  *feedforward(const Matrix *);
         const Matrix **feedforward_complete(const Matrix *);
         void           random_init_values(ANNRightLayer*);
-        void           SGD(const Matrix **, const Matrix **, int, int, int, double, double);
-        void           SGD_batch_update(const Matrix **, const Matrix **, int, int, double, double);
-        nabla_pair    *backpropagation(const Matrix *, const Matrix *);
+        void           SGD(const Matrix **, const Matrix **, const int, const int, const int, const double, const double);
+        void           SGD_batch_update(const Matrix **, const Matrix **, const int, const int, const double, const double);
+        nabla_pair    *backpropagation_quadratic(const Matrix *, const Matrix *);
+        nabla_pair    *backpropagation_cross_entropy(const Matrix *, const Matrix *);
     
     private:
     
