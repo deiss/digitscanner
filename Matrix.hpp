@@ -1,5 +1,5 @@
-#ifndef Matrix_h
-#define Matrix_h
+#ifndef Matrix_hpp
+#define Matrix_hpp
 
 template <typename T>
 class Matrix {
@@ -153,6 +153,7 @@ Matrix<T>* Matrix<T>::operator*(T lambda) {
     return this;
 }
 
+/* Matrices product, can only be called on dynamically created (new) Matrix objects */
 template <typename T>
 Matrix<T>* Matrix<T>::operator*(const Matrix* B) {
     if(B->I!=J) std::cout << "Matrix dimension dismatch! operator*" << std::endl;
@@ -213,4 +214,4 @@ Matrix<T>* Matrix<T>::transpose() {
     return this;
 }
 
-#endif
+#endif /* Matrix_hpp */
