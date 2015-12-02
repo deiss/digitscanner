@@ -10,10 +10,10 @@ Language: C++<br/>
 -----------------------------------------------------------------------------------
 
 Functions:
-	- 'save':  saves the neural network in a file
-	- 'load':  loads a neural network from a file
-	- 'train': use training data to update the weights and biases
-	- 'test':  gives the output and score for a given testing set
+   - 'save':  saves the neural network in a file
+   - 'load':  loads a neural network from a file
+   - 'train': use training data to update the weights and biases
+   - 'test':  gives the output and score for a given testing set
 
 
 
