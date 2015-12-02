@@ -24,26 +24,26 @@ class ANN {
         ~ANN();
     
         int            getNbRightLayers()   const { return nb_right_layers; }
-        int           *getNbNodes()         const { return nb_nodes; }
-        ANNRightLayer *getRightLayer(int i) const { return right_layers[i]; }
+        int*           getNbNodes()         const { return nb_nodes; }
+        ANNRightLayer* getRightLayer(int i) const { return right_layers[i]; }
     
         void train();
         void use();
     
-        const Matrix  *feedforward(const Matrix *);
-        const Matrix **feedforward_complete(const Matrix *);
+        const Matrix*  feedforward(const Matrix*);
+        const Matrix** feedforward_complete(const Matrix*);
         void           random_init_values(ANNRightLayer*);
-        void           SGD(const Matrix **, const Matrix **, const int, const int, const int, const double, const double);
-        void           SGD_batch_update(const Matrix **, const Matrix **, const int, const int, const double, const double);
-        nabla_pair    *backpropagation_quadratic(const Matrix *, const Matrix *);
-        nabla_pair    *backpropagation_cross_entropy(const Matrix *, const Matrix *);
+        void           SGD(std::vector<const Matrix*>*, std::vector<const Matrix*>*, const int, const int, const int, const double, const double);
+        void           SGD_batch_update(std::vector<const Matrix*>*, std::vector<const Matrix*>*, std::map<int, int>*, const int, int, const int, const double, const double);
+        nabla_pair*    backpropagation_quadratic(const Matrix*, const Matrix*);
+        nabla_pair     backpropagation_cross_entropy(const Matrix*, const Matrix*);
     
     private:
     
-        ANNLeftLayer   *input;
-        int            *nb_nodes;
+        ANNLeftLayer*   input;
+        int*            nb_nodes;
         int             nb_right_layers;
-        ANNRightLayer **right_layers;
+        ANNRightLayer** right_layers;
     
 };
 
@@ -85,8 +85,8 @@ virtual ~ANNRightLayer() {
         }
     
         ANNLayer *getPreviousLayer() { return previous_layer; }
-        Matrix *getBiases()  { return B; }
-        Matrix *getWeights() { return W; }
+        Matrix   *getBiases()        { return B; }
+        Matrix   *getWeights()       { return W; }
     
     private:
     

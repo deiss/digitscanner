@@ -129,40 +129,32 @@ void DigitScanner::train(std::string path_data, const int nb_images, const int n
     unsigned char *label = new unsigned char[label_len];
     file_images.read((char*)image, 16);
     file_labels.read((char*)label, 8);
-    
     // offset
     for(int i=0 ; i<nb_images_to_skip ; i++) {
         file_images.read((char*)image, image_len);
         file_labels.read((char*)label, label_len);
     }
-    
     // train across all the data set
-    Matrix **training_input  = new Matrix*[nb_images];
-    Matrix **training_output = new Matrix*[nb_images];
+    std::vector<const Matrix *> training_input;  training_input.reserve(nb_images);
+    std::vector<const Matrix *> training_output; training_output.reserve(nb_images);
     // create the training set
     for(int i=0 ; i<nb_images ; i++) {
         // read an image from the file
         Matrix *input = new Matrix(image_len, 1);
         file_images.read((char*)image, image_len);
         for(int j=0 ; j<image_len ; j++) input->operator()(j, 0) = double(image[j])/256;
-        training_input[i] = input;
-        
+        training_input.push_back(input);
         // read the label from the data set and create the expected output matrix
         Matrix *output = new Matrix(10, 1);
         file_labels.read((char*)label, label_len);
         output->operator()(label[0], 0) = 1;
-        training_output[i] = output;
+        training_output.push_back(output);
     }
     // Stochastic Gradient Descent
-    ann->SGD(const_cast<const Matrix **>(training_input), const_cast<const Matrix **>(training_output), nb_images, nb_epoch, batch_len, eta, alpha);
-    
+    ann->SGD(&training_input, &training_output, nb_images, nb_epoch, batch_len, eta, alpha);
     // clean up
-    for(int j=0 ; j<nb_images ; j++) {
-        delete training_input[j];
-        delete training_output[j];
-    }
-    delete [] training_input;
-    delete [] training_output;
+    for(const Matrix* m : training_input)  delete m;
+    for(const Matrix* m : training_output) delete m;
     delete [] image;
     delete [] label;
     file_images.close();

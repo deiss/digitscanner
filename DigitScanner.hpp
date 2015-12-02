@@ -7,7 +7,7 @@ class DigitScanner {
 
     public:
 
-        DigitScanner(int *, int);
+        DigitScanner(int*, int);
         ~DigitScanner();
 
         void load(std::string, std::string);
@@ -17,7 +17,7 @@ class DigitScanner {
     
     private:
     
-        ANN *ann;
+        ANN* ann;
 
 };
 
