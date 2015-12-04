@@ -9,6 +9,12 @@ Language: C++<br/>
 
 -----------------------------------------------------------------------------------
 
+Screenshot:
+
+![Screenshot 1](Screenshot.png)
+
+-----------------------------------------------------------------------------------
+
 With this project, it is possible to create an Artificial Neural Network, the regular version of it. With only one hidden layer, it is possible to achieve significant results on the MNIST testing set, using the 60000 digits from the training set. 
 
 The MNIST digits are 28x28 black and white pictures. So I used 784 neurons for the input, 10 for the output (1 per digit), and between 30 and 200 neurons for the hidden layer. More neurons in the hidden can lead to better performances but also take longer to train.
@@ -17,11 +23,15 @@ With 200 neurons in the hidden layer, 14 epochs of training over the whole data 
 
 -----------------------------------------------------------------------------------
 
-Functions:
+C++ Functions:
    - 'save':  saves the neural network in a file
    - 'load':  loads a neural network from a file
    - 'train': use training data to update the weights and biases
    - 'test':  gives the output and score for a given testing set
+
+Keys:
+   - 'g': after you draw something in the drawing area, by pressing 'g' the software tries to guess that number
+   - 'r': reset the drawing area
 
 
 
