@@ -1,7 +1,14 @@
 #ifndef DigitScanner_hpp
 #define DigitScanner_hpp
 
+#ifdef __linux__
+#include <GL/glut.h>
+#else
+#include <GLUT/glut.h>
+#endif
+
 #include "ANN.hpp"
+#include "Matrix.hpp"
 
 template <typename T>
 class DigitScanner {
@@ -11,25 +18,77 @@ class DigitScanner {
         DigitScanner(int*, int, bool);
         ~DigitScanner();
 
+        void draw();
         void load(std::string, std::string);
         void save(std::string, std::string);
         void train(std::string, const int, const int, const int, const int, const double, const double);
         void test(std::string, const int, const int);
     
+        void guess();
+        void scan(int, int, unsigned char);
+        void reset();
+    
     private:
     
-        ANN<T>* ann;
+        ANN<T>*        ann;
+        Matrix<float>* digit;
 
 };
 
 template <typename T>
 DigitScanner<T>::DigitScanner(int* nodes, int nb_right_layers, bool multi_threading)
     : ann(new ANN<T>(nodes, nb_right_layers, multi_threading)) {
+    digit = new Matrix<float>(784, 1);
+    for(int i=0 ; i<784 ; i++) digit->operator()(i, 0) = 0;
 }
 
 template <typename T>
 DigitScanner<T>::~DigitScanner() {
     delete ann;
+    delete digit;
+}
+
+/* OpenGL drawing function */
+template <typename T>
+void DigitScanner<T>::draw() {
+    // digit
+    for(int i=0 ; i<28 ; i++) {
+        for(int j=0 ; j<28 ; j++) {
+            unsigned char color = digit->operator()(i*28+j, 0);
+            glColor3ub(color, color, color);
+            glBegin(GL_QUADS);
+            glVertex2d(10*j, 10*(27-i));
+            glVertex2d(10*(j+1), 10*(27-i));
+            glVertex2d(10*(j+1), 10*(27-i+1));
+            glVertex2d(10*j, 10*(27-i+1));
+            glEnd();
+        }
+    }
+    
+}
+
+/* Uses the neural network to guess which number is drawn */
+template <typename T>
+void DigitScanner<T>::guess() {
+    const Matrix<float>* y = ann->feedforward(const_cast<const Matrix<float>*>(digit));
+    int kmax = 0;
+    for(int k=0 ; k<10 ; k++) { if(y->operator()(k, 0)>y->operator()(kmax, 0)) kmax = k; }
+    std::cout << "You draw: " << kmax << std::endl;
+    delete y;
+}
+
+/* Reset the drawing area */
+template <typename T>
+void DigitScanner<T>::reset() {
+    for(int i=0 ; i<784 ; i++) {
+        digit->operator()(i, 0) = 0;
+    }
+}
+
+/* Stores the number */
+template <typename T>
+void DigitScanner<T>::scan(int i, int j, unsigned char value) {
+    digit->operator()(28*i + j, 0) = value;
 }
 
 /* Loads a Neural Network from a file */
@@ -45,7 +104,7 @@ void DigitScanner<T>::load(std::string folder, std::string filename) {
     nb_nodes = new int[nb_layers];
     // number of nodes in layer
     for(int i=0 ; i<nb_layers ; i++) file >> nb_nodes[i];
-    ann = new ANN<T>(nb_nodes, nb_layers-1);
+    ann = new ANN<T>(nb_nodes, nb_layers-1, false);
     // weights and biases
     for(int i=0 ; i<nb_layers-1 ; i++) {
         ANNRightLayer<T>* current = ann->getRightLayer(i);
@@ -111,13 +170,11 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     unsigned char* label = new unsigned char[label_len];
     file_images.read((char*)image, 16);
     file_labels.read((char*)label, 8);
-    
     // offset
     for(int i=0 ; i<nb_images_to_skip ; i++) {
         file_images.read((char*)image, image_len);
         file_labels.read((char*)label, label_len);
     }
-    
     // compute the results
     int        right_guesses = 0;
     Matrix<T>* test_input    = new Matrix<T>(image_len, 1);

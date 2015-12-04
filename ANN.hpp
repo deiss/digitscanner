@@ -137,8 +137,8 @@ typename ANN<T>::nabla_pair ANN<T>::backpropagation_cross_entropy(const Matrix<T
     const Matrix<T>** nabla_B     = new const Matrix<T>*[nb_right_layers];
           Matrix<T>* d            = new Matrix<T>(activations[nb_right_layers]);
     d->operator-(training_output);
-    Matrix<T>* at = new Matrix<T>(activations[nb_right_layers-1]); at->transpose();         // aT
-    Matrix<T>* nw = new Matrix<T>(d);                              nw = nw->operator*(at);  // d*aT
+    Matrix<T>* at = new Matrix<T>(activations[nb_right_layers-1]); at->transpose();
+    Matrix<T>* nw = new Matrix<T>(d);                              nw = nw->operator*(at);
     nabla_W[nb_right_layers-1] = nw;
     nabla_B[nb_right_layers-1] = d;
     delete at;
@@ -224,7 +224,7 @@ void ANN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
         std::vector<std::thread> threads;
         while(batch_counter<=training_set_len-batch_len) {
             if(multi_threading) {
-                threads.push_back(std::thread(SGD_batch_update, this, training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha));
+                threads.push_back(std::thread(&ANN::SGD_batch_update, this, training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha));
             }
             else {
                 SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
