@@ -102,7 +102,9 @@ virtual ~ANNRightLayer() {
     
 };
 
-/* ANN constructor */
+
+
+/* ANN constructor. */
 template <typename T>
 ANN<T>::ANN(int* nb_nodes, int nb_right_layers, bool multi_threading)
     : multi_threading(multi_threading),
@@ -120,7 +122,7 @@ ANN<T>::ANN(int* nb_nodes, int nb_right_layers, bool multi_threading)
     }
 }
 
-/* ANN desctructor */
+/* ANN desctructor. */
 template <typename T>
 ANN<T>::~ANN() {
     delete input;
@@ -129,7 +131,7 @@ ANN<T>::~ANN() {
     delete [] nb_nodes;
 }
 
-/* Backpropagation algorithm using the cross-entropy cost function */
+/* Backpropagation algorithm using the cross-entropy cost function. */
 template <typename T>
 typename ANN<T>::nabla_pair ANN<T>::backpropagation_cross_entropy(const Matrix<T>* training_input, const Matrix<T>* training_output) {
     const Matrix<T>** activations = feedforward_complete(training_input);
@@ -160,7 +162,7 @@ typename ANN<T>::nabla_pair ANN<T>::backpropagation_cross_entropy(const Matrix<T
     return nabla_pair(nabla_W, nabla_B);
 }
 
-/* Feedforward algorithm to be used to compute the output */
+/* Feedforward algorithm to be used to compute the output. */
 template <typename T>
 const Matrix<T>* ANN<T>::feedforward(const Matrix<T>* X) {
     const Matrix<T>* current = X;
@@ -176,7 +178,7 @@ const Matrix<T>* ANN<T>::feedforward(const Matrix<T>* X) {
     return current;
 }
 
-/* Feedforward algorithm to be used in the backpropagation algorithm */
+/* Feedforward algorithm to be used in the backpropagation algorithm. */
 template <typename T>
 const Matrix<T>** ANN<T>::feedforward_complete(const Matrix<T>* X) {
     const Matrix<T>** activations = new const Matrix<T>*[nb_right_layers+1];
@@ -192,7 +194,7 @@ const Matrix<T>** ANN<T>::feedforward_complete(const Matrix<T>* X) {
     return activations;
 }
 
-/* Initializes the network's weights and biases with a Gaussian generator */
+/* Initializes the network's weights and biases with a Gaussian generator. */
 template <typename T>
 void ANN<T>::random_init_values(ANNRightLayer<T>* l) {
     Matrix<T>* W = l->getWeights();
@@ -206,7 +208,7 @@ void ANN<T>::random_init_values(ANNRightLayer<T>* l) {
     }
 }
 
-/* Stochastic Gradient Descent algorithm */
+/* Stochastic Gradient Descent algorithm. */
 template <typename T>
 void ANN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
     // epoch
@@ -236,7 +238,7 @@ void ANN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
     }
 }
 
-/* Stochastic Gradient Descent algorithm for a batch */
+/* Stochastic Gradient Descent algorithm for a batch. */
 template <typename T>
 void ANN<T>::SGD_batch_update(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, std::map<int, int>* shuffle, const int training_set_len, int batch_counter, const int batch_len, const double eta, const double alpha) {
     std::vector<Matrix<T>*> nabla_W; nabla_W.reserve(nb_right_layers);

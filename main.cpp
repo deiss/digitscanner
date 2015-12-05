@@ -5,13 +5,9 @@
 
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_clock;
 
-void call_from_main();
 void print_elapsed_time(chrono_clock);
 
 int main(int argc, char **argv) {
-    /* enable all numerical exceptions, for debugging */
-    // call_from_main();
-
     /* initializations */
     chrono_clock begin = std::chrono::high_resolution_clock::now();
     srand(static_cast<unsigned int>(time(NULL)));
@@ -42,7 +38,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-/* Computes and print execution time */
+/* Computes and print execution time. */
 void print_elapsed_time(chrono_clock begin) {
     chrono_clock end = std::chrono::high_resolution_clock::now();
     auto         dur = end - begin;

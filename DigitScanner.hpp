@@ -35,6 +35,8 @@ class DigitScanner {
 
 };
 
+
+
 template <typename T>
 DigitScanner<T>::DigitScanner(int* nodes, int nb_right_layers, bool multi_threading)
     : ann(new ANN<T>(nodes, nb_right_layers, multi_threading)) {
@@ -48,7 +50,7 @@ DigitScanner<T>::~DigitScanner() {
     delete digit;
 }
 
-/* OpenGL drawing function */
+/* OpenGL drawing function. */
 template <typename T>
 void DigitScanner<T>::draw() {
     // digit
@@ -67,7 +69,7 @@ void DigitScanner<T>::draw() {
     
 }
 
-/* Uses the neural network to guess which number is drawn */
+/* Uses the neural network to guess which number is drawn. */
 template <typename T>
 void DigitScanner<T>::guess() {
     const Matrix<T>* y = ann->feedforward(const_cast<const Matrix<T>*>(digit));
@@ -77,7 +79,7 @@ void DigitScanner<T>::guess() {
     delete y;
 }
 
-/* Reset the drawing area */
+/* Reset the drawing area. */
 template <typename T>
 void DigitScanner<T>::reset() {
     for(int i=0 ; i<784 ; i++) {
@@ -85,13 +87,13 @@ void DigitScanner<T>::reset() {
     }
 }
 
-/* Stores the number */
+/* Stores the number. */
 template <typename T>
 void DigitScanner<T>::scan(int i, int j, unsigned char value) {
     if(value>digit->operator()(28*i + j, 0)) digit->operator()(28*i + j, 0) = value;
 }
 
-/* Loads a Neural Network from a file */
+/* Loads a Neural Network from a file. */
 template <typename T>
 void DigitScanner<T>::load(std::string folder, std::string filename) {
     if(ann) delete  ann;
@@ -125,7 +127,7 @@ void DigitScanner<T>::load(std::string folder, std::string filename) {
     delete nb_nodes;
 }
 
-/* Saves a Neural Network into a file */
+/* Saves a Neural Network into a file. */
 template <typename T>
 void DigitScanner<T>::save(std::string folder, std::string filename) {
     std::string   path = folder + filename;
@@ -156,7 +158,7 @@ void DigitScanner<T>::save(std::string folder, std::string filename) {
     file.close();
 }
 
-/* Tests a Neural Network */
+/* Tests a Neural Network. */
 template <typename T>
 void DigitScanner<T>::test(std::string path_data, const int nb_images, const int nb_images_to_skip) {
     // training and test data file path
@@ -200,7 +202,7 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     file_labels.close();
 }
 
-/* Trains a Neural Network using the Stochastic Gradient Descent algorithm */
+/* Trains a Neural Network using the Stochastic Gradient Descent algorithm. */
 template <typename T>
 void DigitScanner<T>::train(std::string path_data, const int nb_images, const int nb_images_to_skip, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
     // training and test data file path
