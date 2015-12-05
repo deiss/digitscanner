@@ -70,7 +70,7 @@ void DigitScanner<T>::draw() {
 /* Uses the neural network to guess which number is drawn */
 template <typename T>
 void DigitScanner<T>::guess() {
-    const Matrix<float>* y = ann->feedforward(const_cast<const Matrix<float>*>(digit));
+    const Matrix<T>* y = ann->feedforward(const_cast<const Matrix<T>*>(digit));
     int kmax = 0;
     for(int k=0 ; k<10 ; k++) { if(y->operator()(k, 0)>y->operator()(kmax, 0)) kmax = k; }
     std::cout << "You draw: " << kmax << std::endl;
@@ -88,7 +88,7 @@ void DigitScanner<T>::reset() {
 /* Stores the number */
 template <typename T>
 void DigitScanner<T>::scan(int i, int j, unsigned char value) {
-    digit->operator()(28*i + j, 0) = value;
+    if(value>digit->operator()(28*i + j, 0)) digit->operator()(28*i + j, 0) = value;
 }
 
 /* Loads a Neural Network from a file */

@@ -64,11 +64,21 @@ void Window::keyboard(unsigned char key, int x, int y) {
 
 /* Mouse function */
 void Window::motion(int x, int y) {
-    int i = static_cast<int>(y/10);
-    int j = static_cast<int>(x/10);
+    double cell_width = 10;
+    int color   = 255;
+    int offsety = -1;
+    int offsetx = -1;
+    int i = static_cast<int>(y/cell_width);
+    int j = static_cast<int>(x/cell_width);
+    double coeffy = (i*cell_width-y+cell_width/2)/(cell_width/2);
+    double coeffx = (j*cell_width-x+cell_width/2)/(cell_width/2);
+    if(coeffy<0) { coeffy = -coeffy; offsety = 1; }
+    if(coeffx<0) { coeffx = -coeffx; offsetx = 1; }
     bool inside_window = true;
     if(i<0 || i>27 || j<0 || j>27) inside_window = false;
-    if(inside_window) dgs->scan(i, j, 255);
+    if(inside_window) dgs->scan(i, j, color - 20*(coeffy+coeffx));
+    if(inside_window) dgs->scan(i+offsety, j, 255*(coeffy));
+    if(inside_window) dgs->scan(i, j+offsetx, 255*(coeffx));
 }
 
 /* Mouse function */
