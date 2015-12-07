@@ -1,5 +1,6 @@
-#### Project: DigitScanner<br/>
-#### Author: DEISS Olivier<br/>
+##### Project: DigitScanner
+##### Author: DEISS Olivier
+##### Started: November 2015
 
 This project is a handwritten number recognition software, using a feedforward Artificial Neural Network (ANN). The network learns with the Stochastic Gradient Descent algorithm, using the cross-entropy as a cost function.
 
