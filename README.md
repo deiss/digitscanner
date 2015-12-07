@@ -4,6 +4,8 @@
 
 This project is a handwritten number recognition software, using a feedforward Artificial Neural Network (ANN). The network learns with the Stochastic Gradient Descent algorithm, using the cross-entropy as a cost function.
 
+The projects uses the MNIST dataset to train and test the neural network. Then it is possible to draw numbers in a window and make the computer guess.
+
 I was rather focused on understanding the principles of ANN in this project, so I coded the whole project myself and didn't use any libraries. You should consider using linear algebra librairies if you want greater performances.
 
 Language: C++<br/>
