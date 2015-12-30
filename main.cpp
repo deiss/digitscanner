@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
     //dgs.test(path_data, 10000, 0);
     //dgs.save(path_folder_ANN, filename_ANN);
     
-    /* Creates a Window for testing */
+    /* creates a Window for testing */
     Window *w = new Window(280, 280);
     w->setDgs(&dgs);
     w->setSceneWidth(280);

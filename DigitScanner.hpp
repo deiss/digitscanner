@@ -18,12 +18,12 @@ class DigitScanner {
         DigitScanner(int*, int, bool);
         ~DigitScanner();
 
-        void draw();
         void load(std::string, std::string);
         void save(std::string, std::string);
         void train(std::string, const int, const int, const int, const int, const double, const double);
         void test(std::string, const int, const int);
     
+        void draw();
         void guess();
         void scan(int, int, unsigned char);
         void reset();
@@ -75,7 +75,7 @@ void DigitScanner<T>::guess() {
     const Matrix<T>* y = ann->feedforward(const_cast<const Matrix<T>*>(digit));
     int kmax = 0;
     for(int k=0 ; k<10 ; k++) { if(y->operator()(k, 0)>y->operator()(kmax, 0)) kmax = k; }
-    std::cout << "You draw: " << kmax << std::endl;
+    std::cout << "You drew: " << kmax << std::endl;
     delete y;
 }
 
@@ -180,7 +180,7 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     // compute the results
     int        right_guesses = 0;
     Matrix<T>* test_input    = new Matrix<T>(image_len, 1);
-    for(int i=0 ; i<nb_images ; i++) {
+    for(int i=0 ; i<nb_images-nb_images_to_skip ; i++) {
         // create input matrix
         file_images.read((char*)image, image_len);
         for(int j=0 ; j<image_len ; j++) test_input->operator()(j, 0) = double(image[j])/256;
@@ -225,7 +225,7 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
     std::vector<const Matrix<T>*> training_input;  training_input.reserve(nb_images);
     std::vector<const Matrix<T>*> training_output; training_output.reserve(nb_images);
     // create the training set
-    for(int i=0 ; i<nb_images ; i++) {
+    for(int i=0 ; i<nb_images-nb_images_to_skip ; i++) {
         // read an image from the file
         Matrix<T>* input = new Matrix<T>(image_len, 1);
         file_images.read((char*)image, image_len);
