@@ -216,4 +216,4 @@ Matrix<T>* Matrix<T>::transpose() {
     return this;
 }
 
-#endif /* Matrix_hpp */
+#endif

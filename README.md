@@ -1,18 +1,20 @@
 # DigitScanner
 
-##### Author: DEISS Olivier
+![Screenshot](media/Screenshot.png)
 
 ## PROJECT
 
-DigitScanner is a tool written in C++ to create, train and test artificial neural networks for handwritten number recognition. The project uses the MNIST dataset to train and test the neural networks. It is also possible to draw numbers in a window and ask the tool to guess the number you drew. The neural network are taught with the Stochastic Gradient Descent algorithm, using the cross-entropy as a cost function.
+DigitScanner is a tool written in C++ to create, train and test artificial neural networks for handwritten number recognition. The project uses the MNIST dataset to train and test the neural networks. It is also possible to draw numbers in a window and ask the tool to guess the number you drew.
+
+The neural network are taught with the Stochastic Gradient Descent algorithm, using the cross-entropy as a cost function. With only one hidden layer, it is possible to achieve significant results on the MNIST testing set, using the 60000 digits from the training set. The MNIST digits are 28x28 black and white pictures, so we need to use 784 neurons for the input, 10 for the output (1 per digit), and between 30 and 200 neurons for the hidden layer. More neurons in the hidden layer can lead to better performances but also take longer to train.
+
+With 200 neurons in the hidden layer, 14 epochs of training over the whole data set with batches of 10 pictures, up to 98.33% guesses were right on the testing set (10000 pictures), using a learning rate of 0.1 and no weight decay.
 
 ## LICENSE
 
 This project is licensed under the GPL License. See COPYING for more information.
 
 ***
-
-![Screenshot](media/Screenshot.png)
 
 ***
 
@@ -50,9 +52,9 @@ And test this last neural network:
 You can finally use the --gui option to display a window and draw numbers in it. Type 'g' to guess the number and 'r' to reset the drawing area.
 
     bin/digitscanner --annin ann_100_30.txt --gui
+    
 
-### About Machine Learning
+#### Contact
 
-With only one hidden layer, it is possible to achieve significant results on the MNIST testing set, using the 60000 digits from the training set. The MNIST digits are 28x28 black and white pictures, so we need to use 784 neurons for the input, 10 for the output (1 per digit), and between 30 and 200 neurons for the hidden layer. More neurons in the hidden layer can lead to better performances but also take longer to train.
-
-With 200 neurons in the hidden layer, 14 epochs of training over the whole data set with batches of 10 pictures, up to 98.33% guesses were right on the testing set (10000 pictures), using a learning rate of 0.1 and no weight decay.
+##### Author: DEISS Olivier
+##### Email: olivier . deiss [at] gmail . com

@@ -23,7 +23,7 @@ void Arguments::print_presentation() {
 }
 
 void Arguments::print_help() {
-    std::cerr << "USE: digitscanner [options] " << std::endl;
+    std::cerr << "USE: digitscanner [options]" << std::endl;
     std::cerr << std::endl;
     std::cerr << "OPTIONS:" << std::endl;
     std::cerr << "   --help                               Displays this help." << std::endl;
@@ -193,8 +193,7 @@ int Arguments::parse_arguments() {
             }
         }
         /* errors */
-        if(!check_short_args(help_msg)) return -1;
-        if(!check_long_args(help_msg))  return -1;
+        if(!check_long_args(help_msg)) return -1;
     }
     return 0;
 }
@@ -265,9 +264,5 @@ bool Arguments::check_long_args(std::string help_msg) {
         std::cerr << help_msg << std::endl;
         return false;
     }
-    return true;
-}
-
-bool Arguments::check_short_args(std::string help_msg) {
     return true;
 }

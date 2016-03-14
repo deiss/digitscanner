@@ -278,4 +278,4 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
     file_labels.close();
 }
 
-#endif /* DigitScanner_hpp */
+#endif

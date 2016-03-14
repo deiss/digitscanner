@@ -1,27 +1,28 @@
-# project third party
+# third party
 LIB_LIST     = glut
 INCLUDE_LIST = GLUT
-LIB_GLUT     = -lGL -lGLU lib/glut/GLUT
-
-# compilator and liker flags
-CC       = g++
-LD_FLAGS = $(LIB_GLUT)
-CC_FLAGS = -Wall -std=c++11
-EXEC     = digitscanner
+LIB_GLUT     = -lGL -lGLU -lGLUT
 
 # project configuration
+CC       = g++
+LD_FLAGS = $(LIB_GLUT)
+CC_FLAGS = -Wall -std=c++11 -Ofast -funroll-loops
+EXEC     = digitscanner
+
+# project structure
 BUILD_DIR   = build
 BIN_DIR     = bin
 SRC_DIR     = src
 LIB_DIR     = lib
 INCLUDE_DIR = include
 
-# subfolders lookup
+# libe and headers subfolders lookup
 LIB     = $(foreach lib, $(LIB_DIR)/$(LIB_LIST), $(addprefix -L, $(lib)))
 INCLUDE = $(foreach include, $(INCLUDE_DIR)/$(INCLUDE_LIST), $(addprefix -I, $(include)))
 SRC     = $(wildcard $(SRC_DIR)/*.cpp)
 OBJ     = $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRC))
 
+# sourcefile subfolders lookup
 VPATH = $(SRC_DIR)
 
 # entry point
