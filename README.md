@@ -51,7 +51,7 @@ You can finally use the --gui option to display a window and draw numbers in it.
 
     bin/digitscanner --annin ann_100_30.txt --gui
     
-#### Improvements
+### Improvements
 
 Many improvements can be brought to this project. First it would be possible to use a decent library for matrices. I just wanted to code a matrix class at least once in my life and this project was a great occasion to do so, but I guess it is not the most efficient.
 
