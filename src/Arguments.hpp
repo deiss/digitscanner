@@ -39,7 +39,6 @@ class Arguments {
 
         bool is_set(std::string arg) { return arg_set.count(arg); }
         void print_help();
-        void print_presentation();
         int  parse_arguments();
 
     private:

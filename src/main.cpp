@@ -24,7 +24,6 @@ int main(int argc, char **argv) {
     int err = args.parse_arguments();
     if(err<0) {
         if(err==-2) {
-            args.print_presentation();
             args.print_help();
         }
         return 0;

@@ -26,11 +26,6 @@ Arguments::Arguments(int p_argc, char** p_argv) :
     argv(p_argv) {
 }
 
-void Arguments::print_presentation() {
-    std::cerr << "DigitScanner is a tool to create, train and test artificial neural networks for handwritten number recognition." << std::endl;
-    std::cerr << std::endl;
-}
-
 void Arguments::print_help() {
     std::cerr << "USE: digitscanner [options]" << std::endl;
     std::cerr << std::endl;

@@ -20,6 +20,10 @@ Linux/Mac : 'make' will create the binary in the 'bin' directory.
 
 ### Use
 
+You can get a list of the parameters and options with:
+
+    bin/digitscanner --help
+
 You can start with the existing neural networks in the 'ann' folder and test them with the mnist data_set:
 
     bin/digitscanner --annin ann/ann_100.txt --test 10000 0 --mnist mnist_data
