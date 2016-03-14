@@ -47,7 +47,6 @@ class ANN {
         void              random_init_values(ANNRightLayer<T>*);
         void              SGD(std::vector<const Matrix<T>*>*, std::vector<const Matrix<T>*>*, const int, const int, const int, const double, const double);
         void              SGD_batch_update(std::vector<const Matrix<T>*>*, std::vector<const Matrix<T>*>*, std::map<int, int>*, const int, int, const int, const double, const double);
-        nabla_pair*       backpropagation_quadratic(const Matrix<T>*, const Matrix<T>*);
         nabla_pair        backpropagation_cross_entropy(const Matrix<T>*, const Matrix<T>*);
     
     private:
