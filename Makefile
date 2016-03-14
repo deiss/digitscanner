@@ -6,7 +6,7 @@ LIB_GLUT     = -lGL -lGLU -lGLUT
 # project configuration
 CC       = g++
 LD_FLAGS = $(LIB_GLUT)
-CC_FLAGS = -Wall -std=c++11 -Ofast -funroll-loops
+CC_FLAGS = -Wall -Wno-deprecated-declarations -std=c++11 -Ofast -funroll-loops
 EXEC     = digitscanner
 
 # project structure
@@ -16,7 +16,7 @@ SRC_DIR     = src
 LIB_DIR     = lib
 INCLUDE_DIR = include
 
-# libe and headers subfolders lookup
+# libs and headers subfolders lookup
 LIB     = $(foreach lib, $(LIB_DIR)/$(LIB_LIST), $(addprefix -L, $(lib)))
 INCLUDE = $(foreach include, $(INCLUDE_DIR)/$(INCLUDE_LIST), $(addprefix -I, $(include)))
 SRC     = $(wildcard $(SRC_DIR)/*.cpp)
