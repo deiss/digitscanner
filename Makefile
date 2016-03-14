@@ -1,8 +1,7 @@
 # project third party
 LIB_LIST     = glut
-INCLUDE_LIST = glut
+INCLUDE_LIST = GLUT
 LIB_GLUT     = -lGL -lGLU lib/glut/GLUT
-LD_FLAGSSSS  = -lglut -lGLU32
 
 # compilator and liker flags
 CC       = g++
@@ -46,14 +45,11 @@ clean:
 $(BUILD_DIR)/main.o: main.cpp DigitScanner.hpp Window.hpp
 	$(CC) $(INCLUDE) $(CC_FLAGS) -o $@ -c $<
 
-# objects
 $(BUILD_DIR)/Exception.o: Exception.cpp
 	$(CC) $(INCLUDE) $(CC_FLAGS) -o $@ -c $<
 
-# objects
 $(BUILD_DIR)/Window.o: Window.cpp Window.hpp
 	$(CC) $(INCLUDE) $(CC_FLAGS) -o $@ -c $<
 
-# objects
 $(BUILD_DIR)/Arguments.o: Arguments.cpp Arguments.hpp
 	$(CC) $(INCLUDE) $(CC_FLAGS) -o $@ -c $<

@@ -158,7 +158,7 @@ Matrix<T>* Matrix<T>::operator*(T lambda) {
 /* Matrices product, can only be called on dynamically created (new) Matrix objects */
 template <typename T>
 Matrix<T>* Matrix<T>::operator*(const Matrix* B) {
-    if(B->I!=J) std::cout << "Matrix dimension dismatch! operator*" << std::endl;
+    if(B->I!=J) std::cerr << "Matrix dimension dismatch! operator*" << std::endl;
     Matrix* res = new Matrix(I, B->J);
     for(int i=0 ; i<I ; i++) {
         for(int k=0 ; k<B->I ; k++) {
@@ -173,7 +173,7 @@ Matrix<T>* Matrix<T>::operator*(const Matrix* B) {
 
 template <typename T>
 Matrix<T>* Matrix<T>::operator+(const Matrix* B) {
-    if(B->I!=I || B->J!=J) std::cout << "Matrix dimension dismatch! operator+" << std::endl;
+    if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
             matrix[i*J + j] += B->operator()(i, j);
@@ -184,7 +184,7 @@ Matrix<T>* Matrix<T>::operator+(const Matrix* B) {
 
 template <typename T>
 Matrix<T>* Matrix<T>::operator-(const Matrix* B) {
-    if(B->I!=I || B->J!=J) std::cout << "Matrix dimension dismatch! operator-" << std::endl;
+    if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! operator-" << std::endl;
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
             matrix[i*J + j] -= B->operator()(i, j);
@@ -195,7 +195,7 @@ Matrix<T>* Matrix<T>::operator-(const Matrix* B) {
 
 template <typename T>
 Matrix<T>* Matrix<T>::element_wise_product(const Matrix* B) {
-    if(B->I!=I || B->J!=J) std::cout << "Matrix dimension dismatch! element_wise_product" << std::endl;
+    if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! element_wise_product" << std::endl;
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
             matrix[i*J + j] *= B->operator()(i, j);

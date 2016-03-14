@@ -4,6 +4,7 @@ Arguments::Arguments(int p_argc, char** p_argv) :
     annin(""),
     annout(""),
     mnist(""),
+    max_threads(0),
     train_imgnb(0),
     train_imgskip(0),
     train_epochs(0),
@@ -45,7 +46,7 @@ void Arguments::print_help() {
     std::cerr << "   --gui                                Creates a window that enables you to draw numbers. Commands:" << std::endl;
     std::cerr << "                                           g: using the neural network, guess the number" << std::endl;
     std::cerr << "                                           r: resets the drawing area" << std::endl;
-    std::cerr << "   --enable_multithreading              Enables multithreading to increase computation performances." << std::endl;
+    std::cerr << "   --enable_multithreading <max>        Enables multithreading with a maximum of <max> threads to increase computation performances." << std::endl;
 }
 
 int Arguments::parse_arguments() {
@@ -72,6 +73,17 @@ int Arguments::parse_arguments() {
             }
             else if(arg_value=="--annout") {
                 if(!parse_string_arg(std::string(argv[i]), &i, &annout, "You must specify the output neural network file.\n" + help_msg)) { return -1; }
+            }
+            /* integer */
+            else if(arg_value=="--enable_multithreading") {
+                if(++i<argc) {
+                    std::string max_threads_str(argv[i]);
+                    try                            { max_threads = std::stoi(max_threads_str); }
+                    catch(std::exception const& e) { std::cerr << "The maximum number of threads must be a positive integer." << std::endl; return -1; }
+                    if(max_threads<=0) { std::cerr << "The maximum number of threads must be a positive integer." << std::endl; return -1; }
+                    else { arg_set.insert("enable_multithreading"); }
+                }
+                else { std::cerr << "The maximum number of threads is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
             }
             /* commands */
             else if(arg_value=="--train") {
@@ -174,9 +186,6 @@ int Arguments::parse_arguments() {
             }
             else if(arg_value=="--gui") {
                 arg_set.insert("gui");
-            }
-            else if(arg_value=="--enable_multithreading") {
-                arg_set.insert("enable_multithreading");
             }
             else {
                 std::cerr << "Unknown \"" << arg_value << "\" parameter." << std::endl;

@@ -23,7 +23,7 @@ class ANN {
 
     public:
 
-        ANN(std::vector<int>, bool);
+        ANN(std::vector<int>, int);
         ~ANN();
     
         int               getNbRightLayers()   const { return nb_right_layers; }
@@ -47,7 +47,7 @@ class ANN {
         int                nb_right_layers;
         ANNLeftLayer<T>*   input;
         ANNRightLayer<T>** right_layers;
-        bool               multithreading;
+        int                max_threads;
     
 };
 
@@ -107,12 +107,12 @@ virtual ~ANNRightLayer() {
 
 /* ANN constructor. */
 template <typename T>
-ANN<T>::ANN(std::vector<int> p_layers, bool p_multithreading)
+ANN<T>::ANN(std::vector<int> p_layers, int p_max_threads)
     : layers(p_layers),
       nb_right_layers(static_cast<int>(p_layers.size())-1),
       input(new ANNLeftLayer<T>(p_layers[0])),
       right_layers(new ANNRightLayer<T>*[nb_right_layers]),
-      multithreading(p_multithreading) {
+      max_threads(p_max_threads) {
     ANNLayer<T>* previous = input;
     for(int i=0 ; i<nb_right_layers ; i++) {
         ANNRightLayer<T>* l = new ANNRightLayer<T>(layers[i+1], previous);
@@ -224,13 +224,30 @@ void ANN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
         int                      batch_counter = 0;
         std::vector<std::thread> threads;
         while(batch_counter<=training_set_len-batch_len) {
-            if(multithreading) {
+            int thread_count = 0;
+            if(max_threads>1) {
+                if(thread_count>max_threads) {
+                    threads.at(0).join();
+                    threads.erase(threads.begin());
+                    thread_count--;
+                }
                 try{
                     threads.push_back(std::thread(&ANN::SGD_batch_update, this, training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha));
+                    thread_count++;
                 }
                 catch(std::exception &e) {
+                    /* too many threads are already running */
                     for(std::thread& t : threads) t.join();
                     threads.clear();
+                    /* try to start this one again */
+                    try {
+                        threads.push_back(std::thread(&ANN::SGD_batch_update, this, training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha));
+                        thread_count++;
+                    }
+                    catch(std::exception &e) {
+                        std::cerr << "Error while starting a new thread. Exiting." << std::endl;
+                        return;
+                    }
                 }
             }
             else {
@@ -238,8 +255,8 @@ void ANN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
             }
             batch_counter += batch_len;
         }
-        if(multithreading) { for(std::thread& t : threads) t.join(); }
-        std::cerr << "epoch " << (i+1) << "done" << std::endl;
+        if(max_threads>1) { for(std::thread& t : threads) t.join(); }
+        std::cerr << "epoch " << (i+1) << " done" << std::endl;
     }
 }
 

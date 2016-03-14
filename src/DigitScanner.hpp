@@ -13,8 +13,8 @@ class DigitScanner {
 
     public:
 
-        DigitScanner(bool=false);
-        DigitScanner(std::vector<int>, bool=false);
+        DigitScanner(int=0);
+        DigitScanner(std::vector<int>, int=0);
         ~DigitScanner();
     
         void init();
@@ -34,22 +34,22 @@ class DigitScanner {
     
         ANN<T>*        ann;
         Matrix<float>* digit;
-        bool           multithreading;
+        int            max_threads;
 
 };
 
 
 
 template <typename T>
-DigitScanner<T>::DigitScanner(bool p_multithreading) :
-    multithreading(p_multithreading) {
+DigitScanner<T>::DigitScanner(int p_max_threads) :
+    max_threads(p_max_threads) {
     init();
 }
 
 template <typename T>
-DigitScanner<T>::DigitScanner(std::vector<int> p_layers, bool p_multithreading) :
-    ann(new ANN<T>(p_layers, p_multithreading)),
-    multithreading(p_multithreading) {
+DigitScanner<T>::DigitScanner(std::vector<int> p_layers, int p_max_threads) :
+    ann(new ANN<T>(p_layers, p_max_threads)),
+    max_threads(p_max_threads) {
     init();
 }
 
@@ -67,7 +67,7 @@ void DigitScanner<T>::init() {
 
 template <typename T>
 void DigitScanner<T>::set_layers(std::vector<int> p_layers) {
-    ann = new ANN<T>(p_layers, multithreading);
+    ann = new ANN<T>(p_layers, max_threads);
 }
 
 /* OpenGL drawing function. */
@@ -210,7 +210,7 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     // compute the results
     int        right_guesses = 0;
     Matrix<T>* test_input    = new Matrix<T>(image_len, 1);
-    for(int i=0 ; i<nb_images-nb_images_to_skip ; i++) {
+    for(int i=0 ; i<nb_images ; i++) {
         // create input matrix
         file_images.read((char*)image, image_len);
         for(int j=0 ; j<image_len ; j++) test_input->operator()(j, 0) = double(image[j])/256;
@@ -255,7 +255,7 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
     std::vector<const Matrix<T>*> training_input;  training_input.reserve(nb_images);
     std::vector<const Matrix<T>*> training_output; training_output.reserve(nb_images);
     // create the training set
-    for(int i=0 ; i<nb_images-nb_images_to_skip ; i++) {
+    for(int i=0 ; i<nb_images ; i++) {
         // read an image from the file
         Matrix<T>* input = new Matrix<T>(image_len, 1);
         file_images.read((char*)image, image_len);

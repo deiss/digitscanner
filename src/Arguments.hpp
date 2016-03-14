@@ -13,6 +13,7 @@ class Arguments {
         std::string           annout;
         std::vector<int>      layers;
         std::string           mnist;
+        int                   max_threads;
         bool                  time;
         bool                  gui;
         int                   train_imgnb;

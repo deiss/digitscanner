@@ -24,41 +24,35 @@ Linux/Mac : 'make' will create the binary in the 'bin' directory'.
 
 You can start with the existing neural networks in the 'ann' folder and test them with the mnist data_set:
 
-    bin/digitscanner --annin ann/ann_200.txt --test 10000 0 --mnist mnist_data
+    bin/digitscanner --annin ann/ann_100.txt --test 10000 0 --mnist mnist_data
     
-Or you can create a new neural network, with 784 neurons in input, a hidden layer of 100 neurons and an output layer of 10 neurons, and train it twice over the whole dataset with batches of 10 pictures and a learning factor of 0.1. Do not forget to save this neural network with the --annout parameter. The neural network available in ann/ann_100.txt has been created with the following command:
+Or you can create a new neural network, with 784 neurons in input, a hidden layer of 50 neurons and an output layer of 10 neurons, and train it twice over the whole dataset with batches of 10 pictures and a learning factor of 0.1. Do not forget to save this neural network with the --annout parameter. The neural network available in ann/ann_50.txt has been created with the following command:
 
-    bin/digitscanner --layers 3 784 100 10 --train 60000 0 2 10 0.1 0 --annout ann_100.txt --mnist mnist_data
+    bin/digitscanner --layers 3 784 50 10 --train 60000 0 2 10 0.1 0 --annout ann_50.txt --mnist mnist_data
     
-You can also try to see if adding another hidden layer will improve the test result. It may take a long time, so you can use the --enable_multithreading option to make the process quicker. You can use the --time option to see how long it takes to do the training.
+You can also try to see if adding another hidden layer will improve the test result. It may take a long time, so you can use the --enable_multithreading option and train it over only 20000 pictures to make the process quicker. Let's use the last 20000 pictures. You can use the --time option to see how long it takes to do the training. The neural network available in ann/ann_100.txt has been created with the following command:
 
-    bin/digitscanner --layers 4 784 100 50 10 --train 60000 0 1 10 0.1 0 --annout ann_100_30.txt --mnist mnist_data --enable_multithreading --time
+    bin/digitscanner --layers 3 784 100 10 --train 20000 40000 1 10 0.1 0 --annout ann_100.txt --mnist mnist_data --enable_multithreading 2 --time
     
 Then you can load the previously created neural networks and test them:
 
-    bin/digitscanner --annin ann_100_30.txt --test 10000 0
+    bin/digitscanner --annin ann_100.txt --test 10000 0 --mnist mnist_data   # 11.35%
+    bin/digitscanner --annin ann_50.txt --test 10000 0 --mnist mnist_data    # 94.77%
     
-Or you can use the --gui option to display a window and draw numbers in it. Type 'g' to guess the number and 'r' to reset the drawing area.
+So the second neural network with 100 neurons in the hidden layer did not do a really good job. You can train it again:
+
+    bin/digitscanner --annin ann_100.txt --train 60000 0 20 5 0.1 0 --annout ann_100_improved.txt --time --enable_multithreading 2 --mnist mnist_data
+    
+And test this last neural network:
+    //////////////////////
+    bin/digitscanner --annin ann_100_improved.txt --test 10000 0 --mnist mnist_data   # ???????%
+
+You can finally use the --gui option to display a window and draw numbers in it. Type 'g' to guess the number and 'r' to reset the drawing area.
 
     bin/digitscanner --annin ann_100_30.txt --gui
 
-### 
+### About Machine Learning
 
-With only one hidden layer, it is possible to achieve significant results on the MNIST testing set, using the 60000 digits from the training set. The MNIST digits are 28x28 black and white pictures. So I used 784 neurons for the input, 10 for the output (1 per digit), and between 30 and 200 neurons for the hidden layer. More neurons in the hidden layer can lead to better performances but also take longer to train.
+With only one hidden layer, it is possible to achieve significant results on the MNIST testing set, using the 60000 digits from the training set. The MNIST digits are 28x28 black and white pictures, so we need to use 784 neurons for the input, 10 for the output (1 per digit), and between 30 and 200 neurons for the hidden layer. More neurons in the hidden layer can lead to better performances but also take longer to train.
 
-With 200 neurons in the hidden layer, 14 epochs of training over the whole data set with batches of 10 pictures, up to 98.33% guesses were right on the testing set (10000 pictures). I used a learning rate of 0.1 and no weight decay to get these results. This Neural Network is stored in "dgs_params.txt".
-
------------------------------------------------------------------------------------
-
-C++ Functions:
-   - 'save':  saves the neural network in a file
-   - 'load':  loads a neural network from a file
-   - 'train': use training data to update the weights and biases
-   - 'test':  gives the output and score for a given testing set
-
-Keys:
-   - 'g': guess the number in the drawing area
-   - 'r': reset the drawing area
-
-
-
+With 200 neurons in the hidden layer, 14 epochs of training over the whole data set with batches of 10 pictures, up to 98.33% guesses were right on the testing set (10000 pictures), using a learning rate of 0.1 and no weight decay.
