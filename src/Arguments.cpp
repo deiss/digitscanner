@@ -248,6 +248,11 @@ bool Arguments::check_long_args(std::string help_msg) {
         std::cerr << help_msg << std::endl;
         return false;
     }
+    else if(arg_set.count("layers") && arg_set.count("annin")) {
+        std::cerr << "You can only either load a neural network from a file or create a new one using --layers. Not both." << std::endl;
+        std::cerr << help_msg << std::endl;
+        return false;
+    }
     else if(arg_set.count("test") && !arg_set.count("annin") && !arg_set.count("layers")) {
         std::cerr << "You cannot test a neural network without loading an existing neural network or creating a new one." << std::endl;
         std::cerr << help_msg << std::endl;

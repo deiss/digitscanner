@@ -36,20 +36,32 @@ You can also try to see if adding another hidden layer will improve the test res
     
 Then you can load the previously created neural networks and test them:
 
-    bin/digitscanner --annin ann_100.txt --test 10000 0 --mnist mnist_data   # 11.35%
-    bin/digitscanner --annin ann_50.txt --test 10000 0 --mnist mnist_data    # 94.77%
+    bin/digitscanner --annin ann_100.txt --test 10000 0 --mnist mnist_data   # 88.64%
+    bin/digitscanner --annin ann_50.txt --test 10000 0 --mnist mnist_data    # 94.59%
     
-So the second neural network with 100 neurons in the hidden layer did not do a really good job. You can train it again:
+So the second neural network with 100 neurons in the hidden layer did not do a really good job, but it has only been trained on 20000 pictures once. You can train it again:
 
     bin/digitscanner --annin ann_100.txt --train 60000 0 20 5 0.1 0 --annout ann_100_improved.txt --time --enable_multithreading 4 --mnist mnist_data
     
 And test this last neural network:
-    //////////////////////
-    bin/digitscanner --annin ann_100_improved.txt --test 10000 0 --mnist mnist_data   # 38.46%
 
-You can finally use the --gui option to display a window and draw numbers in it. Type 'g' to guess the number and 'r' to reset the drawing area.
+    bin/digitscanner --annin ann_100_improved.txt --test 10000 0 --mnist mnist_data   # 96.38%
 
-    bin/digitscanner --annin ann_100_30.txt --gui
+It gives a better result. You can finally use the --gui option to display a window and draw numbers in it. Type 'g' to guess the number and 'r' to reset the drawing area.
+
+    bin/digitscanner --annin ann_100_improved.txt --gui
+    
+Finally, let's try with two hidden layers and 10 epochs:
+
+    bin/digitscanner --layers 4 784 200 100 10 --train 60000 0 10 5 0.1 0 --annout ann_200_100.txt --enable_multithreading 5 --time --mnist mnist_data
+    bin/digitscanner --annin ann_200_100.txt --test 10000 0 --mnist mnist_data   # 96.57 %
+    
+It gives good results but it is still not amazing. This is because it gets really hard to train. What if we do 20 more epochs:
+
+    bin/digitscanner --train 60000 0 15 5 0.1 0 --annout ann_200_100_improved.txt --annin ann/ann_200_100.txt --enable_multithreading 5 --time --mnist mnist_data
+    bin/digitscanner --annin ann_200_100_improved.txt --test 10000 0 --mnist mnist_data   # 98.25%
+    
+It is better but also shows that the training is really slow. This neural network is available in the 'ann' folder.
     
 ### Improvements
 
@@ -59,6 +71,6 @@ Then to improve the correctness and reach the 99.x % of correct guesses over the
 
 To gain a few more percent, getting rid of this artificial neural network and implementing a convolutional neural network is the key.
 
-#### Contact
+### Contact
 
 ##### olivier . deiss [at] gmail . com
