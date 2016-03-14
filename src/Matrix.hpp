@@ -1,3 +1,12 @@
+/*
+
+Project: DigitScanner
+Author: DEISS Olivier
+
+This software is offered under the GPL license. See COPYING for more information.
+
+*/
+
 #ifndef Matrix_hpp
 #define Matrix_hpp
 

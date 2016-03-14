@@ -1,3 +1,12 @@
+/*
+
+Project: DigitScanner
+Author: DEISS Olivier
+
+This software is offered under the GPL license. See COPYING for more information.
+
+*/
+
 #include <cmath>
 #include <cstring>
 #include <ctime>
@@ -101,4 +110,3 @@ void Window::reshape(int w, int h) {
     glLoadIdentity();
     gluOrtho2D(0, scene_width, 0, scene_width*h/w);
 }
-
