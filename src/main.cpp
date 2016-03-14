@@ -25,9 +25,8 @@ int main(int argc, char **argv) {
     srand(static_cast<unsigned int>(time(NULL)));
     
     /* DigitScanner */
-    DigitScanner<float> dgs;
+    DigitScanner<float> dgs(args.is_set("enable_multithreading"));
     if(args.is_set("layers")) {
-        ///int nodes[] = {784, 200, 10};
         dgs.set_layers(args.layers);
     }
     else if(args.is_set("annin")) {

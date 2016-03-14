@@ -3,7 +3,6 @@
 Arguments::Arguments(int p_argc, char** p_argv) :
     annin(""),
     annout(""),
-    layers{0},
     mnist(""),
     train_imgnb(0),
     train_imgskip(0),
@@ -29,7 +28,7 @@ void Arguments::print_help() {
     std::cerr << "   --help                               Displays this help." << std::endl;
     std::cerr << "   --annin <ann_file_path>              Loads a neural network from a file. If not specified, a new neural network is created." << std::endl;
     std::cerr << "   --annout <ann_file_path>             Stores the neural network in a file, at exit. This option is useful when training the neural network. If not specified, the neural network is lost." << std::endl;
-    std::cerr << "   --layers <nb_layers> <1> <2> [...]   Creates a neural network with given number of layers and nodes in each layer. The number of nodes of the first layer has to be set to 784 according to the number of pixels in mnist pictures." << std::endl;
+    std::cerr << "   --layers <nb_layers> <1> <2> [...]   Creates a neural network with given number of layers and nodes in each layer. The number of nodes of the first layer has to be set to 784 according to the number of pixels in mnist pictures, and the number of nodes of the right most layer has to be set to 10, for the 10 possible digits." << std::endl;
     std::cerr << "   --mnist <path>                       Path to the mnist dataset folder." << std::endl;
     std::cerr << "   --train <imgnb> <imgskip> <epochs>" << std::endl;
     std::cerr << "           <batch_len> <eta> <alpha>    Trains the neural network with the mnist training set." << std::endl;
@@ -46,6 +45,7 @@ void Arguments::print_help() {
     std::cerr << "   --gui                                Creates a window that enables you to draw numbers. Commands:" << std::endl;
     std::cerr << "                                           g: using the neural network, guess the number" << std::endl;
     std::cerr << "                                           r: resets the drawing area" << std::endl;
+    std::cerr << "   --enable_multithreading              Enables multithreading to increase computation performances." << std::endl;
 }
 
 int Arguments::parse_arguments() {
@@ -145,7 +145,7 @@ int Arguments::parse_arguments() {
                     if(nb_layers<0 || nb_layers>10000) { std::cerr << "The number of layers must be a positive integer." << std::endl; return -1; }
                     else {
                         layers.reserve(nb_layers);
-                        for(int i=0 ; i<nb_layers ; i++) {
+                        for(int j=0 ; j<nb_layers ; j++) {
                             if(++i<argc) {
                                 std::string nb_nodes_str(argv[i]);
                                 int         nb_nodes;
@@ -155,7 +155,7 @@ int Arguments::parse_arguments() {
                                 else { layers.push_back(nb_nodes); }
                             }
                             else {
-                                std::cerr << "The number of nodes for the " << i << "th layer is not specified." << std::endl;
+                                std::cerr << "The number of nodes for the " << j << "th layer is not specified." << std::endl;
                                 return -1;
                             }
                         }
@@ -174,6 +174,9 @@ int Arguments::parse_arguments() {
             }
             else if(arg_value=="--gui") {
                 arg_set.insert("gui");
+            }
+            else if(arg_value=="--enable_multithreading") {
+                arg_set.insert("enable_multithreading");
             }
             else {
                 std::cerr << "Unknown \"" << arg_value << "\" parameter." << std::endl;
@@ -243,8 +246,13 @@ bool Arguments::check_long_args(std::string help_msg) {
         std::cerr << help_msg << std::endl;
         return false;
     }
-    else if(!arg_set.count("test") && !arg_set.count("train")) {
-        std::cerr << "Think green! You cannot just create an empty neural network or load an existing one if you do not use it. You need to either train it or test it." << std::endl;
+    else if(arg_set.count("layers") && layers.at(layers.size()-1)!=10) {
+        std::cerr << "The number of nodes of the right most layer has to be set to 10, for the 10 possible digits." << std::endl;
+        std::cerr << help_msg << std::endl;
+        return false;
+    }
+    else if(!arg_set.count("test") && !arg_set.count("train") && !arg_set.count("gui")) {
+        std::cerr << "Think green! You cannot just create an empty neural network or load an existing one if you do not use it. You need to either train it, test it, or play with it." << std::endl;
         std::cerr << help_msg << std::endl;
         return false;
     }

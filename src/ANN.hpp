@@ -114,7 +114,6 @@ ANN<T>::ANN(std::vector<int> p_layers, bool p_multithreading)
       input(new ANNLeftLayer<T>(p_layers[0])),
       right_layers(new ANNRightLayer<T>*[nb_right_layers]) {
     ANNLayer<T>* previous = input;
-    for(int i=0 ; i<nb_right_layers+1 ; i++) this->layers[i] = layers[i];
     for(int i=0 ; i<nb_right_layers ; i++) {
         ANNRightLayer<T>* l = new ANNRightLayer<T>(layers[i+1], previous);
         right_layers[i]     = l;
@@ -226,7 +225,13 @@ void ANN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
         std::vector<std::thread> threads;
         while(batch_counter<=training_set_len-batch_len) {
             if(multithreading) {
-                threads.push_back(std::thread(&ANN::SGD_batch_update, this, training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha));
+                try{
+                    threads.push_back(std::thread(&ANN::SGD_batch_update, this, training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha));
+                }
+                catch(std::exception &e) {
+                    for(std::thread& t : threads) t.join();
+                    threads.clear();
+                }
             }
             else {
                 SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
@@ -234,7 +239,7 @@ void ANN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
             batch_counter += batch_len;
         }
         if(multithreading) { for(std::thread& t : threads) t.join(); }
-        std::cout << i << "..." << std::endl;
+        std::cerr << "epoch " << (i+1) << "done" << std::endl;
     }
 }
 
