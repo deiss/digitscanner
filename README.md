@@ -61,5 +61,5 @@ To gain a few more percent, getting rid of this artificial neural network and im
 
 #### Contact
 
-##### Author: DEISS Olivier
-##### Email: olivier . deiss [at] gmail . com
+##### DEISS Olivier
+##### olivier . deiss [at] gmail . com
