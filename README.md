@@ -8,8 +8,6 @@ DigitScanner is a tool written in C++ to create, train and test artificial neura
 
 The neural network are taught with the Stochastic Gradient Descent algorithm, using the cross-entropy as a cost function. With only one hidden layer, it is possible to achieve significant results on the MNIST testing set, using the 60000 digits from the training set. The MNIST digits are 28x28 black and white pictures, so we need to use 784 neurons for the input, 10 for the output (1 per digit), and between 30 and 200 neurons for the hidden layer. More neurons in the hidden layer can lead to better performances but also take longer to train.
 
-With 200 neurons in the hidden layer, 14 epochs of training over the whole data set with batches of 10 pictures, up to 98.33% guesses were right on the testing set (10000 pictures), using a learning rate of 0.1 and no weight decay.
-
 ## LICENSE
 
 This project is licensed under the GPL License. See COPYING for more information.
