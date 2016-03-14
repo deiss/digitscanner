@@ -22,10 +22,10 @@ This software is offered under the GPL license. See COPYING for more information
 
 #include "Matrix.hpp"
 
-template <typename T> class ANNLeftLayer;
-template <typename T> class ANNRightLayer;
+template<typename T> class ANNLeftLayer;
+template<typename T> class ANNRightLayer;
 
-template <typename T>
+template<typename T>
 class ANN {
 
     typedef std::pair<const Matrix<T>**, const Matrix<T>**> nabla_pair;
@@ -59,7 +59,7 @@ class ANN {
     
 };
 
-template <typename T>
+template<typename T>
 class ANNLayer {
 
     public:
@@ -75,7 +75,7 @@ virtual ~ANNLayer() {}
     
 };
 
-template <typename T>
+template<typename T>
 class ANNLeftLayer: public ANNLayer<T> {
 
     public:
@@ -85,7 +85,7 @@ virtual ~ANNLeftLayer() {}
 
 };
 
-template <typename T>
+template<typename T>
 class ANNRightLayer: public ANNLayer<T> {
 
     public:
@@ -114,7 +114,7 @@ virtual ~ANNRightLayer() {
 
 
 /* ANN constructor. */
-template <typename T>
+template<typename T>
 ANN<T>::ANN(std::vector<int> p_layers, int p_max_threads)
     : layers(p_layers),
       nb_right_layers(static_cast<int>(p_layers.size())-1),
@@ -131,7 +131,7 @@ ANN<T>::ANN(std::vector<int> p_layers, int p_max_threads)
 }
 
 /* ANN desctructor. */
-template <typename T>
+template<typename T>
 ANN<T>::~ANN() {
     delete input;
     for(int i=0 ; i<nb_right_layers ; i++) delete right_layers[i];
@@ -139,7 +139,7 @@ ANN<T>::~ANN() {
 }
 
 /* Backpropagation algorithm using the cross-entropy cost function. */
-template <typename T>
+template<typename T>
 typename ANN<T>::nabla_pair ANN<T>::backpropagation_cross_entropy(const Matrix<T>* training_input, const Matrix<T>* training_output) {
     const Matrix<T>** activations = feedforward_complete(training_input);
     const Matrix<T>** nabla_W     = new const Matrix<T>*[nb_right_layers];
@@ -170,7 +170,7 @@ typename ANN<T>::nabla_pair ANN<T>::backpropagation_cross_entropy(const Matrix<T
 }
 
 /* Feedforward algorithm to be used to compute the output. */
-template <typename T>
+template<typename T>
 const Matrix<T>* ANN<T>::feedforward(const Matrix<T>* X) {
     const Matrix<T>* current = X;
     for(int i=0 ; i<nb_right_layers ; i++) {
@@ -186,7 +186,7 @@ const Matrix<T>* ANN<T>::feedforward(const Matrix<T>* X) {
 }
 
 /* Feedforward algorithm to be used in the backpropagation algorithm. */
-template <typename T>
+template<typename T>
 const Matrix<T>** ANN<T>::feedforward_complete(const Matrix<T>* X) {
     const Matrix<T>** activations = new const Matrix<T>*[nb_right_layers+1];
     activations[0]             = X;
@@ -202,7 +202,7 @@ const Matrix<T>** ANN<T>::feedforward_complete(const Matrix<T>* X) {
 }
 
 /* Initializes the network's weights and biases with a Gaussian generator. */
-template <typename T>
+template<typename T>
 void ANN<T>::random_init_values(ANNRightLayer<T>* l) {
     Matrix<T>* W = l->getWeights();
     Matrix<T>* B = l->getBiases();
@@ -216,7 +216,7 @@ void ANN<T>::random_init_values(ANNRightLayer<T>* l) {
 }
 
 /* Stochastic Gradient Descent algorithm. */
-template <typename T>
+template<typename T>
 void ANN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
     // epoch
     for(int i=0 ; i<nb_epoch ; i++) {
@@ -269,7 +269,7 @@ void ANN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
 }
 
 /* Stochastic Gradient Descent algorithm for a batch. */
-template <typename T>
+template<typename T>
 void ANN<T>::SGD_batch_update(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, std::map<int, int>* shuffle, const int training_set_len, int batch_counter, const int batch_len, const double eta, const double alpha) {
     std::vector<Matrix<T>*> nabla_W; nabla_W.reserve(nb_right_layers);
     std::vector<Matrix<T>*> nabla_B; nabla_B.reserve(nb_right_layers);

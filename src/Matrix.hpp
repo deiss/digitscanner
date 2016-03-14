@@ -10,7 +10,7 @@ This software is offered under the GPL license. See COPYING for more information
 #ifndef Matrix_hpp
 #define Matrix_hpp
 
-template <typename T>
+template<typename T>
 class Matrix {
 
     public:
@@ -52,12 +52,12 @@ class Matrix {
 
 
 
-template <typename T>
+template<typename T>
 Matrix<T>::Matrix(int I, int J) : I(I), J(J) {
     init_matrix();
 }
 
-template <typename T>
+template<typename T>
 Matrix<T>::Matrix(const Matrix<T>& B) : I(B.I), J(B.J) {
     init_matrix();
     for(int i=0 ; i<I ; i++) {
@@ -67,7 +67,7 @@ Matrix<T>::Matrix(const Matrix<T>& B) : I(B.I), J(B.J) {
     }
 }
 
-template <typename T>
+template<typename T>
 Matrix<T>::Matrix(const Matrix<T>* B) : I(B->I), J(B->J) {
     init_matrix();
     for(int i=0 ; i<I ; i++) {
@@ -77,17 +77,17 @@ Matrix<T>::Matrix(const Matrix<T>* B) : I(B->I), J(B->J) {
     }
 }
 
-template <typename T>
+template<typename T>
 Matrix<T>::~Matrix() {
     delete_matrix();
 }
 
-template <typename T>
+template<typename T>
 T Matrix<T>::sigmoid(T x) const {
     return 1/(1+exp(-x));
 }
 
-template <typename T>
+template<typename T>
 Matrix<T>* Matrix<T>::sigmoid() {
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
@@ -97,12 +97,12 @@ Matrix<T>* Matrix<T>::sigmoid() {
     return this;
 }
 
-template <typename T>
+template<typename T>
 void Matrix<T>::delete_matrix() {
     delete [] matrix;
 }
 
-template <typename T>
+template<typename T>
 void Matrix<T>::init_matrix() {
     matrix = new T[I*J];
     for(int i=0 ; i<I*J ; i++) {
@@ -110,7 +110,7 @@ void Matrix<T>::init_matrix() {
     }
 }
 
-template <typename T>
+template<typename T>
 void Matrix<T>::print() const {
     for(int i=0 ; i<I ; i++) {
         std::cout << "| ";
@@ -122,7 +122,7 @@ void Matrix<T>::print() const {
     std::cout << std::endl;
 }
 
-template <typename T>
+template<typename T>
 void Matrix<T>::resize(int I, int J) {
     delete_matrix();
     this->I = I;
@@ -130,31 +130,31 @@ void Matrix<T>::resize(int I, int J) {
     init_matrix();
 }
 
-template <typename T>
+template<typename T>
 Matrix<T>* Matrix<T>::Ones(int I) {
     Matrix* R = new Matrix(I, 1);
     for(int i=0 ; i<I ; i++) R->operator()(i, 0) = 1;
     return R;
 }
 
-template <typename T>
+template<typename T>
 Matrix<T> Matrix<T>::Identity(int I) {
     Matrix R(I, I);
     for(int i=0 ; i<I ; i++) R(i, i) = 1;
     return R;
 }
 
-template <typename T>
+template<typename T>
 T Matrix<T>::operator()(int i, int j) const {
     return matrix[i*J + j];
 }
 
-template <typename T>
+template<typename T>
 T& Matrix<T>::operator()(int i, int j) {
     return matrix[i*J + j];
 }
 
-template <typename T>
+template<typename T>
 Matrix<T>* Matrix<T>::operator*(T lambda) {
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
@@ -165,7 +165,7 @@ Matrix<T>* Matrix<T>::operator*(T lambda) {
 }
 
 /* Matrices product, can only be called on dynamically created (new) Matrix objects */
-template <typename T>
+template<typename T>
 Matrix<T>* Matrix<T>::operator*(const Matrix* B) {
     if(B->I!=J) std::cerr << "Matrix dimension dismatch! operator*" << std::endl;
     Matrix* res = new Matrix(I, B->J);
@@ -180,7 +180,7 @@ Matrix<T>* Matrix<T>::operator*(const Matrix* B) {
     return res;
 }
 
-template <typename T>
+template<typename T>
 Matrix<T>* Matrix<T>::operator+(const Matrix* B) {
     if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
     for(int i=0 ; i<I ; i++) {
@@ -191,7 +191,7 @@ Matrix<T>* Matrix<T>::operator+(const Matrix* B) {
     return this;
 }
 
-template <typename T>
+template<typename T>
 Matrix<T>* Matrix<T>::operator-(const Matrix* B) {
     if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! operator-" << std::endl;
     for(int i=0 ; i<I ; i++) {
@@ -202,7 +202,7 @@ Matrix<T>* Matrix<T>::operator-(const Matrix* B) {
     return this;
 }
 
-template <typename T>
+template<typename T>
 Matrix<T>* Matrix<T>::element_wise_product(const Matrix* B) {
     if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! element_wise_product" << std::endl;
     for(int i=0 ; i<I ; i++) {
@@ -213,7 +213,7 @@ Matrix<T>* Matrix<T>::element_wise_product(const Matrix* B) {
     return this;
 }
 
-template <typename T>
+template<typename T>
 Matrix<T>* Matrix<T>::transpose() {
     Matrix copy = *this;
     resize(J, I);

@@ -17,7 +17,7 @@ This software is offered under the GPL license. See COPYING for more information
 #include "ANN.hpp"
 #include "Matrix.hpp"
 
-template <typename T>
+template<typename T>
 class DigitScanner {
 
     public:
@@ -49,38 +49,38 @@ class DigitScanner {
 
 
 
-template <typename T>
+template<typename T>
 DigitScanner<T>::DigitScanner(int p_max_threads) :
     max_threads(p_max_threads) {
     init();
 }
 
-template <typename T>
+template<typename T>
 DigitScanner<T>::DigitScanner(std::vector<int> p_layers, int p_max_threads) :
     ann(new ANN<T>(p_layers, p_max_threads)),
     max_threads(p_max_threads) {
     init();
 }
 
-template <typename T>
+template<typename T>
 DigitScanner<T>::~DigitScanner() {
     delete ann;
     delete digit;
 }
 
-template <typename T>
+template<typename T>
 void DigitScanner<T>::init() {
     digit = new Matrix<float>(784, 1);
     for(int i=0 ; i<784 ; i++) digit->operator()(i, 0) = 0;
 }
 
-template <typename T>
+template<typename T>
 void DigitScanner<T>::set_layers(std::vector<int> p_layers) {
     ann = new ANN<T>(p_layers, max_threads);
 }
 
 /* OpenGL drawing function. */
-template <typename T>
+template<typename T>
 void DigitScanner<T>::draw() {
     // digit
     for(int i=0 ; i<28 ; i++) {
@@ -99,7 +99,7 @@ void DigitScanner<T>::draw() {
 }
 
 /* Uses the neural network to guess which number is drawn. */
-template <typename T>
+template<typename T>
 void DigitScanner<T>::guess() {
     const Matrix<T>* y = ann->feedforward(const_cast<const Matrix<T>*>(digit));
     int kmax = 0;
@@ -109,7 +109,7 @@ void DigitScanner<T>::guess() {
 }
 
 /* Reset the drawing area. */
-template <typename T>
+template<typename T>
 void DigitScanner<T>::reset() {
     for(int i=0 ; i<784 ; i++) {
         digit->operator()(i, 0) = 0;
@@ -117,13 +117,13 @@ void DigitScanner<T>::reset() {
 }
 
 /* Stores the number. */
-template <typename T>
+template<typename T>
 void DigitScanner<T>::scan(int i, int j, unsigned char value) {
     if(value>digit->operator()(28*i + j, 0)) digit->operator()(28*i + j, 0) = value;
 }
 
 /* Loads a Neural Network from a file. */
-template <typename T>
+template<typename T>
 bool DigitScanner<T>::load(std::string path) {
     int              nb_layers;
     std::vector<int> layers;
@@ -161,7 +161,7 @@ bool DigitScanner<T>::load(std::string path) {
 }
 
 /* Saves a Neural Network into a file. */
-template <typename T>
+template<typename T>
 bool DigitScanner<T>::save(std::string path) {
     std::ofstream file(path);
     if(file) {
@@ -198,7 +198,7 @@ bool DigitScanner<T>::save(std::string path) {
 }
 
 /* Tests a Neural Network. */
-template <typename T>
+template<typename T>
 void DigitScanner<T>::test(std::string path_data, const int nb_images, const int nb_images_to_skip) {
     // training and test data file path
     std::string    test_images = path_data + "t10k-images.idx3-ubyte";
@@ -242,7 +242,7 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
 }
 
 /* Trains a Neural Network using the Stochastic Gradient Descent algorithm. */
-template <typename T>
+template<typename T>
 void DigitScanner<T>::train(std::string path_data, const int nb_images, const int nb_images_to_skip, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
     // training and test data file path
     std::string    train_images = path_data + "train-images.idx3-ubyte";
