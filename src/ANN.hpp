@@ -43,11 +43,11 @@ class ANN {
     
     private:
     
-        ANNLeftLayer<T>*   input;
-        bool               multithreading;
         std::vector<int>   layers;
         int                nb_right_layers;
+        ANNLeftLayer<T>*   input;
         ANNRightLayer<T>** right_layers;
+        bool               multithreading;
     
 };
 
@@ -108,11 +108,11 @@ virtual ~ANNRightLayer() {
 /* ANN constructor. */
 template <typename T>
 ANN<T>::ANN(std::vector<int> p_layers, bool p_multithreading)
-    : multithreading(p_multithreading),
+    : layers(p_layers),
       nb_right_layers(static_cast<int>(p_layers.size())-1),
-      layers(p_layers),
       input(new ANNLeftLayer<T>(p_layers[0])),
-      right_layers(new ANNRightLayer<T>*[nb_right_layers]) {
+      right_layers(new ANNRightLayer<T>*[nb_right_layers]),
+      multithreading(p_multithreading) {
     ANNLayer<T>* previous = input;
     for(int i=0 ; i<nb_right_layers ; i++) {
         ANNRightLayer<T>* l = new ANNRightLayer<T>(layers[i+1], previous);
