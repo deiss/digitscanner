@@ -18,7 +18,7 @@ This project is licensed under the GPL License. See COPYING for more information
 
 ### Install
 
-Linux/Mac : 'make' will create the binary in the 'bin' directory'.
+Linux/Mac : 'make' will create the binary in the 'bin' directory.
 
 ### Use
 
