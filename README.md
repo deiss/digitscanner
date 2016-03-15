@@ -18,6 +18,8 @@ This project is licensed under the GPL License. See COPYING for more information
 
 Linux/Mac : `make` will create the binary in the `bin` directory.
 
+***
+
 ### Use
 
 You can get a list of the parameters and options with:
@@ -64,6 +66,8 @@ It gives good results but it is still not amazing. This is because it gets reall
     bin/digitscanner --annin ann_200_100_improved.txt --test 10000 0 --mnist mnist_data   # 98.25%
     
 It is better but also shows that the training is really slow. This neural network is available in the `ann` folder.
+
+***
     
 ### Improvements
 
