@@ -10,7 +10,7 @@ The neural networks are taught with the Stochastic Gradient Descent algorithm, u
 
 ## LICENSE
 
-This project is licensed under the GPL License. See COPYING for more information.
+This project is licensed under the GPL License. See [COPYING](COPYING) for more information.
 
 ***
 
