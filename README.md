@@ -77,6 +77,8 @@ Then to improve the correctness and reach the 99.x% of correct guesses over the 
 
 To correctly classify a few more images, the key is to implement a convolutional neural network.
 
+***
+
 ### Contact
 
 olivier . deiss [at] gmail . com
