@@ -4,7 +4,7 @@
 
 ## PROJECT
 
-DigitScanner is a C++ tool to create, train and test artificial neural networks for handwritten number recognition. The project uses the MNIST dataset to train and test the neural networks. It is also possible to draw numbers in a window and ask the tool to guess the number you drew.
+DigitScanner is a C++ tool to create, train and test feedforward neural networks (fnn) for handwritten number recognition. The project uses the MNIST dataset to train and test the neural networks. It is also possible to draw numbers in a window and ask the tool to guess the number you drew.
 
 The neural networks are taught with the Stochastic Gradient Descent algorithm, using the cross-entropy as a cost function. With only one hidden layer, it is possible to achieve significant results on the MNIST testing set, using the 60000 digits from the training set. The MNIST digits are 28x28 black and white pictures, so we need to use 784 neurons for the input, 10 for the output (1 per digit), and between 30 and 200 neurons for the hidden layer. More neurons in the hidden layer can lead to better performances but also take longer to train.
 
