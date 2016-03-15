@@ -17,8 +17,8 @@ LIB_DIR     = lib
 INCLUDE_DIR = include
 
 # libs and headers subfolders lookup
-LIB     = $(foreach lib, $(LIB_DIR)/$(LIB_LIST), $(addprefix -L, $(lib)))
-INCLUDE = $(foreach include, $(INCLUDE_DIR)/$(INCLUDE_LIST), $(addprefix -I, $(include)))
+LIB     = $(foreach lib, $(LIB_LIST), $(addprefix -L$(LIB_DIR)/, $(lib)))
+INCLUDE = $(foreach include, $(INCLUDE_LIST), $(addprefix -I$(INCLUDE_DIR)/, $(include)))
 SRC     = $(wildcard $(SRC_DIR)/*.cpp)
 OBJ     = $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRC))
 
