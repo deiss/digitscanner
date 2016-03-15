@@ -26,46 +26,46 @@ You can get a list of the parameters and options with:
 
     bin/digitscanner --help
 
-You can start with the existing neural networks in the `ann` folder and test them with the mnist dataset:
+You can start with the existing neural networks in the `fnn` folder and test them with the mnist dataset:
 
-    bin/digitscanner --annin ann/ann_100.txt --test 10000 0 --mnist mnist_data
+    bin/digitscanner --fnnin fnn/fnn_100.txt --test 10000 0 --mnist mnist_data
     
-Or you can create a new neural network, with 784 neurons in input, a hidden layer of 50 neurons and an output layer of 10 neurons, and train it twice over the whole dataset with batches of 10 pictures and a learning factor of 0.1. Do not forget to save this neural network with the `--annout` parameter. The neural network available in `ann/ann_50.txt` has been created with the following command:
+Or you can create a new neural network, with 784 neurons in input, a hidden layer of 50 neurons and an output layer of 10 neurons, and train it twice over the whole dataset with batches of 10 pictures and a learning factor of 0.1. Do not forget to save this neural network with the `--fnnout` parameter. The neural network available in `fnn/fnn_50.txt` has been created with the following command:
 
-    bin/digitscanner --layers 3 784 50 10 --train 60000 0 2 10 0.1 0 --annout ann_50.txt --mnist mnist_data
+    bin/digitscanner --layers 3 784 50 10 --train 60000 0 2 10 0.1 0 --fnnout fnn_50.txt --mnist mnist_data
     
-You can also try to see if adding another hidden layer will improve the test result. It may take a long time, so you can use the `--enable_multithreading` option and train it over only 20000 pictures to make the process quicker. Let's use the last 20000 pictures. You can use the `--time` option to see how long it takes to do the training. The neural network available in `ann/ann_100.txt` has been created with the following command:
+You can also try to see if adding another hidden layer will improve the test result. It may take a long time, so you can use the `--enable_multithreading` option and train it over only 20000 pictures to make the process quicker. Let's use the last 20000 pictures. You can use the `--time` option to see how long it takes to do the training. The neural network available in `fnn/fnn_100.txt` has been created with the following command:
 
-    bin/digitscanner --layers 3 784 100 10 --train 20000 40000 1 10 0.1 0 --annout ann_100.txt --mnist mnist_data --enable_multithreading 2 --time
+    bin/digitscanner --layers 3 784 100 10 --train 20000 40000 1 10 0.1 0 --fnnout fnn_100.txt --mnist mnist_data --enable_multithreading 2 --time
     
 Then you can load the previously created neural networks and test them:
 
-    bin/digitscanner --annin ann_100.txt --test 10000 0 --mnist mnist_data   # 88.64%
-    bin/digitscanner --annin ann_50.txt --test 10000 0 --mnist mnist_data    # 94.59%
+    bin/digitscanner --fnnin fnn_100.txt --test 10000 0 --mnist mnist_data   # 88.64%
+    bin/digitscanner --fnnin fnn_50.txt --test 10000 0 --mnist mnist_data    # 94.59%
     
 So the second neural network with 100 neurons in the hidden layer did not do a really good job, but it has only been trained on 20000 pictures once. You can train it again:
 
-    bin/digitscanner --annin ann_100.txt --train 60000 0 20 5 0.1 0 --annout ann_100_improved.txt --time --enable_multithreading 4 --mnist mnist_data
+    bin/digitscanner --fnnin fnn_100.txt --train 60000 0 20 5 0.1 0 --fnnout fnn_100_improved.txt --time --enable_multithreading 4 --mnist mnist_data
     
 And test this last neural network:
 
-    bin/digitscanner --annin ann_100_improved.txt --test 10000 0 --mnist mnist_data   # 96.38%
+    bin/digitscanner --fnnin fnn_100_improved.txt --test 10000 0 --mnist mnist_data   # 96.38%
 
 It gives a better result. You can finally use the `--gui` option to display a window and draw numbers in it. Type `g` to guess the number and `r` to reset the drawing area.
 
-    bin/digitscanner --annin ann_100_improved.txt --gui
+    bin/digitscanner --fnnin fnn_100_improved.txt --gui
     
 Finally, let's try with two hidden layers and ten epochs:
 
-    bin/digitscanner --layers 4 784 200 100 10 --train 60000 0 10 5 0.1 0 --annout ann_200_100.txt --enable_multithreading 5 --time --mnist mnist_data
-    bin/digitscanner --annin ann_200_100.txt --test 10000 0 --mnist mnist_data   # 96.57 %
+    bin/digitscanner --layers 4 784 200 100 10 --train 60000 0 10 5 0.1 0 --fnnout fnn_200_100.txt --enable_multithreading 5 --time --mnist mnist_data
+    bin/digitscanner --fnnin fnn_200_100.txt --test 10000 0 --mnist mnist_data   # 96.57 %
     
 It gives good results but it is still not amazing. This is because it gets really hard to train. What if we do twenty more epochs:
 
-    bin/digitscanner --train 60000 0 15 5 0.1 0 --annout ann_200_100_improved.txt --annin ann/ann_200_100.txt --enable_multithreading 5 --time --mnist mnist_data
-    bin/digitscanner --annin ann_200_100_improved.txt --test 10000 0 --mnist mnist_data   # 98.25%
+    bin/digitscanner --train 60000 0 15 5 0.1 0 --fnnout fnn_200_100_improved.txt --fnnin fnn/fnn_200_100.txt --enable_multithreading 5 --time --mnist mnist_data
+    bin/digitscanner --fnnin fnn_200_100_improved.txt --test 10000 0 --mnist mnist_data   # 98.25%
     
-It is better but also shows that the training is really slow. This neural network is available in the `ann` folder.
+It is better but also shows that the training is really slow. This neural network is available in the `fnn` folder.
 
 ***
     
