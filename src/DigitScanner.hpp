@@ -14,7 +14,7 @@ This software is offered under the GPL license. See COPYING for more information
 
 #include "GLUT/glut.h"
 
-#include "ANN.hpp"
+#include "FNN.hpp"
 #include "Matrix.hpp"
 
 template<typename T>
@@ -41,7 +41,7 @@ class DigitScanner {
     
     private:
     
-        ANN<T>*        ann;
+        FNN<T>*        fnn;
         Matrix<float>* digit;
         int            max_threads;
 
@@ -57,14 +57,14 @@ DigitScanner<T>::DigitScanner(int p_max_threads) :
 
 template<typename T>
 DigitScanner<T>::DigitScanner(std::vector<int> p_layers, int p_max_threads) :
-    ann(new ANN<T>(p_layers, p_max_threads)),
+    fnn(new FNN<T>(p_layers, p_max_threads)),
     max_threads(p_max_threads) {
     init();
 }
 
 template<typename T>
 DigitScanner<T>::~DigitScanner() {
-    delete ann;
+    delete fnn;
     delete digit;
 }
 
@@ -76,7 +76,7 @@ void DigitScanner<T>::init() {
 
 template<typename T>
 void DigitScanner<T>::set_layers(std::vector<int> p_layers) {
-    ann = new ANN<T>(p_layers, max_threads);
+    fnn = new FNN<T>(p_layers, max_threads);
 }
 
 /* OpenGL drawing function. */
@@ -101,7 +101,7 @@ void DigitScanner<T>::draw() {
 /* Uses the neural network to guess which number is drawn. */
 template<typename T>
 void DigitScanner<T>::guess() {
-    const Matrix<T>* y = ann->feedforward(const_cast<const Matrix<T>*>(digit));
+    const Matrix<T>* y = fnn->feedforward(const_cast<const Matrix<T>*>(digit));
     int kmax = 0;
     for(int k=0 ; k<10 ; k++) { if(y->operator()(k, 0)>y->operator()(kmax, 0)) kmax = k; }
     std::cout << "You drew: " << kmax << std::endl;
@@ -134,10 +134,10 @@ bool DigitScanner<T>::load(std::string path) {
         layers.reserve(nb_layers);
         // number of nodes in each layer
         for(int i=0 ; i<nb_layers ; i++) { int nb_nodes; file >> nb_nodes; layers.push_back(nb_nodes); }
-        ann = new ANN<T>(layers, false);
+        fnn = new FNN<T>(layers, false);
         // weights and biases
         for(int i=0 ; i<nb_layers-1 ; i++) {
-            ANNRightLayer<T>* current = ann->getRightLayer(i);
+            FNNRightLayer<T>* current = fnn->getRightLayer(i);
             Matrix<T>*        W       = current->getWeights();
             Matrix<T>*        B       = current->getBiases();
             // write W
@@ -166,13 +166,13 @@ bool DigitScanner<T>::save(std::string path) {
     std::ofstream file(path);
     if(file) {
         // number of layers
-        file << (ann->getNbRightLayers()+1) << std::endl;
+        file << (fnn->getNbRightLayers()+1) << std::endl;
         // number of nodes in each
-        for(int i=0 ; i<ann->getNbRightLayers()+1 ; i++) file << ann->getLayers()[i] << " ";
+        for(int i=0 ; i<fnn->getNbRightLayers()+1 ; i++) file << fnn->getLayers()[i] << " ";
         file << std::endl;
         // weights and biases
-        for(int i=0 ; i<ann->getNbRightLayers() ; i++) {
-            ANNRightLayer<T>* current = ann->getRightLayer(i);
+        for(int i=0 ; i<fnn->getNbRightLayers() ; i++) {
+            FNNRightLayer<T>* current = fnn->getRightLayer(i);
             Matrix<T>*        W       = current->getWeights();
             Matrix<T>*        B       = current->getBiases();
             // write W
@@ -226,7 +226,7 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
         // read output label
         file_labels.read((char*)label, label_len);
         // compute output
-        const Matrix<T>* y = ann->feedforward(const_cast<const Matrix<T>*>(test_input));
+        const Matrix<T>* y = fnn->feedforward(const_cast<const Matrix<T>*>(test_input));
         int kmax = 0;
         for(int k=0 ; k<10 ; k++) { if(y->operator()(k, 0)>y->operator()(kmax, 0)) kmax = k; }
         if(kmax==label[0]) right_guesses++;
@@ -277,7 +277,7 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
         training_output.push_back(output);
     }
     // Stochastic Gradient Descent
-    ann->SGD(&training_input, &training_output, nb_images, nb_epoch, batch_len, eta, alpha);
+    fnn->SGD(&training_input, &training_output, nb_images, nb_epoch, batch_len, eta, alpha);
     // clean up
     for(const Matrix<T>* m : training_input)  delete m;
     for(const Matrix<T>* m : training_output) delete m;

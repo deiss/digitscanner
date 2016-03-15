@@ -10,8 +10,8 @@ This software is offered under the GPL license. See COPYING for more information
 #include "Arguments.hpp"
 
 Arguments::Arguments(int p_argc, char** p_argv) :
-    annin(""),
-    annout(""),
+    fnnin(""),
+    fnnout(""),
     mnist(""),
     max_threads(0),
     train_imgnb(0),
@@ -31,8 +31,8 @@ void Arguments::print_help() {
     std::cerr << std::endl;
     std::cerr << "OPTIONS:" << std::endl;
     std::cerr << "   --help                               Displays this help." << std::endl;
-    std::cerr << "   --annin <ann_file_path>              Loads a neural network from a file. If not specified, a new neural network is created." << std::endl;
-    std::cerr << "   --annout <ann_file_path>             Stores the neural network in a file, at exit. This option is useful when training the neural network. If not specified, the neural network is lost." << std::endl;
+    std::cerr << "   --fnnin <fnn_file_path>              Loads a neural network from a file. If not specified, a new neural network is created." << std::endl;
+    std::cerr << "   --fnnout <fnn_file_path>             Stores the neural network in a file, at exit. This option is useful when training the neural network. If not specified, the neural network is lost." << std::endl;
     std::cerr << "   --layers <nb_layers> <1> <2> [...]   Creates a neural network with given number of layers and nodes in each layer. The number of nodes of the first layer has to be set to 784 according to the number of pixels in mnist pictures, and the number of nodes of the right most layer has to be set to 10, for the 10 possible digits." << std::endl;
     std::cerr << "   --mnist <path>                       Path to the mnist dataset folder." << std::endl;
     std::cerr << "   --train <imgnb> <imgskip> <epochs>" << std::endl;
@@ -72,11 +72,11 @@ int Arguments::parse_arguments() {
                 if(!parse_string_arg(std::string(argv[i]), &i, &mnist, "You must specify the mnist dataset folder path.\n" + help_msg)) { return -1; }
                 if(mnist.at(mnist.length()-1)!='/') mnist.push_back('/');
             }
-            else if(arg_value=="--annin") {
-                if(!parse_string_arg(std::string(argv[i]), &i, &annin, "You must specify the input neural network file.\n" + help_msg)) { return -1; }
+            else if(arg_value=="--fnnin") {
+                if(!parse_string_arg(std::string(argv[i]), &i, &fnnin, "You must specify the input neural network file.\n" + help_msg)) { return -1; }
             }
-            else if(arg_value=="--annout") {
-                if(!parse_string_arg(std::string(argv[i]), &i, &annout, "You must specify the output neural network file.\n" + help_msg)) { return -1; }
+            else if(arg_value=="--fnnout") {
+                if(!parse_string_arg(std::string(argv[i]), &i, &fnnout, "You must specify the output neural network file.\n" + help_msg)) { return -1; }
             }
             /* integer */
             else if(arg_value=="--enable_multithreading") {
@@ -238,17 +238,17 @@ bool Arguments::check_long_args(std::string help_msg) {
         std::cerr << help_msg << std::endl;
         return false;
     }
-    else if(!arg_set.count("annin") && !arg_set.count("layers")) {
-        std::cerr << "You need to either load a neural network from a file using --annin or create a new one using --layers." << std::endl;
+    else if(!arg_set.count("fnnin") && !arg_set.count("layers")) {
+        std::cerr << "You need to either load a neural network from a file using --fnnin or create a new one using --layers." << std::endl;
         std::cerr << help_msg << std::endl;
         return false;
     }
-    else if(arg_set.count("layers") && arg_set.count("annin")) {
+    else if(arg_set.count("layers") && arg_set.count("fnnin")) {
         std::cerr << "You can only either load a neural network from a file or create a new one using --layers. Not both." << std::endl;
         std::cerr << help_msg << std::endl;
         return false;
     }
-    else if(arg_set.count("test") && !arg_set.count("annin") && !arg_set.count("layers")) {
+    else if(arg_set.count("test") && !arg_set.count("fnnin") && !arg_set.count("layers")) {
         std::cerr << "You cannot test a neural network without loading an existing neural network or creating a new one." << std::endl;
         std::cerr << help_msg << std::endl;
         return false;

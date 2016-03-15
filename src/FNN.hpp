@@ -7,8 +7,8 @@ This software is offered under the GPL license. See COPYING for more information
 
 */
 
-#ifndef ANN_hpp
-#define ANN_hpp
+#ifndef FNN_hpp
+#define FNN_hpp
 
 #include <cmath>
 #include <list>
@@ -22,29 +22,29 @@ This software is offered under the GPL license. See COPYING for more information
 
 #include "Matrix.hpp"
 
-template<typename T> class ANNLeftLayer;
-template<typename T> class ANNRightLayer;
+template<typename T> class FNNLeftLayer;
+template<typename T> class FNNRightLayer;
 
 template<typename T>
-class ANN {
+class FNN {
 
     typedef std::pair<const Matrix<T>**, const Matrix<T>**> nabla_pair;
 
     public:
 
-        ANN(std::vector<int>, int);
-        ~ANN();
+        FNN(std::vector<int>, int);
+        ~FNN();
     
         int               getNbRightLayers()   const { return nb_right_layers; }
         std::vector<int>  getLayers()          const { return layers; }
-        ANNRightLayer<T>* getRightLayer(int i) const { return right_layers[i]; }
+        FNNRightLayer<T>* getRightLayer(int i) const { return right_layers[i]; }
     
         void train();
         void use();
     
         const Matrix<T>*  feedforward(const Matrix<T>*);
         const Matrix<T>** feedforward_complete(const Matrix<T>*);
-        void              random_init_values(ANNRightLayer<T>*);
+        void              random_init_values(FNNRightLayer<T>*);
         void              SGD(std::vector<const Matrix<T>*>*, std::vector<const Matrix<T>*>*, const int, const int, const int, const double, const double);
         void              SGD_batch_update(std::vector<const Matrix<T>*>*, std::vector<const Matrix<T>*>*, std::map<int, int>*, const int, int, const int, const double, const double);
         nabla_pair        backpropagation_cross_entropy(const Matrix<T>*, const Matrix<T>*);
@@ -53,20 +53,20 @@ class ANN {
     
         std::vector<int>   layers;
         int                nb_right_layers;
-        ANNLeftLayer<T>*   input;
-        ANNRightLayer<T>** right_layers;
+        FNNLeftLayer<T>*   input;
+        FNNRightLayer<T>** right_layers;
         int                max_threads;
     
 };
 
 template<typename T>
-class ANNLayer {
+class FNNLayer {
 
     public:
     
-        ANNLayer(int nb_nodes)
+        FNNLayer(int nb_nodes)
             : nb_nodes(nb_nodes) {}
-virtual ~ANNLayer() {}
+virtual ~FNNLayer() {}
         int getNbNodes() { return nb_nodes; }
     
     protected:
@@ -76,36 +76,36 @@ virtual ~ANNLayer() {}
 };
 
 template<typename T>
-class ANNLeftLayer: public ANNLayer<T> {
+class FNNLeftLayer: public FNNLayer<T> {
 
     public:
     
-        ANNLeftLayer(int nb_nodes) : ANNLayer<T>(nb_nodes) {}
-virtual ~ANNLeftLayer() {}
+        FNNLeftLayer(int nb_nodes) : FNNLayer<T>(nb_nodes) {}
+virtual ~FNNLeftLayer() {}
 
 };
 
 template<typename T>
-class ANNRightLayer: public ANNLayer<T> {
+class FNNRightLayer: public FNNLayer<T> {
 
     public:
     
-        ANNRightLayer(int nb_nodes, ANNLayer<T>* previous_layer) : ANNLayer<T>(nb_nodes), previous_layer(previous_layer) {
+        FNNRightLayer(int nb_nodes, FNNLayer<T>* previous_layer) : FNNLayer<T>(nb_nodes), previous_layer(previous_layer) {
             W = new Matrix<T>(nb_nodes, previous_layer->getNbNodes());
             B = new Matrix<T>(nb_nodes, 1);
         }
-virtual ~ANNRightLayer() {
+virtual ~FNNRightLayer() {
             delete W;
             delete B;
         }
     
-        ANNLayer<T>* getPreviousLayer() { return previous_layer; }
+        FNNLayer<T>* getPreviousLayer() { return previous_layer; }
         Matrix<T>*   getBiases()        { return B; }
         Matrix<T>*   getWeights()       { return W; }
     
     private:
     
-        ANNLayer<T>* previous_layer;
+        FNNLayer<T>* previous_layer;
         Matrix<T>*   W;
         Matrix<T>*   B;
     
@@ -113,26 +113,26 @@ virtual ~ANNRightLayer() {
 
 
 
-/* ANN constructor. */
+/* FNN constructor. */
 template<typename T>
-ANN<T>::ANN(std::vector<int> p_layers, int p_max_threads)
+FNN<T>::FNN(std::vector<int> p_layers, int p_max_threads)
     : layers(p_layers),
       nb_right_layers(static_cast<int>(p_layers.size())-1),
-      input(new ANNLeftLayer<T>(p_layers[0])),
-      right_layers(new ANNRightLayer<T>*[nb_right_layers]),
+      input(new FNNLeftLayer<T>(p_layers[0])),
+      right_layers(new FNNRightLayer<T>*[nb_right_layers]),
       max_threads(p_max_threads) {
-    ANNLayer<T>* previous = input;
+    FNNLayer<T>* previous = input;
     for(int i=0 ; i<nb_right_layers ; i++) {
-        ANNRightLayer<T>* l = new ANNRightLayer<T>(layers[i+1], previous);
+        FNNRightLayer<T>* l = new FNNRightLayer<T>(layers[i+1], previous);
         right_layers[i]     = l;
         previous            = l;
         random_init_values(l);
     }
 }
 
-/* ANN desctructor. */
+/* FNN desctructor. */
 template<typename T>
-ANN<T>::~ANN() {
+FNN<T>::~FNN() {
     delete input;
     for(int i=0 ; i<nb_right_layers ; i++) delete right_layers[i];
     delete [] right_layers;
@@ -140,7 +140,7 @@ ANN<T>::~ANN() {
 
 /* Backpropagation algorithm using the cross-entropy cost function. */
 template<typename T>
-typename ANN<T>::nabla_pair ANN<T>::backpropagation_cross_entropy(const Matrix<T>* training_input, const Matrix<T>* training_output) {
+typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(const Matrix<T>* training_input, const Matrix<T>* training_output) {
     const Matrix<T>** activations = feedforward_complete(training_input);
     const Matrix<T>** nabla_W     = new const Matrix<T>*[nb_right_layers];
     const Matrix<T>** nabla_B     = new const Matrix<T>*[nb_right_layers];
@@ -171,10 +171,10 @@ typename ANN<T>::nabla_pair ANN<T>::backpropagation_cross_entropy(const Matrix<T
 
 /* Feedforward algorithm to be used to compute the output. */
 template<typename T>
-const Matrix<T>* ANN<T>::feedforward(const Matrix<T>* X) {
+const Matrix<T>* FNN<T>::feedforward(const Matrix<T>* X) {
     const Matrix<T>* current = X;
     for(int i=0 ; i<nb_right_layers ; i++) {
-        ANNRightLayer<T>* current_layer = right_layers[i];
+        FNNRightLayer<T>* current_layer = right_layers[i];
         Matrix<T>*     W                = current_layer->getWeights();
         Matrix<T>*     B                = current_layer->getBiases();
         Matrix<T>*     a                = new Matrix<T>(W);
@@ -187,11 +187,11 @@ const Matrix<T>* ANN<T>::feedforward(const Matrix<T>* X) {
 
 /* Feedforward algorithm to be used in the backpropagation algorithm. */
 template<typename T>
-const Matrix<T>** ANN<T>::feedforward_complete(const Matrix<T>* X) {
+const Matrix<T>** FNN<T>::feedforward_complete(const Matrix<T>* X) {
     const Matrix<T>** activations = new const Matrix<T>*[nb_right_layers+1];
     activations[0]             = X;
     for(int i=0 ; i<nb_right_layers ; i++) {
-        ANNRightLayer<T>*current_layer = right_layers[i];
+        FNNRightLayer<T>*current_layer = right_layers[i];
         Matrix<T>*     W             = current_layer->getWeights();
         Matrix<T>*     B             = current_layer->getBiases();
         Matrix<T>*     a             = new Matrix<T>(W);
@@ -203,7 +203,7 @@ const Matrix<T>** ANN<T>::feedforward_complete(const Matrix<T>* X) {
 
 /* Initializes the network's weights and biases with a Gaussian generator. */
 template<typename T>
-void ANN<T>::random_init_values(ANNRightLayer<T>* l) {
+void FNN<T>::random_init_values(FNNRightLayer<T>* l) {
     Matrix<T>* W = l->getWeights();
     Matrix<T>* B = l->getBiases();
     std::default_random_engine       generator;
@@ -217,7 +217,7 @@ void ANN<T>::random_init_values(ANNRightLayer<T>* l) {
 
 /* Stochastic Gradient Descent algorithm. */
 template<typename T>
-void ANN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
+void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
     // epoch
     for(int i=0 ; i<nb_epoch ; i++) {
         // shuffle the training data
@@ -240,7 +240,7 @@ void ANN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
                     thread_count--;
                 }
                 try{
-                    threads.push_back(std::thread(&ANN::SGD_batch_update, this, training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha));
+                    threads.push_back(std::thread(&FNN::SGD_batch_update, this, training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha));
                     thread_count++;
                 }
                 catch(std::exception &e) {
@@ -249,7 +249,7 @@ void ANN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
                     threads.clear();
                     /* try to start this one again */
                     try {
-                        threads.push_back(std::thread(&ANN::SGD_batch_update, this, training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha));
+                        threads.push_back(std::thread(&FNN::SGD_batch_update, this, training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha));
                         thread_count++;
                     }
                     catch(std::exception &e) {
@@ -270,7 +270,7 @@ void ANN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
 
 /* Stochastic Gradient Descent algorithm for a batch. */
 template<typename T>
-void ANN<T>::SGD_batch_update(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, std::map<int, int>* shuffle, const int training_set_len, int batch_counter, const int batch_len, const double eta, const double alpha) {
+void FNN<T>::SGD_batch_update(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, std::map<int, int>* shuffle, const int training_set_len, int batch_counter, const int batch_len, const double eta, const double alpha) {
     std::vector<Matrix<T>*> nabla_W; nabla_W.reserve(nb_right_layers);
     std::vector<Matrix<T>*> nabla_B; nabla_B.reserve(nb_right_layers);
     for(int i=0 ; i<nb_right_layers ; i++) {

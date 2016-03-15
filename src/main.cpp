@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     /* DigitScanner */
     DigitScanner<float> dgs(args.max_threads);
     if(args.is_set("layers"))     { dgs.set_layers(args.layers); }
-    else if(args.is_set("annin")) { if(!dgs.load(args.annin)) return 0; }
+    else if(args.is_set("fnnin")) { if(!dgs.load(args.fnnin)) return 0; }
     
     /* actions */
     chrono_clock begin = std::chrono::high_resolution_clock::now();
@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
     if(args.is_set("time"))      { print_elapsed_time(begin); }
 
     /* save */
-    if(args.is_set("annout")) { dgs.save(args.annout); }
+    if(args.is_set("fnnout")) { dgs.save(args.fnnout); }
     
     /* gui */
     if(args.is_set("gui")) {

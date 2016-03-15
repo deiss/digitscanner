@@ -18,8 +18,8 @@ class Arguments {
 
     public:
     
-        std::string           annin;
-        std::string           annout;
+        std::string           fnnin;
+        std::string           fnnout;
         std::vector<int>      layers;
         std::string           mnist;
         int                   max_threads;
