@@ -80,7 +80,7 @@ It gives a better result. You can finally use the `--gui` option to display a wi
     
 When using this option, try to draw the digit within the displayed box to obtain better results. Among the three digits below, only the middle one was correctly labeled by the `fnn/fnn_200_100_improved.txt` neural network.
 
-(!Example)[media/examples.png]
+![Example](media/examples.png)
     
 Finally, let's try with two hidden layers and ten epochs:
 
