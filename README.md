@@ -2,28 +2,9 @@
 
 ![Screenshot](media/Screenshot.png)
 
-## PROJECT
-
 DigitScanner is a C++ tool to create, train and test feedforward neural networks (fnn) for handwritten number recognition. The project uses the MNIST dataset to train and test the neural networks. It is also possible to draw numbers in a window and ask the tool to guess the number you drew.
 
 The neural networks are taught with the Stochastic Gradient Descent algorithm, using the cross-entropy as a cost function. With only one hidden layer, it is possible to achieve significant results on the MNIST testing set, using the 60000 digits from the training set. The MNIST digits are 28x28 black and white pictures, so we need to use 784 neurons for the input, 10 for the output (1 per digit), and between 30 and 200 neurons for the hidden layer. More neurons in the hidden layer can lead to better performances but also take longer to train.
-
-## LICENSE
-
-DigitScanner - Copyright (C) 2016 -  Olivier Deiss
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received [a copy of the GNU General Public License](COPYING)
-along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 ***
 
@@ -131,6 +112,25 @@ Many improvements can be brought to this project. First it would be possible to 
 Then to improve the correctness and reach the 99.x% of correct guesses over the training set, it is possible to artificially increase the training set by copying/rotating/scaling the existing ones.
 
 To correctly classify a few more images, the key is to implement a convolutional neural network.
+
+***
+
+### LICENSE
+
+DigitScanner - Copyright (C) 2016 -  Olivier Deiss
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received [a copy of the GNU General Public License](COPYING)
+along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 ***
 
