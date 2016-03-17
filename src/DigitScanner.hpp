@@ -53,7 +53,7 @@ class DigitScanner {
         void train(std::string, const int, const int, const int, const int, const double, const double);
         void test(std::string, const int, const int);
     
-        void draw();
+        void draw(bool);
         void guess();
         void scan(int, int, unsigned char);
         void reset();
@@ -116,20 +116,23 @@ void DigitScanner<T>::set_layers(std::vector<int> p_layers) {
 }
 
 /*
-Draws the digit created by the user.
+Draws the digit created by the user. Can draw either the background or
+the digit.
 */
 template<typename T>
-void DigitScanner<T>::draw() {
+void DigitScanner<T>::draw(bool background) {
     for(int i=0 ; i<28 ; i++) {
         for(int j=0 ; j<28 ; j++) {
             unsigned char color = digit->operator()(i*28+j, 0);
-            glColor3ub(color, color, color);
-            glBegin(GL_QUADS);
-            glVertex2d(10*j, 10*(27-i));
-            glVertex2d(10*(j+1), 10*(27-i));
-            glVertex2d(10*(j+1), 10*(27-i+1));
-            glVertex2d(10*j, 10*(27-i+1));
-            glEnd();
+            if((background && color==0) || (!background && color>0)) {
+                glColor3ub(color, color, color);
+                glBegin(GL_QUADS);
+                glVertex2d(10*j, 10*(27-i));
+                glVertex2d(10*(j+1), 10*(27-i));
+                glVertex2d(10*(j+1), 10*(27-i+1));
+                glVertex2d(10*j, 10*(27-i+1));
+                glEnd();
+            }
         }
     }
     

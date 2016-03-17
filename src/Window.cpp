@@ -67,11 +67,29 @@ void Window::draw() {
     glClear(GL_COLOR_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glColor3ub(0, 0, 100);
-    dgs->draw();
+    dgs->draw(true);   /* background */
+    draw_box();
+    dgs->draw(false);  /* digit */
     glutSwapBuffers();
     glutPostRedisplay();
     std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+}
+
+/*
+Draws a box in which the digit should ideally be drawn.
+*/
+void Window::draw_box() {
+    /* dark gray */
+    unsigned char gray = 40;
+    int square_margin  = 40;
+    glColor3ub(gray, gray, gray);
+    glLineWidth(3);
+    glBegin(GL_LINE_LOOP);
+    glVertex2d(square_margin, square_margin);
+    glVertex2d(window_width-square_margin, square_margin);
+    glVertex2d(window_width-square_margin, window_height-square_margin);
+    glVertex2d(square_margin, window_height-square_margin);
+    glEnd();
 }
 
 /*
@@ -85,24 +103,27 @@ void Window::keyboard(unsigned char key, int x, int y) {
 }
 
 /*
-Mouse function.
+Updates the digit's drawing.
 */
 void Window::motion(int x, int y) {
     double cell_width = 10;
-    int color   = 255;
-    int offsety = -1;
-    int offsetx = -1;
-    int i = static_cast<int>(y/cell_width);
-    int j = static_cast<int>(x/cell_width);
-    double coeffy = (i*cell_width-y+cell_width/2)/(cell_width/2);
-    double coeffx = (j*cell_width-x+cell_width/2)/(cell_width/2);
+    int    color   = 255;
+    int    offsety = -1;
+    int    offsetx = -1;
+    int    i       = static_cast<int>(y/cell_width);
+    int    j       = static_cast<int>(x/cell_width);
+    /* the coeff variable tells how centered the mouse is on a cell */
+    double coeffy  = (i*cell_width-y+cell_width/2)/(cell_width/2);
+    double coeffx  = (j*cell_width-x+cell_width/2)/(cell_width/2);
     if(coeffy<0) { coeffy = -coeffy; offsety = 1; }
     if(coeffx<0) { coeffx = -coeffx; offsetx = 1; }
     bool inside_window = true;
     if(i<0 || i>27 || j<0 || j>27) inside_window = false;
-    if(inside_window) dgs->scan(i, j, color - 20*(coeffy+coeffx));
-    if(inside_window) dgs->scan(i+offsety, j, 255*(coeffy));
-    if(inside_window) dgs->scan(i, j+offsetx, 255*(coeffx));
+    if(inside_window) {
+        dgs->scan(i, j, color - 20*(coeffy+coeffx));
+        if(i>0 && i<27) dgs->scan(i+offsety, j, 255*(coeffy));
+        if(j>0 && j<27) dgs->scan(i, j+offsetx, 255*(coeffx));
+    }
 }
 
 /*

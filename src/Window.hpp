@@ -44,6 +44,7 @@ class Window {
         void init();
         void launch() const;
  static void draw();
+ static void draw_box();
  static void keyboard(unsigned char, int, int);
  static void motion(int, int);
  static void passive(int, int);
