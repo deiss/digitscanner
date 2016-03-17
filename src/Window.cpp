@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Window.hpp"
 
-/* static variables */
+/* definition of static variables */
 DigitScanner<float>* Window::dgs;
 int                  Window::mouse_x;
 int                  Window::scene_width = 1;
@@ -40,18 +40,18 @@ int                  Window::sleep_time = 5;
 int                  Window::window_width;
 int                  Window::window_height;
 
-/* Window constructor. */
+/*
+Initializes the variables.
+*/
 Window::Window(const int w_width, const int w_height) {
     window_width  = w_width;
     window_height = w_height;
     mouse_x       = window_width/2;
 }
 
-/* Window destructor. */
-Window::~Window() {
-}
-
-/* Initialization function. */
+/*
+Initialization function.
+*/
 void Window::init() {
     int   argc    = 1;
     char *argv[1] = {(char *)"DigitScanner"};
@@ -60,7 +60,9 @@ void Window::init() {
     glutInitWindowSize(window_width, window_height);
 }
 
-/* Calls the Graph draw() function. */
+/*
+Calls the Graph draw() function.
+*/
 void Window::draw() {
     glClear(GL_COLOR_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);
@@ -72,7 +74,9 @@ void Window::draw() {
     std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
 }
 
-/* Calls the Graph keyboard() function. */
+/*
+Calls the Graph keyboard() function.
+*/
 void Window::keyboard(unsigned char key, int x, int y) {
     switch(key) {
         case 'g' : dgs->guess(); break;
@@ -80,7 +84,9 @@ void Window::keyboard(unsigned char key, int x, int y) {
     }
 }
 
-/* Mouse function */
+/*
+Mouse function.
+*/
 void Window::motion(int x, int y) {
     double cell_width = 10;
     int color   = 255;
@@ -99,12 +105,16 @@ void Window::motion(int x, int y) {
     if(inside_window) dgs->scan(i, j+offsetx, 255*(coeffx));
 }
 
-/* Mouse function */
+/*
+Mouse function.
+*/
 void Window::passive(int x, int y) {
     mouse_x = x;
 }
 
-/* Initializes new windows. */
+/*
+Initializes new windows.
+*/
 void Window::launch() const {
     glutCreateWindow("DigitScanner");
     glViewport(0, 0, window_width, window_height);
@@ -117,7 +127,9 @@ void Window::launch() const {
     glutMainLoop();
 }
 
-/* Reshape function. */
+/*
+Reshape function.
+*/
 void Window::reshape(int w, int h) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();

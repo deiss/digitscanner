@@ -75,7 +75,9 @@ int main(int argc, char **argv) {
     
 }
 
-/* Computes and print execution time. */
+/*
+Computes and print execution time.
+*/
 void print_elapsed_time(chrono_clock begin) {
     chrono_clock end = std::chrono::high_resolution_clock::now();
     auto         dur = end - begin;

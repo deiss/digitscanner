@@ -20,6 +20,31 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+This class defines a feedforward neural network (fnn) and the associated
+methods for initializing, training, and computation of output value.
+This class is a template to allow the use of multiple types for the data
+stored in the neural network (basically allows float, double, long double).
+
+A neural network is composed of multiple layers. These layers are defined
+with the abstract class FNNLayer. The input layer is of type FNNLeftLayer, 
+while the other layers and the output layer are of type FNNRightLayer.
+
+                     ------------
+                     | FNNLayer |
+                     ------------
+                        ^   ^
+                       /     \
+                      /       \
+                     /         \
+        ----------------     -----------------
+        | FNNLeftLayer |     | FNNRightLayer |
+        ----------------     -----------------
+        
+An FNNLeftLayer just has a number of nodes, while a FNNRightLayer has weight
+and bias matrices.
+*/
+
 #ifndef FNN_hpp
 #define FNN_hpp
 
@@ -126,7 +151,10 @@ virtual ~FNNRightLayer() {
 
 
 
-/* FNN constructor. */
+/*
+Initializes the variables and creates the layers according to the
+p_layer vector. The layers are linked to each other.
+*/
 template<typename T>
 FNN<T>::FNN(std::vector<int> p_layers, int p_max_threads)
     : layers(p_layers),
@@ -143,7 +171,9 @@ FNN<T>::FNN(std::vector<int> p_layers, int p_max_threads)
     }
 }
 
-/* FNN desctructor. */
+/*
+Deletes the input, hidden and output layers.
+*/
 template<typename T>
 FNN<T>::~FNN() {
     delete input;
@@ -151,9 +181,19 @@ FNN<T>::~FNN() {
     delete [] right_layers;
 }
 
-/* Backpropagation algorithm using the cross-entropy cost function. */
+/*
+Backpropagation algorithm using the cross-entropy cost function. The algorithm
+computes the difference between the output for a given set of input and the 
+expected output. This gives what should be corrected. This first step is the
+feedforward step. The next step is the backpropagation, in which all the weights
+and biases are updated according to the computed error. This function returns
+how the parameters should be corrected for one pair of input and output. Usually,
+the training is done using batches of input-output data. The parameters are updated
+only once for the whole batch of data.
+*/
 template<typename T>
 typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(const Matrix<T>* training_input, const Matrix<T>* training_output) {
+    /* feedforward */
     const Matrix<T>** activations = feedforward_complete(training_input);
     const Matrix<T>** nabla_W     = new const Matrix<T>*[nb_right_layers];
     const Matrix<T>** nabla_B     = new const Matrix<T>*[nb_right_layers];
@@ -164,11 +204,11 @@ typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(const Matrix<T
     nabla_W[nb_right_layers-1] = nw;
     nabla_B[nb_right_layers-1] = d;
     delete at;
-    // backward
+    /* backward propagation */
     for(int i=nb_right_layers-2 ; i>=0 ; i--) {
         const Matrix<T>* a  = activations[i+1];
-              Matrix<T>* sp = Matrix<T>::Ones(a->getI());                      sp->operator-(a); sp->element_wise_product(a);
-              Matrix<T>* wt  = new Matrix<T>(right_layers[i+1]->getWeights()); wt->transpose();
+              Matrix<T>* sp = Matrix<T>::Ones(a->getI());                     sp->operator-(a); sp->element_wise_product(a);
+              Matrix<T>* wt = new Matrix<T>(right_layers[i+1]->getWeights()); wt->transpose();
         d = wt->operator*(d); d->element_wise_product(sp);
         Matrix<T>* at = new Matrix<T>(activations[i]); at->transpose();
         Matrix<T>* nw = new Matrix<T>(d);              nw = nw->operator*(at);
@@ -178,11 +218,17 @@ typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(const Matrix<T
         delete sp;
     }
     for(int i=1 ; i<=nb_right_layers ; i++) delete activations[i];
-    delete [] activations; // activations[0]=input is not deleted
+    delete [] activations;
+    /* activations[0]=input is not deleted */
     return nabla_pair(nabla_W, nabla_B);
 }
 
-/* Feedforward algorithm to be used to compute the output. */
+/*
+Feedforward algorithm to be used to compute the output.
+O = WA+B. This function uses the sigmoid function to range
+the output in [0 1]. This function is to be called when just
+the output is needed.
+*/
 template<typename T>
 const Matrix<T>* FNN<T>::feedforward(const Matrix<T>* X) {
     const Matrix<T>* current = X;
@@ -198,7 +244,11 @@ const Matrix<T>* FNN<T>::feedforward(const Matrix<T>* X) {
     return current;
 }
 
-/* Feedforward algorithm to be used in the backpropagation algorithm. */
+/*
+Feedforward algorithm to be used in the backpropagation algorithm.
+This function is to be called when all the activations are needed,
+for instance during the backpropagation step.
+*/
 template<typename T>
 const Matrix<T>** FNN<T>::feedforward_complete(const Matrix<T>* X) {
     const Matrix<T>** activations = new const Matrix<T>*[nb_right_layers+1];
@@ -214,7 +264,9 @@ const Matrix<T>** FNN<T>::feedforward_complete(const Matrix<T>* X) {
     return activations;
 }
 
-/* Initializes the network's weights and biases with a Gaussian generator. */
+/*
+Initializes the network's weights and biases with a Gaussian generator.
+*/
 template<typename T>
 void FNN<T>::random_init_values(FNNRightLayer<T>* l) {
     Matrix<T>* W = l->getWeights();
@@ -228,12 +280,18 @@ void FNN<T>::random_init_values(FNNRightLayer<T>* l) {
     }
 }
 
-/* Stochastic Gradient Descent algorithm. */
+/*
+Stochastic Gradient Descent algorithm. This function generates multiple
+batches of training data, shuffled among the whole training data set, runs
+the backpropagation algorithm on this batch, and continues until the whole
+data set has been completed. Depending on the number of epochs, the whole
+process can be run more than once.
+*/
 template<typename T>
 void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
-    // epoch
+    /* epochs */
     for(int i=0 ; i<nb_epoch ; i++) {
-        // shuffle the training data
+        /* shuffle the training data */
         std::map<int, int> shuffle;
         std::vector<int>   indexes;
         for(int j=0 ; j<training_set_len ; j++) { indexes.push_back(j); }
@@ -244,8 +302,10 @@ void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
         }
         int                      batch_counter = 0;
         std::vector<std::thread> threads;
+        /* use all the training dataset */
         while(batch_counter<=training_set_len-batch_len) {
             int thread_count = 0;
+            /* SGD on the batch using multithreading */
             if(max_threads>1) {
                 if(thread_count>max_threads) {
                     threads.at(0).join();
@@ -271,6 +331,7 @@ void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
                     }
                 }
             }
+            /* SGD on the batch using only one thread */
             else {
                 SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
             }
@@ -281,7 +342,11 @@ void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
     }
 }
 
-/* Stochastic Gradient Descent algorithm for a batch. */
+/*
+Stochastic Gradient Descent algorithm for a batch.
+This function is the actual SGD algorithm. It runs the backpropagation
+on the whole batch before updating the weights and biases.
+*/
 template<typename T>
 void FNN<T>::SGD_batch_update(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, std::map<int, int>* shuffle, const int training_set_len, int batch_counter, const int batch_len, const double eta, const double alpha) {
     std::vector<Matrix<T>*> nabla_W; nabla_W.reserve(nb_right_layers);

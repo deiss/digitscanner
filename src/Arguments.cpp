@@ -22,6 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Arguments.hpp"
 
+/*
+Initializes variables.
+*/
 Arguments::Arguments(int p_argc, char** p_argv) :
     fnnin(""),
     fnnout(""),
@@ -39,36 +42,42 @@ Arguments::Arguments(int p_argc, char** p_argv) :
     argv(p_argv) {
 }
 
+/*
+Prints help.
+*/
 void Arguments::print_help() {
     std::cout << "DigitScanner Copyright (C) 2016 Olivier Deiss - olivier.deiss@gmail.com" << std::endl;
     std::cout << "This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under certain conditions. Type 'digitscanner --license' for details." << std::endl;
-    std::cerr << "USE: digitscanner [options]" << std::endl;
-    std::cerr << std::endl;
-    std::cerr << "OPTIONS:" << std::endl;
-    std::cerr << "   --help                               Displays this help." << std::endl;
+    std::cout << "USE: digitscanner [options]" << std::endl;
+    std::cout << std::endl;
+    std::cout << "OPTIONS:" << std::endl;
+    std::cout << "   --help                               Displays this help." << std::endl;
     std::cout << "   --license                            Displays the GPL license." << std::endl;
-    std::cerr << "   --fnnin <fnn_file_path>              Loads a neural network from a file. If not specified, a new neural network is created." << std::endl;
-    std::cerr << "   --fnnout <fnn_file_path>             Stores the neural network in a file, at exit. This option is useful when training the neural network. If not specified, the neural network is lost." << std::endl;
-    std::cerr << "   --layers <nb_layers> <1> <2> [...]   Creates a neural network with given number of layers and nodes in each layer. The number of nodes of the first layer has to be set to 784 according to the number of pixels in mnist pictures, and the number of nodes of the right most layer has to be set to 10, for the 10 possible digits." << std::endl;
-    std::cerr << "   --mnist <path>                       Path to the mnist dataset folder." << std::endl;
-    std::cerr << "   --train <imgnb> <imgskip> <epochs>" << std::endl;
-    std::cerr << "           <batch_len> <eta> <alpha>    Trains the neural network with the mnist training set." << std::endl;
-    std::cerr << "                                           imgnb:     number of images of the training set to be used for training. Max: 60000." << std::endl;
-    std::cerr << "                                           imgskip:   skips the first images of the training set." << std::endl;
-    std::cerr << "                                           epochs:    number of epochs in the learning process." << std::endl;
-    std::cerr << "                                           batch_len: number of images in a batch." << std::endl;
-    std::cerr << "                                           eta:       learning factor. For handwritten number recognition, you can use a value between 0.1 and 1." << std::endl;
-    std::cerr << "                                           alpha:     weight decay factor." << std::endl;
-    std::cerr << "   --test <imgnb> <imgskip>             Tests the neural network on the mnist testing set." << std::endl;
-    std::cerr << "                                           imgnb:   number of images of the testing set to be used for training. Max: 10000." << std::endl;
-    std::cerr << "                                           imgskip: skips the first images of the training set." << std::endl;
-    std::cerr << "   --time                               Prints the training or testing time." << std::endl;
-    std::cerr << "   --gui                                Creates a window that enables you to draw numbers. Commands:" << std::endl;
-    std::cerr << "                                           g: using the neural network, guess the number" << std::endl;
-    std::cerr << "                                           r: resets the drawing area" << std::endl;
-    std::cerr << "   --enable_multithreading <max>        Enables multithreading with a maximum of <max> threads to increase computation performances." << std::endl;
+    std::cout << "   --fnnin <fnn_file_path>              Loads a neural network from a file. If not specified, a new neural network is created." << std::endl;
+    std::cout << "   --fnnout <fnn_file_path>             Stores the neural network in a file, at exit. This option is useful when training the neural network. If not specified, the neural network is lost." << std::endl;
+    std::cout << "   --layers <nb_layers> <1> <2> [...]   Creates a neural network with given number of layers and nodes in each layer. The number of nodes of the first layer has to be set to 784 according to the number of pixels in mnist pictures, and the number of nodes of the right most layer has to be set to 10, for the 10 possible digits." << std::endl;
+    std::cout << "   --mnist <path>                       Path to the mnist dataset folder." << std::endl;
+    std::cout << "   --train <imgnb> <imgskip> <epochs>" << std::endl;
+    std::cout << "           <batch_len> <eta> <alpha>    Trains the neural network with the mnist training set." << std::endl;
+    std::cout << "                                           imgnb:     number of images of the training set to be used for training. Max: 60000." << std::endl;
+    std::cout << "                                           imgskip:   skips the first images of the training set." << std::endl;
+    std::cout << "                                           epochs:    number of epochs in the learning process." << std::endl;
+    std::cout << "                                           batch_len: number of images in a batch." << std::endl;
+    std::cout << "                                           eta:       learning factor. For handwritten number recognition, you can use a value between 0.1 and 1." << std::endl;
+    std::cout << "                                           alpha:     weight decay factor." << std::endl;
+    std::cout << "   --test <imgnb> <imgskip>             Tests the neural network on the mnist testing set." << std::endl;
+    std::cout << "                                           imgnb:   number of images of the testing set to be used for training. Max: 10000." << std::endl;
+    std::cout << "                                           imgskip: skips the first images of the training set." << std::endl;
+    std::cout << "   --time                               Prints the training or testing time." << std::endl;
+    std::cout << "   --gui                                Creates a window that enables you to draw numbers. Commands:" << std::endl;
+    std::cout << "                                           g: using the neural network, guess the number" << std::endl;
+    std::cout << "                                           r: resets the drawing area" << std::endl;
+    std::cout << "   --enable_multithreading <max>        Enables multithreading with a maximum of <max> threads to increase computation performances." << std::endl;
 }
 
+/*
+Parses the command line arguments.
+*/
 int Arguments::parse_arguments() {
     std::string help_msg = "You can use --help to get more help.";
     if(argc==1) {
@@ -218,6 +227,9 @@ int Arguments::parse_arguments() {
     return 0;
 }
 
+/*
+Parses a string argument and detects errors like a missing value.
+*/
 bool Arguments::parse_string_arg(std::string arg_value, int* i, std::string* arg_container, std::string error_msg) {
     if(++*i<argc) {
         *arg_container = std::string(argv[*i]);
@@ -230,19 +242,9 @@ bool Arguments::parse_string_arg(std::string arg_value, int* i, std::string* arg
     }
 }
 
-bool Arguments::parse_short_args(char arg_value, std::string* arg_container, std::string help_msg) {
-    if(*arg_container=="") {
-        *arg_container = std::string(1, arg_value);
-        arg_set.insert(std::string(1, arg_value));
-        return true;
-    }
-    else {
-        std::cerr << "You cannot specify both \"-" << *arg_container << "\" and \"-" << arg_value << "\" options." << std::endl;
-        std::cerr << help_msg << std::endl;
-        return false;
-    }
-}
-
+/*
+Check incompatibility or misuse of options.
+*/
 bool Arguments::check_long_args(std::string help_msg) {
     if(!arg_set.count("mnist") && arg_set.count("train")) {
         std::cerr << "You cannot train a neural network without specifying the location of the mnist dataset. You can do so by using the --mnist parameter." << std::endl;

@@ -20,6 +20,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+This class treats the command line arguments and sets their default value.
+*/
+
 #ifndef Arguments_hpp
 #define Arguments_hpp
 
@@ -31,21 +35,21 @@ class Arguments {
 
     public:
     
-        std::string           fnnin;
-        std::string           fnnout;
-        std::vector<int>      layers;
-        std::string           mnist;
-        int                   max_threads;
-        bool                  time;
-        bool                  gui;
-        int                   train_imgnb;
-        int                   train_imgskip;
-        int                   train_epochs;
-        int                   train_batch_len;
-        double                train_eta;
-        double                train_alpha;
-        int                   test_imgnb;
-        int                   test_imgskip;
+        std::string       fnnin;             /* path of the input neural network file */
+        std::string       fnnout;            /* path of the output neural network file */
+        std::vector<int>  layers;            /* list of number of nodes in each layer */
+        std::string       mnist;             /* path to the mnist data_set folder */
+        int               max_threads;       /* maximum parallel threads running */
+        bool              time;              /* true if the user wants the duration of the action to be displayed */
+        bool              gui;               /* whether the user wants to use the gui */
+        int               train_imgnb;       /* number of images to use for training in train mode */
+        int               train_imgskip;     /* number of images to skip in train mode */
+        int               train_epochs;      /* number of epochs of learning in train mode */
+        int               train_batch_len;   /* number of pictures per batch in train mode */
+        double            train_eta;         /* learning factor in train mode */
+        double            train_alpha;       /* weight decay factor in train mode */
+        int               test_imgnb;        /* number of images to test in test mode */
+        int               test_imgskip;      /* number of images to skip in test mode */
     
         Arguments(int, char**);
         ~Arguments() {}
@@ -57,14 +61,13 @@ class Arguments {
 
     private:
 
-        bool parse_short_args(char, std::string*, std::string);
         bool parse_string_arg(std::string, int*, std::string*, std::string);
         bool check_long_args(std::string);
         bool check_short_args(std::string);
     
-        std::set<std::string> arg_set;
-        int                   argc;
-        char**                argv;
+        std::set<std::string> arg_set;   /* if an argument is correct and specified it is added to this set */
+        int                   argc;      /* number of arguments */
+        char**                argv;      /* value of arguments */
 
 };
 

@@ -20,6 +20,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+This class defines a matrix and operations that can be applied to it.
+*/
+
 #ifndef Matrix_hpp
 #define Matrix_hpp
 
@@ -57,19 +61,25 @@ class Matrix {
     
     private:
 
-        int I;
-        int J;
-        T*  matrix;
+        int I;        /* number of rows */
+        int J;        /* number of columns */
+        T*  matrix;   /* matrix' coefficients */
 
 };
 
 
 
+/*
+Initializes the variables.
+*/
 template<typename T>
 Matrix<T>::Matrix(int I, int J) : I(I), J(J) {
     init_matrix();
 }
 
+/*
+Initializes this matrix doing a copy of matrix B.
+*/
 template<typename T>
 Matrix<T>::Matrix(const Matrix<T>& B) : I(B.I), J(B.J) {
     init_matrix();
@@ -80,6 +90,9 @@ Matrix<T>::Matrix(const Matrix<T>& B) : I(B.I), J(B.J) {
     }
 }
 
+/*
+Initializes this matrix doing a copy of matrix B.
+*/
 template<typename T>
 Matrix<T>::Matrix(const Matrix<T>* B) : I(B->I), J(B->J) {
     init_matrix();
@@ -90,16 +103,25 @@ Matrix<T>::Matrix(const Matrix<T>* B) : I(B->I), J(B->J) {
     }
 }
 
+/*
+Deletes the coefficients.
+*/
 template<typename T>
 Matrix<T>::~Matrix() {
     delete_matrix();
 }
 
+/*
+Applies the sigmoid function to a number.
+*/
 template<typename T>
 T Matrix<T>::sigmoid(T x) const {
     return 1/(1+exp(-x));
 }
 
+/*
+Applies the sigmoid function to a matrix.
+*/
 template<typename T>
 Matrix<T>* Matrix<T>::sigmoid() {
     for(int i=0 ; i<I ; i++) {
@@ -110,11 +132,17 @@ Matrix<T>* Matrix<T>::sigmoid() {
     return this;
 }
 
+/*
+Deletes the coefficients.
+*/
 template<typename T>
 void Matrix<T>::delete_matrix() {
     delete [] matrix;
 }
 
+/*
+Sets the matrix' coefficients to 0.
+*/
 template<typename T>
 void Matrix<T>::init_matrix() {
     matrix = new T[I*J];
@@ -123,6 +151,9 @@ void Matrix<T>::init_matrix() {
     }
 }
 
+/*
+Displays the matrix.
+*/
 template<typename T>
 void Matrix<T>::print() const {
     for(int i=0 ; i<I ; i++) {
@@ -135,6 +166,10 @@ void Matrix<T>::print() const {
     std::cout << std::endl;
 }
 
+/*
+Resizes the matrix. The old martrix is deleted and the new one
+has all coefficients to 0.
+*/
 template<typename T>
 void Matrix<T>::resize(int I, int J) {
     delete_matrix();
@@ -143,6 +178,9 @@ void Matrix<T>::resize(int I, int J) {
     init_matrix();
 }
 
+/*
+Creates a vector of ones.
+*/
 template<typename T>
 Matrix<T>* Matrix<T>::Ones(int I) {
     Matrix* R = new Matrix(I, 1);
@@ -150,6 +188,9 @@ Matrix<T>* Matrix<T>::Ones(int I) {
     return R;
 }
 
+/*
+Creates the identity matrix.
+*/
 template<typename T>
 Matrix<T> Matrix<T>::Identity(int I) {
     Matrix R(I, I);
@@ -157,16 +198,25 @@ Matrix<T> Matrix<T>::Identity(int I) {
     return R;
 }
 
+/*
+Returns the matrix coefficient at row i, column j.
+*/
 template<typename T>
 T Matrix<T>::operator()(int i, int j) const {
     return matrix[i*J + j];
 }
 
+/*
+Returns a reference to the matrix coefficient at row i, column j.
+*/
 template<typename T>
 T& Matrix<T>::operator()(int i, int j) {
     return matrix[i*J + j];
 }
 
+/*
+Multiplication of a matrix by a number.
+*/
 template<typename T>
 Matrix<T>* Matrix<T>::operator*(T lambda) {
     for(int i=0 ; i<I ; i++) {
@@ -177,7 +227,10 @@ Matrix<T>* Matrix<T>::operator*(T lambda) {
     return this;
 }
 
-/* Matrices product, can only be called on dynamically created (new) Matrix objects */
+/*
+Product of two matrices, can only be called on dynamically created
+(using 'new') Matrix objects.
+*/
 template<typename T>
 Matrix<T>* Matrix<T>::operator*(const Matrix* B) {
     if(B->I!=J) std::cerr << "Matrix dimension dismatch! operator*" << std::endl;
@@ -193,6 +246,9 @@ Matrix<T>* Matrix<T>::operator*(const Matrix* B) {
     return res;
 }
 
+/*
+Addition of two matrices.
+*/
 template<typename T>
 Matrix<T>* Matrix<T>::operator+(const Matrix* B) {
     if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
@@ -204,6 +260,9 @@ Matrix<T>* Matrix<T>::operator+(const Matrix* B) {
     return this;
 }
 
+/*
+Substraction of two matrices.
+*/
 template<typename T>
 Matrix<T>* Matrix<T>::operator-(const Matrix* B) {
     if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! operator-" << std::endl;
@@ -215,6 +274,9 @@ Matrix<T>* Matrix<T>::operator-(const Matrix* B) {
     return this;
 }
 
+/*
+Element wise product of two matrices.
+*/
 template<typename T>
 Matrix<T>* Matrix<T>::element_wise_product(const Matrix* B) {
     if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! element_wise_product" << std::endl;
@@ -226,6 +288,9 @@ Matrix<T>* Matrix<T>::element_wise_product(const Matrix* B) {
     return this;
 }
 
+/*
+Transpose the matrix.
+*/
 template<typename T>
 Matrix<T>* Matrix<T>::transpose() {
     Matrix copy = *this;

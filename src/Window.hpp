@@ -20,6 +20,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+This class deals with the rendering of the application. It receives the
+events (mouse, keyboard) and prints the digit to screen.
+*/
+
 #ifndef Window_hpp
 #define Window_hpp
 
@@ -30,7 +35,7 @@ class Window {
     public :
     
         Window(const int, const int);
-        ~Window();
+        ~Window() {}
 
         void setDgs(DigitScanner<float>* dgs) { this->dgs = dgs; }
         void setSceneWidth(int scene_width)   { this->scene_width = scene_width; }
@@ -46,12 +51,12 @@ class Window {
     
     private :
  
- static int                  mouse_x;
- static int                  scene_width;
- static int                  sleep_time;
- static int                  window_height;
- static int                  window_width;
- static DigitScanner<float>* dgs;
+ static int                  mouse_x;         /* x coordinate of the mouse */
+ static int                  scene_width;     /* width of the scene */
+ static int                  sleep_time;      /* sleeping time between two consecutive drawings (milliseconds) */
+ static int                  window_height;   /* height of the window */
+ static int                  window_width;    /* width of the window */
+ static DigitScanner<float>* dgs;             /* associated DigitScanner object */
 
 };
 
