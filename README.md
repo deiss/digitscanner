@@ -91,7 +91,7 @@ The number of nodes in each layer are separated with spaces. The weight matrix b
       ...     ...     ...   ...   ...
     W(n, 1) W(n, 2) W(n, 3) ... W(n, m)
     
-The biases matriw between the first layer (m nodes) and the second layer (n nodes) is written on one line:
+The bias matrix between the first layer (m nodes) and the second layer (n nodes) is written on one line:
 
     B(1, 1) B(1, 2) B(1, 3) ... B(1, n)
 
