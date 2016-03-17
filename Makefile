@@ -1,10 +1,10 @@
 # project configuration
 LIB_GLUT_LINUX = -lGL -lGLU -lglut
 LIB_GLUT_MAC   = -framework OpenGL -framework GLUT
-CC       = g++
-LD_FLAGS = $(LIB_GLUT)
-CC_FLAGS = -Wall -Wno-deprecated-declarations -std=c++11 -Ofast -funroll-loops
-EXEC     = digitscanner
+CC             = g++
+LD_FLAGS       = $(LIB_GLUT)
+CC_FLAGS       = -Wall -Wno-deprecated-declarations -std=c++11 -Ofast -funroll-loops
+EXEC           = digitscanner
 
 # project structure
 BUILD_DIR = build
