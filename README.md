@@ -71,7 +71,7 @@ It is better but also shows that the training is really slow. This neural networ
     
 ### File Format
 
-The weights are multiplied to the inputs to give the outputs. The weight matrix *W* between two layers has *n* rows and *m* columns, where *m* is the number of nodes in the first layer and *n* is the number of nodes of the second layer. The bias matrix *B* is a *n*-dimension vector. Given an input vector *I*, a weight matrix *W*, a bias vector *B* and an output vector *O*, we have the following formula: *O* = *WA* + *B*.
+The weights are multiplied to the inputs to give the outputs. The weight matrix *W* between two layers has *n* rows and *m* columns, where *m* is the number of nodes in the first layer and *n* is the number of nodes of the second layer. The bias matrix *B* is a *n*-dimension vector. Given an input vector *I*, a weight matrix *W*, a bias vector *B* and an output vector *O*, we have the following formula: *O* = *WA* + *B*. This output from the first layer is the input of the second layer.
 
 Neural networks are stored as text files. Their structure is as follow:
 
