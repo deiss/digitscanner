@@ -69,6 +69,36 @@ It is better but also shows that the training is really slow. This neural networ
 
 ***
     
+### File Format
+
+The weights are multiplied to the inputs to give the outputs. The weight matrix *W* between two layers has *n* rows and *m* columns, where *m* is the number of nodes in the first layer and *n* is the number of nodes of the second layer. The bias matrix *B* is a *n*-dimension vector. Given an input vector *I*, a weight matrix *W*, a bias vector *B* and an output vector *O*, we have the following formula: *O* = *WA* + *B*.
+
+Neural networks are stored as text files. Their structure is as follow:
+
+    <number of layers>
+    <number of nodes in first layer> ... <number of nodes in last layer >
+    <weights matrix between first-second layers>
+    <biases matrix between first-second layers>
+    ...
+    <weights matrix between penultimate-last layers>
+    <biases matrix between penultimate-last layers>
+    
+The number of nodes in each layer are separated with spaces. The weight matrices have the following structure:
+
+    # W matrix between first layer (m nodes) and second layer (n nodes)
+    W(1, 1) W(1, 2) W(1, 3) ... W(1, m)
+    W(2, 1) W(2, 2) W(2, 3) ... W(2, m)
+    W(3, 1) W(3, 2) W(3, 3) ... W(3, m)
+      ...     ...     ...   ...   ...
+    W(n, 1) W(n, 2) W(n, 3) ... W(n, m)
+    
+The biases matrices are written on one line:
+
+    # B matrix between first layer (m nodes) and second layer (n nodes)
+    B(1, 1) B(1, 2) B(1, 3) ... B(1, n)
+
+***
+    
 ### Improvements
 
 Many improvements can be brought to this project. First it would be possible to use a decent library for matrices. I just wanted to code a matrix class at least once in my life and this project was a great occasion to do so, but I guess it is not the most efficient one.
