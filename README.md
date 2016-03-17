@@ -78,7 +78,7 @@ It gives a better result. You can finally use the `--gui` option to display a wi
 
     bin/digitscanner --fnnin fnn_100_improved.txt --gui
     
-When using this option, try to draw the digit within the displayed box to obtain better results. Among the three digits below, only the middle one was correctly labeled by the *fnn/fnn_200_100_improved.txt* neural network.
+When using this option, try to draw the digit within the displayed box to obtain better results. For instance, among the three digits below, only the middle one was correctly labeled by the *fnn/fnn_200_100_improved.txt* neural network.
 
 ![Example](media/examples.png)
     
