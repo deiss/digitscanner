@@ -115,7 +115,7 @@ To correctly classify a few more images, the key is to implement a convolutional
 
 ***
 
-### LICENSE
+### License
 
 DigitScanner - Copyright (C) 2016 -  Olivier Deiss
 
