@@ -12,7 +12,7 @@ License: This software is offered under the GPL license. See COPYING for more in
 #include <thread>
 #include <vector>
 
-#include "GLUT/glut.h"
+#include "cross_platform/GLUT.hpp"
 
 #include "Window.hpp"
 
