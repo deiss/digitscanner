@@ -87,11 +87,11 @@ Neural networks are stored as text files. Their structure is as follow:
 
     <number of layers>
     <number of nodes in first layer> ... <number of nodes in last layer >
-    <weights matrix between first-second layers>
-    <biases matrix between first-second layers>
+    <weight matrix between first-second layers>
+    <bias matrix between first-second layers>
     ...
-    <weights matrix between penultimate-last layers>
-    <biases matrix between penultimate-last layers>
+    <weight matrix between penultimate-last layers>
+    <bias matrix between penultimate-last layers>
     
 The number of nodes in each layer are separated with spaces. The weight matrix between the first layer (m nodes) and the second layer (n nodes) has the following structure:
 
