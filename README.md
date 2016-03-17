@@ -78,6 +78,10 @@ It gives a better result. You can finally use the `--gui` option to display a wi
 
     bin/digitscanner --fnnin fnn_100_improved.txt --gui
     
+When using this option, try to draw the digit within the displayed box to obtain better results. Among the three digits below, only the middle one was correctly labeled by the `fnn/fnn_200_100_improved.txt` neural network.
+
+(Example)[media/examples.png]
+    
 Finally, let's try with two hidden layers and ten epochs:
 
     bin/digitscanner --layers 4 784 200 100 10 --train 60000 0 10 5 0.1 0 --fnnout fnn_200_100.txt --enable_multithreading 5 --time --mnist mnist_data
