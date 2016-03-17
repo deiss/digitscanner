@@ -16,7 +16,7 @@ This project is licensed under the GPL License. See [COPYING](COPYING) for more 
 
 ### Install
 
-Linux/Mac : `make` will create the binary in the `bin` directory.
+Linux/Mac : `make` will create the binary in the *bin* directory.
 
 ***
 
@@ -26,15 +26,15 @@ You can get a list of the parameters and options with:
 
     bin/digitscanner --help
 
-You can start with the existing neural networks in the `fnn` folder and test them with the mnist dataset:
+You can start with the existing neural networks in the *fnn* directory and test them with the mnist dataset:
 
     bin/digitscanner --fnnin fnn/fnn_100.txt --test 10000 0 --mnist mnist_data
     
-Or you can create a new neural network, with 784 neurons in input, a hidden layer of 50 neurons and an output layer of 10 neurons, and train it twice over the whole dataset with batches of 10 pictures and a learning factor of 0.1. Do not forget to save this neural network with the `--fnnout` parameter. The neural network available in `fnn/fnn_50.txt` has been created with the following command:
+Or you can create a new neural network, with 784 neurons in input, a hidden layer of 50 neurons and an output layer of 10 neurons, and train it twice over the whole dataset with batches of 10 pictures and a learning factor of 0.1. Do not forget to save this neural network with the `--fnnout` parameter. The neural network available in *fnn/fnn_50.txt* has been created with the following command:
 
     bin/digitscanner --layers 3 784 50 10 --train 60000 0 2 10 0.1 0 --fnnout fnn_50.txt --mnist mnist_data
     
-You can also try to see if adding another hidden layer will improve the test result. It may take a long time, so you can use the `--enable_multithreading` option and train it over only 20000 pictures to make the process quicker. Let's use the last 20000 pictures. You can use the `--time` option to see how long it takes to do the training. The neural network available in `fnn/fnn_100.txt` has been created with the following command:
+You can also try to see if adding another hidden layer will improve the test result. It may take a long time, so you can use the `--enable_multithreading` option and train it over only 20000 pictures to make the process quicker. Let's use the last 20000 pictures. You can use the `--time` option to see how long it takes to do the training. The neural network available in *fnn/fnn_100.txt* has been created with the following command:
 
     bin/digitscanner --layers 3 784 100 10 --train 20000 40000 1 10 0.1 0 --fnnout fnn_100.txt --mnist mnist_data --enable_multithreading 2 --time
     
@@ -65,7 +65,7 @@ It gives good results but it is still not amazing. This is because it gets reall
     bin/digitscanner --train 60000 0 15 5 0.1 0 --fnnout fnn_200_100_improved.txt --fnnin fnn/fnn_200_100.txt --enable_multithreading 5 --time --mnist mnist_data
     bin/digitscanner --fnnin fnn_200_100_improved.txt --test 10000 0 --mnist mnist_data   # 98.25%
     
-It is better but also shows that the training is really slow. This neural network is available in the `fnn` folder.
+It is better but also shows that the training is really slow. This neural network is available in the *fnn* directory.
 
 ***
     
