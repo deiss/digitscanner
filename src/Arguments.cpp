@@ -88,8 +88,12 @@ int Arguments::parse_arguments() {
     else {
         for(int i=1 ; i<argc ; i++) {
             std::string arg_value(argv[i]);
+            /* license */
+            if(arg_value=="--license") {
+                return -4;
+            }
             /* help */
-            if(arg_value=="--help") {
+            else if(arg_value=="--help") {
                 return -2;
             }
             /* string */
