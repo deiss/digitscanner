@@ -57,5 +57,5 @@ $(BUILD_DIR)/Arguments.o: Arguments.cpp Arguments.hpp
 	$(CC) $(INCLUDE) $(CC_FLAGS) -o $@ -c $<
 
 clean:
-	rm $(BUILD_DIR)/*.o
-	rm -r $(BUILD_DIR)
+	@rm $(BUILD_DIR)/*.o
+	@rm -r $(BUILD_DIR)
