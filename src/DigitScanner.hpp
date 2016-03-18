@@ -31,7 +31,7 @@ network can have several floating point accuracies.
 
 #include <vector>
 
-#include "cross_platform/GLUT.hpp"
+#include "GLUT.hpp"
 
 #include "FNN.hpp"
 #include "Matrix.hpp"

@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <thread>
 #include <vector>
 
-#include "cross_platform/GLUT.hpp"
+#include "GLUT.hpp"
 
 #include "Window.hpp"
 
