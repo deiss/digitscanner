@@ -84,7 +84,7 @@ The weights are multiplied to the inputs to give the outputs. The weight matrix 
 Neural networks are stored as text files. Their structure is as follow:
 
     <number of layers>
-    <number of nodes in first layer> ... <number of nodes in last layer >
+    <number of nodes in first layer> ... <number of nodes in last layer>
     <weight matrix between first-second layers>
     <bias matrix between first-second layers>
     ...
