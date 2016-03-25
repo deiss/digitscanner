@@ -154,5 +154,6 @@ Reshape function.
 void Window::reshape(int w, int h) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0, scene_width, 0, scene_width*h/w);
+    gluOrtho2D(0, scene_width, 0, scene_width*window_height/window_width);
+    glutReshapeWindow(window_width, window_height);
 }
