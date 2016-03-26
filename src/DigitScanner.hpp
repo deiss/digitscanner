@@ -260,24 +260,22 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     std::string    test_labels = path_data + "t10k-labels.idx1-ubyte";
     std::ifstream  file_images(test_images, std::ifstream::in | std::ifstream::binary);
     std::ifstream  file_labels(test_labels, std::ifstream::in | std::ifstream::binary);
-    const int      image_len = 784;
-    const int      label_len = 1;
+    const    int   image_len        = 784;
+    const    int   label_len        = 1;
+    const    int   image_header_len = 16;
+    const    int   label_header_len = 8;
     unsigned char* image = new unsigned char[image_len];
     unsigned char* label = new unsigned char[label_len];
-    file_images.read((char*)image, 16);
-    file_labels.read((char*)label, 8);
     /* skip the first images */
-    for(int i=0 ; i<nb_images_to_skip ; i++) {
-        file_images.read((char*)image, image_len);
-        file_labels.read((char*)label, label_len);
-    }
+    file_images.seekg(image_header_len + nb_images_to_skip*image_len, std::ios_base::cur);
+    file_labels.seekg(label_header_len + nb_images_to_skip*label_len, std::ios_base::cur);
     /* compute the results */
     int        right_guesses = 0;
     Matrix<T>* test_input    = new Matrix<T>(image_len, 1);
     for(int i=0 ; i<nb_images ; i++) {
         /* create input matrix */
         file_images.read((char*)image, image_len);
-        for(int j=0 ; j<image_len ; j++) test_input->operator()(j, 0) = double(image[j])/256;
+        for(int j=0 ; j<image_len ; j++) test_input->operator()(j, 0) = static_cast<double>(image[j])/256;
         /* read output label */
         file_labels.read((char*)label, label_len);
         /* compute output */
@@ -288,7 +286,7 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
         delete y;
     }
     /* displays the score */
-    std::cout << 100*double(right_guesses)/nb_images << " %" << std::endl;
+    std::cout << 100*static_cast<double>(right_guesses)/nb_images << " %" << std::endl;
     delete test_input;
     delete [] image;
     delete [] label;
@@ -305,17 +303,15 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
     std::string    train_labels = path_data + "train-labels.idx1-ubyte";
     std::ifstream  file_images(train_images, std::ifstream::in | std::ifstream::binary);
     std::ifstream  file_labels(train_labels, std::ifstream::in | std::ifstream::binary);
-    const    int   image_len = 784;
-    const    int   label_len = 1;
-    unsigned char* image = new unsigned char[image_len];
-    unsigned char* label = new unsigned char[label_len];
-    file_images.read((char*)image, 16);
-    file_labels.read((char*)label, 8);
+    const    int   image_len        = 784;
+    const    int   label_len        = 1;
+    const    int   image_header_len = 16;
+    const    int   label_header_len = 8;
+    unsigned char* image            = new unsigned char[image_len];
+    unsigned char* label            = new unsigned char[label_len];
     /* skips the first images */
-    for(int i=0 ; i<nb_images_to_skip ; i++) {
-        file_images.read((char*)image, image_len);
-        file_labels.read((char*)label, label_len);
-    }
+    file_images.seekg(image_header_len + nb_images_to_skip*image_len, std::ios_base::cur);
+    file_labels.seekg(label_header_len + nb_images_to_skip*label_len, std::ios_base::cur);
     /* train across the remaning data */
     std::vector<const Matrix<T>*> training_input;  training_input.reserve(nb_images);
     std::vector<const Matrix<T>*> training_output; training_output.reserve(nb_images);
@@ -324,7 +320,7 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
         /* read an image from the file */
         Matrix<T>* input = new Matrix<T>(image_len, 1);
         file_images.read((char*)image, image_len);
-        for(int j=0 ; j<image_len ; j++) input->operator()(j, 0) = double(image[j])/256;
+        for(int j=0 ; j<image_len ; j++) input->operator()(j, 0) = static_cast<double>(image[j])/256;
         training_input.push_back(input);
         /* read the label from the data set and create the expected output matrix */
         Matrix<T>* output = new Matrix<T>(10, 1);
