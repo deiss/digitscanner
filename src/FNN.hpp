@@ -156,12 +156,12 @@ Initializes the variables and creates the layers according to the
 p_layer vector. The layers are linked to each other.
 */
 template<typename T>
-FNN<T>::FNN(std::vector<int> p_layers, int p_max_threads)
-    : layers(p_layers),
-      nb_right_layers(static_cast<int>(p_layers.size())-1),
-      input(new FNNLeftLayer<T>(p_layers[0])),
-      right_layers(new FNNRightLayer<T>*[nb_right_layers]),
-      max_threads(p_max_threads) {
+FNN<T>::FNN(std::vector<int> p_layers, int p_max_threads) :
+    layers(p_layers),
+    nb_right_layers(static_cast<int>(p_layers.size())-1),
+    input(new FNNLeftLayer<T>(p_layers[0])),
+    right_layers(new FNNRightLayer<T>*[nb_right_layers]),
+    max_threads(p_max_threads) {
     FNNLayer<T>* previous = input;
     for(int i=0 ; i<nb_right_layers ; i++) {
         FNNRightLayer<T>* l = new FNNRightLayer<T>(layers[i+1], previous);
@@ -197,7 +197,7 @@ typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(const Matrix<T
     const Matrix<T>** activations = feedforward_complete(training_input);
     const Matrix<T>** nabla_W     = new const Matrix<T>*[nb_right_layers];
     const Matrix<T>** nabla_B     = new const Matrix<T>*[nb_right_layers];
-          Matrix<T>* d            = new Matrix<T>(activations[nb_right_layers]);
+          Matrix<T>*  d           = new Matrix<T>(activations[nb_right_layers]);
     d->operator-(training_output);
     Matrix<T>* at = new Matrix<T>(activations[nb_right_layers-1]); at->transpose();
     Matrix<T>* nw = new Matrix<T>(d);                              nw = nw->operator*(at);
@@ -234,9 +234,9 @@ const Matrix<T>* FNN<T>::feedforward(const Matrix<T>* X) {
     const Matrix<T>* current = X;
     for(int i=0 ; i<nb_right_layers ; i++) {
         FNNRightLayer<T>* current_layer = right_layers[i];
-        Matrix<T>*     W                = current_layer->getWeights();
-        Matrix<T>*     B                = current_layer->getBiases();
-        Matrix<T>*     a                = new Matrix<T>(W);
+        Matrix<T>*        W             = current_layer->getWeights();
+        Matrix<T>*        B             = current_layer->getBiases();
+        Matrix<T>*        a             = new Matrix<T>(W);
         a = a->operator*(current)->operator+(B)->sigmoid();
         if(current!=X) delete current;
         current = a;
@@ -255,9 +255,9 @@ const Matrix<T>** FNN<T>::feedforward_complete(const Matrix<T>* X) {
     activations[0]             = X;
     for(int i=0 ; i<nb_right_layers ; i++) {
         FNNRightLayer<T>*current_layer = right_layers[i];
-        Matrix<T>*     W             = current_layer->getWeights();
-        Matrix<T>*     B             = current_layer->getBiases();
-        Matrix<T>*     a             = new Matrix<T>(W);
+        Matrix<T>*       W             = current_layer->getWeights();
+        Matrix<T>*       B             = current_layer->getBiases();
+        Matrix<T>*       a             = new Matrix<T>(W);
         a = a->operator*(activations[i])->operator+(B)->sigmoid();
         activations[i+1] = a;
     }

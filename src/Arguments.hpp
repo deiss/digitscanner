@@ -35,21 +35,21 @@ class Arguments {
 
     public:
     
-        std::string       fnnin;             /* path of the input neural network file */
-        std::string       fnnout;            /* path of the output neural network file */
-        std::vector<int>  layers;            /* list of number of nodes in each layer */
-        std::string       mnist;             /* path to the mnist data_set folder */
-        int               max_threads;       /* maximum parallel threads running */
-        bool              time;              /* true if the user wants the duration of the action to be displayed */
-        bool              gui;               /* whether the user wants to use the gui */
-        int               train_imgnb;       /* number of images to use for training in train mode */
-        int               train_imgskip;     /* number of images to skip in train mode */
-        int               train_epochs;      /* number of epochs of learning in train mode */
-        int               train_batch_len;   /* number of pictures per batch in train mode */
-        double            train_eta;         /* learning factor in train mode */
-        double            train_alpha;       /* weight decay factor in train mode */
-        int               test_imgnb;        /* number of images to test in test mode */
-        int               test_imgskip;      /* number of images to skip in test mode */
+        std::string      fnnin;             /* path of the input neural network file */
+        std::string      fnnout;            /* path of the output neural network file */
+        std::vector<int> layers;            /* list of number of nodes in each layer */
+        std::string      mnist;             /* path to the mnist data_set folder */
+        int              max_threads;       /* maximum parallel threads running */
+        bool             time;              /* true if the user wants the duration of the action to be displayed */
+        bool             gui;               /* whether the user wants to use the gui */
+        int              train_imgnb;       /* number of images to use for training in train mode */
+        int              train_imgskip;     /* number of images to skip in train mode */
+        int              train_epochs;      /* number of epochs of learning in train mode */
+        int              train_batch_len;   /* number of pictures per batch in train mode */
+        double           train_eta;         /* learning factor in train mode */
+        double           train_alpha;       /* weight decay factor in train mode */
+        int              test_imgnb;        /* number of images to test in test mode */
+        int              test_imgskip;      /* number of images to skip in test mode */
     
         Arguments(int, char**);
         ~Arguments() {}

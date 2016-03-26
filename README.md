@@ -33,8 +33,14 @@ You can get a list of the parameters and options with:
 You can start with the existing neural networks in the *fnn* directory and test them with the mnist dataset:
 
     bin/digitscanner --fnnin fnn/fnn_100.txt --test 10000 0 --mnist mnist_data
+
+Note that the files in the mnist folder must have the following names:
+* train images: *train-images.idx3-ubyte*
+* train labels: *train-labels.idx1-ubyte*
+* test images: *t10k-images.idx3-ubyte*
+* test labels: *t10k-labels.idx1-ubyte*
     
-Or you can create a new neural network, with 784 neurons in input, a hidden layer of 50 neurons and an output layer of 10 neurons, and train it twice over the whole dataset with batches of 10 pictures and a learning factor of 0.1. Do not forget to save this neural network with the `--fnnout` parameter. The neural network available in *fnn/fnn_50.txt* has been created with the following command:
+You can also create a new neural network, with 784 neurons in input, a hidden layer of 50 neurons and an output layer of 10 neurons, and train it twice over the whole dataset with batches of 10 pictures and a learning factor of 0.1. Do not forget to save this neural network with the `--fnnout` parameter. The neural network available in *fnn/fnn_50.txt* has been created with the following command:
 
     bin/digitscanner --layers 3 784 50 10 --train 60000 0 2 10 0.1 0 --fnnout fnn_50.txt --mnist mnist_data
     

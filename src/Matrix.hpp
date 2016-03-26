@@ -73,7 +73,8 @@ class Matrix {
 Initializes the variables.
 */
 template<typename T>
-Matrix<T>::Matrix(int I, int J) : I(I), J(J) {
+Matrix<T>::Matrix(int I, int J) :
+    I(I), J(J) {
     init_matrix();
 }
 
@@ -81,7 +82,8 @@ Matrix<T>::Matrix(int I, int J) : I(I), J(J) {
 Initializes this matrix doing a copy of matrix B.
 */
 template<typename T>
-Matrix<T>::Matrix(const Matrix<T>& B) : I(B.I), J(B.J) {
+Matrix<T>::Matrix(const Matrix<T>& B) :
+    I(B.I), J(B.J) {
     init_matrix();
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
@@ -94,7 +96,8 @@ Matrix<T>::Matrix(const Matrix<T>& B) : I(B.I), J(B.J) {
 Initializes this matrix doing a copy of matrix B.
 */
 template<typename T>
-Matrix<T>::Matrix(const Matrix<T>* B) : I(B->I), J(B->J) {
+Matrix<T>::Matrix(const Matrix<T>* B) :
+    I(B->I), J(B->J) {
     init_matrix();
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
