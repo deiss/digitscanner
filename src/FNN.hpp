@@ -401,7 +401,8 @@ void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
             auto dur = now - begin;
             auto ms  = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
             if(ms>=15000) {
-                std::cout << "   epoch " << (i+1) << "/" << nb_epoch << ": " << 100*batch_counter/static_cast<double>(training_set_len) << "%" << std::endl;
+                double percentage = static_cast<int>(10000*batch_counter/static_cast<double>(training_set_len))/100.0;
+                std::cout << "   epoch " << (i+1) << "/" << nb_epoch << ": " << percentage << " %" << std::endl;
                 begin = std::chrono::high_resolution_clock::now();
             }
         }
