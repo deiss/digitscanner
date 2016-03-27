@@ -186,23 +186,109 @@ Backpropagation algorithm using the cross-entropy cost function. The algorithm
 computes the difference between the output for a given set of input and the 
 expected output. This gives what should be corrected. This first step is the
 feedforward step. The next step is the backpropagation, in which all the weights
-and biases are updated according to the computed error. This function returns
-how the parameters should be corrected for one pair of input and output. Usually,
-the training is done using batches of input-output data. The parameters are updated
-only once for the whole batch of data.
+and biases differences are computed. This function returns these differences
+for one pair of input and output. Usually, the training is done using batches
+of input-output data. The parameters are updated only once for the whole batch
+of data. Below is the whole mathematical explanation.
+
+The goal of this algorithm is to reduce the cross-entropy cost C defined as
+
+        C = - [ y*ln(a) + (1-y)*ln(1-a) ]
+        a = sigmoid(w*a_ + b)                 
+    
+With a_ the activations of the previous layer. The gradient descent algorithm
+is an iterative algorithm. At each step, C is updated by substracting DeltaC:
+
+        DeltaC = NablaC * DeltaX
+
+With Nabl a being the derivative.To make sure DeltaC is always positive so
+the cost is effectively reduced at every step, it is possible to choose:
+
+        DeltaX = - n * NablaC
+        DeltaC = - n * ||NablaC||^2
+        
+With n the learning rate. What we will do here is:
+
+        w --> w - n * NablaCw
+        b --> b - n * NablaCb
+ 
+So we need to compute NablaCW and NablaCB:
+
+        d = (a-y)
+        NablaCw = dC/dw = a_ * d
+        NablaCb = dC/db = d
+        
+The calculus involves sigmoid'(z) = sigmoid(z)*(1-sigmoid(z)), since
+sigmoid(z) = 1/(1+e^(−z)).
+
+For the previous layers (x_ means x for the previous layer):
+
+        NablaCw_ = dC/da * da/dz * dz/da_ * da_/dw_
+        NablaCb_ = dC/da * da/dz * dz/da_ * da_/db_
+        
+The calculus gives:
+
+        dC/da * da/dz = (a-y)       // same as first step
+        dz/da_ = w                  // a = sig(z)    and  z  = w*a_ + b
+        da_/dw_ = a_*(1-a_) * a__   // a_ = sig(z_)  and  z_ = w_*a__ + b_
+        da_/db_ = a_*(1-a_)
+        
+So:
+
+        NablaCw_ = (a-y) * w * a_*(1-a_) * a__ = d * w * a_*(1-a_) * a__
+        NablaCb_ = (a-y) * w * a_*(1-a_)       = d * w * a_*(1-a_)
+
+This is what is computed by this function, using matrices Suppose we have
+the following 4 layers FNN with 2 hidden layers:
+
+        O
+                O       O
+        O                       O
+                O       O
+        O                       O
+                O       O
+        O
+ 
+        A1      A2      A3      A4        activations for the given layers
+            W1      W2      W3            weight matrices between the layers
+            B1      B2      B3            bias matrices between the layers
+
+We first compute the nabla for matrices W and B, using the formula:
+
+        D(3)   = A(4) - Y
+        NCW(3) = D(3) * A(3)^t
+        NCB(3) = D(3)
+
+This is how W3 and B3 needs to be updated. For the previous W and B matrices, 
+matrix D is propagated from layer to layer as follow:
+
+        SP   = [ (1) - A(k+1) ] ° A(k+1)   // stands for sigmoid'
+        D(k) = [ W(k)^t * D(k+1) ] ° S
+        
+And then used to compute NCW and NCB:
+
+        NCW(k) = D(k) * A(k)^t
+        NCB(k) = D(k)
+
+In these expressions:
+        X^t means transpose of X
+        (1) means a column of ones of height that of A(k+1).
+         °  means an element wise product (Hadamard product)
+         *  means a product of matrices
 */
 template<typename T>
 typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(const Matrix<T>* training_input, const Matrix<T>* training_output) {
     /* feedforward */
     const Matrix<T>** activations = feedforward_complete(training_input);
-    const Matrix<T>** nabla_W     = new const Matrix<T>*[nb_right_layers];
-    const Matrix<T>** nabla_B     = new const Matrix<T>*[nb_right_layers];
+    /* backpropagation */
+    const Matrix<T>** nabla_CW     = new const Matrix<T>*[nb_right_layers];
+    const Matrix<T>** nabla_CB     = new const Matrix<T>*[nb_right_layers];
           Matrix<T>*  d           = new Matrix<T>(activations[nb_right_layers]);
     d->operator-(training_output);
     Matrix<T>* at = new Matrix<T>(activations[nb_right_layers-1]); at->transpose();
     Matrix<T>* nw = new Matrix<T>(d);                              nw = nw->operator*(at);
-    nabla_W[nb_right_layers-1] = nw;
-    nabla_B[nb_right_layers-1] = d;
+    nabla_CW[nb_right_layers-1] = nw;
+    nabla_CB[nb_right_layers-1] = d;
     delete at;
     /* backward propagation */
     for(int i=nb_right_layers-2 ; i>=0 ; i--) {
@@ -212,15 +298,15 @@ typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(const Matrix<T
         d = wt->operator*(d); d->element_wise_product(sp);
         Matrix<T>* at = new Matrix<T>(activations[i]); at->transpose();
         Matrix<T>* nw = new Matrix<T>(d);              nw = nw->operator*(at);
-        nabla_W[i] = nw;
-        nabla_B[i] = d;
+        nabla_CW[i] = nw;
+        nabla_CB[i] = d;
         delete at;
         delete sp;
     }
+    /* do not delete activations[0] (that's the input) */
     for(int i=1 ; i<=nb_right_layers ; i++) delete activations[i];
     delete [] activations;
-    /* activations[0]=input is not deleted */
-    return nabla_pair(nabla_W, nabla_B);
+    return nabla_pair(nabla_CW, nabla_CB);
 }
 
 /*
@@ -349,31 +435,35 @@ on the whole batch before updating the weights and biases.
 */
 template<typename T>
 void FNN<T>::SGD_batch_update(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, std::map<int, int>* shuffle, const int training_set_len, int batch_counter, const int batch_len, const double eta, const double alpha) {
-    std::vector<Matrix<T>*> nabla_W; nabla_W.reserve(nb_right_layers);
-    std::vector<Matrix<T>*> nabla_B; nabla_B.reserve(nb_right_layers);
+    /* create nabla matrices vectors */
+    std::vector<Matrix<T>*> nabla_CW; nabla_CW.reserve(nb_right_layers);
+    std::vector<Matrix<T>*> nabla_CB; nabla_CB.reserve(nb_right_layers);
     for(int i=0 ; i<nb_right_layers ; i++) {
-        nabla_W.push_back(new Matrix<T>(layers[i+1], layers[i]));
-        nabla_B.push_back(new Matrix<T>(layers[i+1], 1));
+        nabla_CW.push_back(new Matrix<T>(layers[i+1], layers[i]));
+        nabla_CB.push_back(new Matrix<T>(layers[i+1], 1));
     }
+    /* feedforward-backpropagation for each data in the batch and sum the nablas */
     for(int i=0 ; i<batch_len ; i++) {
-        nabla_pair delta_nabla = backpropagation_cross_entropy(training_input->at(shuffle->at(batch_counter)), training_output->at(shuffle->at(batch_counter)));
+        nabla_pair delta_nabla = backpropagation_cross_entropy(training_input->at(shuffle->at(batch_counter)),
+                                                               training_output->at(shuffle->at(batch_counter)));
         batch_counter++;
         for(int j=0 ; j<nb_right_layers ; j++) {
-            nabla_W[j]->operator+(delta_nabla.first[j]);
-            nabla_B[j]->operator+(delta_nabla.second[j]);
+            nabla_CW[j]->operator+(delta_nabla.first[j]);
+            nabla_CB[j]->operator+(delta_nabla.second[j]);
             delete delta_nabla.first[j];
             delete delta_nabla.second[j];
         }
         delete [] delta_nabla.first;
         delete [] delta_nabla.second;
     }
+    /* update the parameters */
     for(int i=0 ; i<nb_right_layers ; i++) {
-        nabla_W[i]->operator*(eta/static_cast<double>(batch_len));
-        nabla_B[i]->operator*(eta/static_cast<double>(batch_len));
-        right_layers[i]->getWeights()->operator*(1-(alpha*eta)/static_cast<double>(training_set_len))->operator-(nabla_W[i]);
-        right_layers[i]->getBiases()->operator-(nabla_B[i]);
-        delete nabla_W[i];
-        delete nabla_B[i];
+        nabla_CW[i]->operator*(eta/static_cast<double>(batch_len));
+        nabla_CB[i]->operator*(eta/static_cast<double>(batch_len));
+        right_layers[i]->getWeights()->operator*(1-(alpha*eta)/static_cast<double>(training_set_len))->operator-(nabla_CW[i]);
+        right_layers[i]->getBiases()->operator-(nabla_CB[i]);
+        delete nabla_CW[i];
+        delete nabla_CB[i];
     }
 }
 
