@@ -131,7 +131,7 @@ int Arguments::parse_arguments() {
                     std::string train_imgskip_str(argv[i]);
                     try                            { train_imgskip = std::stoi(train_imgskip_str); }
                     catch(std::exception const& e) { std::cerr << "The number of images to be skipped must be an integer between 0 and 60000." << std::endl; return -1; }
-                    if(train_imgskip<0 || train_imgskip>60000) { std::cerr << "The number of images to be skipped must be an integer between 0 and 60000." << std::endl; return -1; }
+                    if(train_imgskip<0 || train_imgskip>60000-train_imgnb) { std::cerr << "The number of images to be skipped must be an integer between 0 and 60000-<imgnb>." << std::endl; return -1; }
                 }
                 else { std::cerr << "The number of images to be skipped is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
                 if(++i<argc) {
