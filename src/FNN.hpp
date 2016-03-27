@@ -70,7 +70,7 @@ class FNN {
 
     public:
 
-        FNN(std::vector<int>, int);
+        FNN(std::vector<int>);
         ~FNN();
     
         int               getNbRightLayers()   const { return nb_right_layers; }
@@ -93,7 +93,6 @@ class FNN {
         int                nb_right_layers;
         FNNLeftLayer<T>*   input;
         FNNRightLayer<T>** right_layers;
-        int                max_threads;
     
 };
 
@@ -156,12 +155,11 @@ Initializes the variables and creates the layers according to the
 p_layer vector. The layers are linked to each other.
 */
 template<typename T>
-FNN<T>::FNN(std::vector<int> p_layers, int p_max_threads) :
+FNN<T>::FNN(std::vector<int> p_layers) :
     layers(p_layers),
     nb_right_layers(static_cast<int>(p_layers.size())-1),
     input(new FNNLeftLayer<T>(p_layers[0])),
-    right_layers(new FNNRightLayer<T>*[nb_right_layers]),
-    max_threads(p_max_threads) {
+    right_layers(new FNNRightLayer<T>*[nb_right_layers]) {
     FNNLayer<T>* previous = input;
     for(int i=0 ; i<nb_right_layers ; i++) {
         FNNRightLayer<T>* l = new FNNRightLayer<T>(layers[i+1], previous);
@@ -381,6 +379,7 @@ template<typename T>
 void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
     /* epochs */
     for(int i=0 ; i<nb_epoch ; i++) {
+        std::cout << "epoch " << (i+1) << "/" << nb_epoch << " started" << std::endl;
         /* shuffle the training data */
         std::map<int, int> shuffle;
         std::vector<int>   indexes;
@@ -390,16 +389,23 @@ void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
             shuffle[j] = indexes.at(index);
             indexes.erase(indexes.begin()+index);
         }
-        int                      batch_counter = 0;
-        std::vector<std::thread> threads;
         /* use all the training dataset */
+        int batch_counter = 0;
+        std::chrono::time_point<std::chrono::high_resolution_clock> begin, now;
+        begin = std::chrono::high_resolution_clock::now();
         while(batch_counter<=training_set_len-batch_len) {
-            /* SGD on the batch using multithreading */
+            /* SGD on the batch */
             SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
             batch_counter += batch_len;
+            now      = std::chrono::high_resolution_clock::now();
+            auto dur = now - begin;
+            auto ms  = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+            if(ms>=15000) {
+                std::cout << "   epoch " << (i+1) << "/" << nb_epoch << ": " << 100*batch_counter/static_cast<double>(training_set_len) << "%" << std::endl;
+                begin = std::chrono::high_resolution_clock::now();
+            }
         }
-        if(max_threads>1) { for(std::thread& t : threads) t.join(); }
-        std::cerr << "epoch " << (i+1) << "/" << nb_epoch << " done" << std::endl;
+        std::cout << "epoch " << (i+1) << "/" << nb_epoch << " done" << std::endl;
     }
 }
 

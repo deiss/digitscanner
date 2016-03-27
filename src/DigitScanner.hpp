@@ -41,8 +41,8 @@ class DigitScanner {
 
     public:
 
-        DigitScanner(int=0);
-        DigitScanner(std::vector<int>, int=0);
+        DigitScanner();
+        DigitScanner(std::vector<int>);
         ~DigitScanner();
     
         void init();
@@ -62,7 +62,6 @@ class DigitScanner {
     
         FNN<T>*        fnn;           /* feedforward neural network */
         Matrix<float>* digit;         /* input digit, 784 pixels of the picture */
-        int            max_threads;   /* maximum number of parallel threads to use while training */
 
 };
 
@@ -72,8 +71,7 @@ class DigitScanner {
 Initializes the variables.
 */
 template<typename T>
-DigitScanner<T>::DigitScanner(int p_max_threads) :
-    max_threads(p_max_threads) {
+DigitScanner<T>::DigitScanner() {
     init();
 }
 
@@ -81,9 +79,8 @@ DigitScanner<T>::DigitScanner(int p_max_threads) :
 Initializes the variables
 */
 template<typename T>
-DigitScanner<T>::DigitScanner(std::vector<int> p_layers, int p_max_threads) :
-    fnn(new FNN<T>(p_layers, p_max_threads)),
-    max_threads(p_max_threads) {
+DigitScanner<T>::DigitScanner(std::vector<int> p_layers) :
+    fnn(new FNN<T>(p_layers)) {
     init();
 }
 
@@ -112,7 +109,7 @@ Creates the neural network if not done in the constructor.
 template<typename T>
 void DigitScanner<T>::set_layers(std::vector<int> p_layers) {
     if(fnn) delete fnn;
-    fnn = new FNN<T>(p_layers, max_threads);
+    fnn = new FNN<T>(p_layers);
 }
 
 /*
@@ -185,7 +182,7 @@ bool DigitScanner<T>::load(std::string path) {
         layers.reserve(nb_layers);
         /* number of nodes in each layer */
         for(int i=0 ; i<nb_layers ; i++) { int nb_nodes; file >> nb_nodes; layers.push_back(nb_nodes); }
-        fnn = new FNN<T>(layers, false);
+        fnn = new FNN<T>(layers);
         /* weights and biases */
         for(int i=0 ; i<nb_layers-1 ; i++) {
             FNNRightLayer<T>* current = fnn->getRightLayer(i);

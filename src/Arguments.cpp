@@ -29,7 +29,6 @@ Arguments::Arguments(int p_argc, char** p_argv) :
     fnnin(""),
     fnnout(""),
     mnist(""),
-    max_threads(0),
     train_imgnb(0),
     train_imgskip(0),
     train_epochs(0),
@@ -105,17 +104,6 @@ int Arguments::parse_arguments() {
             }
             else if(arg_value=="--fnnout") {
                 if(!parse_string_arg(std::string(argv[i]), &i, &fnnout, "You must specify the output neural network file.\n" + help_msg)) { return -1; }
-            }
-            /* integer */
-            else if(arg_value=="--enable_multithreading") {
-                if(++i<argc) {
-                    std::string max_threads_str(argv[i]);
-                    try                            { max_threads = std::stoi(max_threads_str); }
-                    catch(std::exception const& e) { std::cerr << "The maximum number of threads must be a positive integer." << std::endl; return -1; }
-                    if(max_threads<=0) { std::cerr << "The maximum number of threads must be a positive integer." << std::endl; return -1; }
-                    else { arg_set.insert("enable_multithreading"); }
-                }
-                else { std::cerr << "The maximum number of threads is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
             }
             /* commands */
             else if(arg_value=="--train") {

@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
     srand(static_cast<unsigned int>(time(NULL)));
     
     /* DigitScanner */
-    DigitScanner<float> dgs(args.max_threads);
+    DigitScanner<float> dgs;
     if(args.is_set("layers"))     { dgs.set_layers(args.layers); }
     else if(args.is_set("fnnin")) { if(!dgs.load(args.fnnin)) return 0; }
     
