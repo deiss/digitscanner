@@ -39,7 +39,6 @@ class Arguments {
         std::string      fnnout;            /* path of the output neural network file */
         std::vector<int> layers;            /* list of number of nodes in each layer */
         std::string      mnist;             /* path to the mnist data_set folder */
-        int              max_threads;       /* maximum parallel threads running */
         bool             time;              /* true if the user wants the duration of the action to be displayed */
         bool             gui;               /* whether the user wants to use the gui */
         int              train_imgnb;       /* number of images to use for training in train mode */

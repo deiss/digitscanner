@@ -44,9 +44,9 @@ You can also create a new neural network, with 784 neurons in input, a hidden la
 
     bin/digitscanner --layers 3 784 50 10 --train 60000 0 2 10 0.1 0 --fnnout fnn_50.txt --mnist mnist_data
     
-You can also try to see if adding another hidden layer will improve the test result. It may take a long time, so you can use the `--enable_multithreading` option and train it over only 20000 pictures to make the process quicker. Let's use the last 20000 pictures. You can use the `--time` option to see how long it takes to do the training. The neural network available in *fnn/fnn_100.txt* has been created with the following command:
+You can also try to see if adding another hidden layer will improve the test result. It may take a long time, so you can train it over only 20000 pictures to make the process quicker. Let's use the last 20000 pictures. You can use the `--time` option to see how long it takes to do the training. The neural network available in *fnn/fnn_100.txt* has been created with the following command:
 
-    bin/digitscanner --layers 3 784 100 10 --train 20000 40000 1 10 0.1 0 --fnnout fnn_100.txt --mnist mnist_data --enable_multithreading 2 --time
+    bin/digitscanner --layers 3 784 100 10 --train 20000 40000 1 10 0.1 0 --fnnout fnn_100.txt --mnist mnist_data --time
     
 Then you can load the previously created neural networks and test them:
 
@@ -55,7 +55,7 @@ Then you can load the previously created neural networks and test them:
     
 So the second neural network with 100 neurons in the hidden layer did not do a really good job, but it has only been trained on 20000 pictures once. You can train it again:
 
-    bin/digitscanner --fnnin fnn_100.txt --train 60000 0 20 5 0.1 0 --fnnout fnn_100_improved.txt --time --enable_multithreading 4 --mnist mnist_data
+    bin/digitscanner --fnnin fnn_100.txt --train 60000 0 20 5 0.1 0 --fnnout fnn_100_improved.txt --time --mnist mnist_data
     
 And test this last neural network:
 
@@ -71,12 +71,12 @@ When using this option, try to draw the digit within the displayed box to obtain
     
 Finally, let's try with two hidden layers and ten epochs:
 
-    bin/digitscanner --layers 4 784 200 100 10 --train 60000 0 10 5 0.1 0 --fnnout fnn_200_100.txt --enable_multithreading 5 --time --mnist mnist_data
+    bin/digitscanner --layers 4 784 200 100 10 --train 60000 0 10 5 0.1 0 --fnnout fnn_200_100.txt --time --mnist mnist_data
     bin/digitscanner --fnnin fnn_200_100.txt --test 10000 0 --mnist mnist_data   # 96.57 %
     
 It gives good results but it is still not amazing. This is because it gets really hard to train. What if we do twenty more epochs:
 
-    bin/digitscanner --train 60000 0 15 5 0.1 0 --fnnout fnn_200_100_improved.txt --fnnin fnn/fnn_200_100.txt --enable_multithreading 5 --time --mnist mnist_data
+    bin/digitscanner --train 60000 0 15 5 0.1 0 --fnnout fnn_200_100_improved.txt --fnnin fnn/fnn_200_100.txt --time --mnist mnist_data
     bin/digitscanner --fnnin fnn_200_100_improved.txt --test 10000 0 --mnist mnist_data   # 98.25%
     
 It is better but also shows that the training is really slow. This neural network is available in the *fnn* directory.

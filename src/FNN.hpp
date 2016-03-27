@@ -394,37 +394,8 @@ void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
         std::vector<std::thread> threads;
         /* use all the training dataset */
         while(batch_counter<=training_set_len-batch_len) {
-            int thread_count = 0;
             /* SGD on the batch using multithreading */
-            if(max_threads>1) {
-                if(thread_count>max_threads) {
-                    threads.at(0).join();
-                    threads.erase(threads.begin());
-                    thread_count--;
-                }
-                try{
-                    threads.push_back(std::thread(&FNN::SGD_batch_update, this, training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha));
-                    thread_count++;
-                }
-                catch(std::exception &e) {
-                    /* too many threads are already running */
-                    for(std::thread& t : threads) t.join();
-                    threads.clear();
-                    /* try to start this one again */
-                    try {
-                        threads.push_back(std::thread(&FNN::SGD_batch_update, this, training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha));
-                        thread_count++;
-                    }
-                    catch(std::exception &e) {
-                        std::cerr << "Error while starting a new thread. Exiting." << std::endl;
-                        return;
-                    }
-                }
-            }
-            /* SGD on the batch using only one thread */
-            else {
-                SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
-            }
+            SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
             batch_counter += batch_len;
         }
         if(max_threads>1) { for(std::thread& t : threads) t.join(); }
