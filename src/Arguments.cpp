@@ -130,7 +130,7 @@ int Arguments::parse_arguments() {
                 if(++i<argc) {
                     std::string train_imgskip_str(argv[i]);
                     try                            { train_imgskip = std::stoi(train_imgskip_str); }
-                    catch(std::exception const& e) { std::cerr << "The number of images to be skipped must be an integer between 0 and 60000." << std::endl; return -1; }
+                    catch(std::exception const& e) { std::cerr << "The number of images to be skipped must be an integer between 0 and 60000-<imgnb>." << std::endl; return -1; }
                     if(train_imgskip<0 || train_imgskip>60000-train_imgnb) { std::cerr << "The number of images to be skipped must be an integer between 0 and 60000-<imgnb>." << std::endl; return -1; }
                 }
                 else { std::cerr << "The number of images to be skipped is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
@@ -175,8 +175,8 @@ int Arguments::parse_arguments() {
                 if(++i<argc) {
                     std::string test_imgskip_str(argv[i]);
                     try                            { test_imgskip = std::stoi(test_imgskip_str); }
-                    catch(std::exception const& e) { std::cerr << "The number of images to be skipped must be an integer between 0 and 60000." << std::endl; return -1; }
-                    if(test_imgskip<0 || test_imgskip>10000) { std::cerr << "The number of images to be skipped must be an integer between 0 and 60000." << std::endl; return -1; }
+                    catch(std::exception const& e) { std::cerr << "The number of images to be skipped must be an integer between 0 and 10000-<imgnb>." << std::endl; return -1; }
+                    if(test_imgskip<0 || test_imgskip>10000-test_imgnb) { std::cerr << "The number of images to be skipped must be an integer between 0 and 10000-<imgnb>." << std::endl; return -1; }
                     else { arg_set.insert("test"); }
                 }
                 else { std::cerr << "The number of images to be skipped is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
