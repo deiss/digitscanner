@@ -196,8 +196,12 @@ The goal of this algorithm is to reduce the cross-entropy cost C defined as
         C = - [ y*ln(a) + (1-y)*ln(1-a) ]
         a = sigmoid(w*a_ + b)                 
     
-With a_ the activations of the previous layer. The gradient descent algorithm
-is an iterative algorithm. At each step, C is updated by substracting DeltaC:
+With a_ the activations of the previous layer. The cross-entropy has the advantage
+of enabling the network to learn faster when it is further from the truth, which
+is not achievable with the common quadratic cost function 1/2 * ||y-a||^2.
+
+The gradient descent algorithm is an iterative algorithm. At each step, C is
+updated by substracting DeltaC:
 
         DeltaC = NablaC * DeltaX
 
