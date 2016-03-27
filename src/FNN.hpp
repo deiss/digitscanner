@@ -428,7 +428,7 @@ void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
             batch_counter += batch_len;
         }
         if(max_threads>1) { for(std::thread& t : threads) t.join(); }
-        std::cerr << "epoch " << (i+1) << " done" << std::endl;
+        std::cerr << "epoch " << (i+1) << "/" << nb_epoch << " done" << std::endl;
     }
 }
 
