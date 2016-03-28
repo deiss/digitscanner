@@ -200,6 +200,12 @@ bool DigitScanner<T>::load(std::string path) {
                 file >> B->operator()(j, 0);
             }
         }
+        std::cerr << "fnn successfully loaded: " << nb_layers << " layers (";
+        for(int i=0 ; i<nb_layers ; i++) {
+            std::cout << layers.at(i);
+            if(i<nb_layers) std::cout << ", ";
+            else std::cout << ")" << std::endl;
+        }
         file.close();
         return true;
     }
