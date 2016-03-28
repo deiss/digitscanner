@@ -287,7 +287,6 @@ typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(const Matrix<T
     const Matrix<T>** nabla_CB = new const Matrix<T>*[nb_right_layers];
           Matrix<T>*  d        = new Matrix<T>(activations[nb_right_layers]);
     d->operator-(training_output);
-    d->print();
     Matrix<T>* at = new Matrix<T>(activations[nb_right_layers-1]); at->transpose();
     Matrix<T>* nw = new Matrix<T>(d);                              nw = nw->operator*(at);
     nabla_CW[nb_right_layers-1] = nw;
