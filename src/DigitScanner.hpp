@@ -200,11 +200,11 @@ bool DigitScanner<T>::load(std::string path) {
                 file >> B->operator()(j, 0);
             }
         }
-        std::cerr << "fnn successfully loaded: " << nb_layers << " layers (";
+        std::cerr << "FNN successfully loaded: " << nb_layers << " layers (";
         for(int i=0 ; i<nb_layers ; i++) {
             std::cout << layers.at(i);
             if(i<nb_layers) std::cout << ", ";
-            else std::cout << ")" << std::endl;
+            else std::cout << ")." << std::endl;
         }
         file.close();
         return true;
@@ -221,6 +221,19 @@ Saves a Neural Network into a file.
 template<typename T>
 bool DigitScanner<T>::save(std::string path) {
     std::ofstream file(path);
+    if(!file) {
+        std::string answer = "";
+        std::cerr << "Couldn't create file \"" << path << "\". Change filename? (y/n): ";
+        std::cin >> answer; std::cin.ignore();
+        if(answer=="y") {
+            std::cerr << "New path: ";
+            std::cin >> path; std::cin.ignore();
+            file.open(path);
+        }
+        else {
+            return false;
+        }
+    }
     if(file) {
         /* number of layers */
         file << (fnn->getNbRightLayers()+1) << std::endl;
@@ -245,12 +258,12 @@ bool DigitScanner<T>::save(std::string path) {
             }
             file << std::endl;
         }
+        std::cout << "FNN successfully saved to \"" << path << "\"." << std::endl;
         file.close();
         return true;
     }
     else {
         std::cerr << "Couldn't create file \"" << path << "\"." << std::endl;
-        return false;
     }
 }
 
