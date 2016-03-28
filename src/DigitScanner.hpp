@@ -203,7 +203,7 @@ bool DigitScanner<T>::load(std::string path) {
         std::cerr << "FNN successfully loaded: " << nb_layers << " layers (";
         for(int i=0 ; i<nb_layers ; i++) {
             std::cout << layers.at(i);
-            if(i<nb_layers) std::cout << ", ";
+            if(i<nb_layers-1) std::cout << ", ";
             else std::cout << ")." << std::endl;
         }
         file.close();
@@ -264,6 +264,7 @@ bool DigitScanner<T>::save(std::string path) {
     }
     else {
         std::cerr << "Couldn't create file \"" << path << "\"." << std::endl;
+        return false;
     }
 }
 
