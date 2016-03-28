@@ -37,6 +37,8 @@ class Matrix {
         Matrix(const Matrix*);
         ~Matrix();
     
+        bool operator==(const Matrix<T>* B);
+    
         int getI() const { return I; }
         int getJ() const { return J; }
     
@@ -104,6 +106,24 @@ Matrix<T>::Matrix(const Matrix<T>* B) :
             matrix[i*J + j] = B->operator()(i, j);
         }
     }
+}
+
+/*
+Initializes this matrix doing a copy of matrix B.
+*/
+template<typename T>
+bool Matrix<T>::operator==(const Matrix<T>* B) {
+    if(I!=B->getI() || J!=B->getJ()) {
+        return false;
+    }
+    for(int i=0 ; i<I ; i++) {
+        for(int j=0 ; j<J ; j++) {
+            if(matrix[i*J + j]!=B->operator()(i, j)) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 /*
