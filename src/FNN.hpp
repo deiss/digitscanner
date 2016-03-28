@@ -240,7 +240,7 @@ So:
         NablaCw_ = (a-y) * w * a_*(1-a_) * a__ = d * w * a_*(1-a_) * a__
         NablaCb_ = (a-y) * w * a_*(1-a_)       = d * w * a_*(1-a_)
 
-This is what is computed by this function, using matrices Suppose we have
+This is what is computed by this function, using matrices. Suppose we have
 the following 4 layers FNN with 2 hidden layers:
 
         O
