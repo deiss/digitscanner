@@ -202,9 +202,9 @@ bool DigitScanner<T>::load(std::string path) {
         }
         std::cerr << "FNN successfully loaded: " << nb_layers << " layers (";
         for(int i=0 ; i<nb_layers ; i++) {
-            std::cout << layers.at(i);
-            if(i<nb_layers-1) std::cout << ", ";
-            else std::cout << ")." << std::endl;
+            std::cerr << layers.at(i);
+            if(i<nb_layers-1) std::cerr << ", ";
+            else std::cerr << ")." << std::endl;
         }
         file.close();
         return true;
@@ -223,10 +223,10 @@ bool DigitScanner<T>::save(std::string path) {
     std::ofstream file(path);
     if(!file) {
         std::string answer = "";
-        std::cerr << "Couldn't create file \"" << path << "\". Change filename? (y/n): ";
+        std::cout << "Couldn't create file \"" << path << "\". Change filename? (y/n): ";
         std::cin >> answer; std::cin.ignore();
         if(answer=="y") {
-            std::cerr << "New path: ";
+            std::cout << "New path: ";
             std::cin >> path; std::cin.ignore();
             file.open(path);
         }
@@ -258,7 +258,7 @@ bool DigitScanner<T>::save(std::string path) {
             }
             file << std::endl;
         }
-        std::cout << "FNN successfully saved to \"" << path << "\"." << std::endl;
+        std::cerr << "FNN successfully saved to \"" << path << "\"." << std::endl;
         file.close();
         return true;
     }
