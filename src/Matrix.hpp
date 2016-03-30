@@ -66,9 +66,12 @@ class Matrix {
         void    resize(int, int);
  inline T       sigmoid(T) const;
         Matrix* sigmoid();
-        Matrix* transpose();
+        Matrix* transpose_ret_p();
+        Matrix& transpose_ret_r();
     
     private:
+    
+        void transpose();
 
         int I;        /* number of rows */
         int J;        /* number of columns */
@@ -393,10 +396,28 @@ Matrix<T>* Matrix<T>::element_wise_product(const Matrix* B) {
 }
 
 /*
-Transpose the matrix.
+Transpose the matrix and returns a pointer to this matrix.
 */
 template<typename T>
-Matrix<T>* Matrix<T>::transpose() {
+Matrix<T>* Matrix<T>::transpose_ret_p() {
+    transpose();
+    return this;
+}
+
+/*
+Transpose the matrix and returns a reference to this matrix.
+*/
+template<typename T>
+Matrix<T>& Matrix<T>::transpose_ret_r() {
+    transpose();
+    return *this;
+}
+
+/*
+Transpose algorithm
+*/
+template<typename T>
+void Matrix<T>::transpose() {
     Matrix copy = *this;
     resize(J, I);
     for(int i=0 ; i<I ; i++) {
@@ -404,7 +425,6 @@ Matrix<T>* Matrix<T>::transpose() {
             matrix[i*J + j] = copy(j, i);
         }
     }
-    return this;
 }
 
 #endif
