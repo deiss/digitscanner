@@ -29,6 +29,7 @@ Arguments::Arguments(int p_argc, char** p_argv) :
     fnnin(""),
     fnnout(""),
     mnist(""),
+    gui(false),
     train_imgnb(0),
     train_imgskip(0),
     train_epochs(0),
@@ -67,7 +68,6 @@ void Arguments::print_help() {
     std::cout << "   --test <imgnb> <imgskip>             Tests the neural network on the mnist testing set." << std::endl;
     std::cout << "                                           imgnb:   number of images of the testing set to be used for training. Max: 10000." << std::endl;
     std::cout << "                                           imgskip: skips the first images of the training set." << std::endl;
-    std::cout << "   --time                               Prints the training or testing time." << std::endl;
     std::cout << "   --gui                                Creates a window that enables you to draw numbers. Commands:" << std::endl;
     std::cout << "                                           g: using the neural network, guess the number" << std::endl;
     std::cout << "                                           r: resets the drawing area" << std::endl;

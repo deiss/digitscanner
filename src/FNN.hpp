@@ -66,7 +66,8 @@ template<typename T> class FNNRightLayer;
 template<typename T>
 class FNN {
 
-    typedef std::pair<const Matrix<T>**, const Matrix<T>**> nabla_pair;
+    typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_clock;
+    typedef std::pair<const Matrix<T>**, const Matrix<T>**>             nabla_pair;
 
     public:
 
@@ -88,6 +89,8 @@ class FNN {
         nabla_pair        backpropagation_cross_entropy(const Matrix<T>*, const Matrix<T>*);
     
     private:
+    
+        double elapsed_time(chrono_clock);
     
         std::vector<int>   layers;
         int                nb_right_layers;
@@ -377,11 +380,12 @@ process can be run more than once.
 */
 template<typename T>
 void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
-    std::chrono::time_point<std::chrono::high_resolution_clock> begin, begin_batch, now;
+    chrono_clock begin_training, begin_epoch, begin_batch;
+    begin_training = std::chrono::high_resolution_clock::now();
     /* epochs */
     for(int i=0 ; i<nb_epoch ; i++) {
         begin_batch = std::chrono::high_resolution_clock::now();
-        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ":     0 %" << std::flush;
+        std::cout << "shuffling training set..." << std::flush;
         /* shuffle the training data */
         std::map<int, int> shuffle;
         std::vector<int>   indexes;
@@ -391,31 +395,30 @@ void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
             shuffle[j] = indexes.at(index);
             indexes.erase(indexes.begin()+index);
         }
+        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": [----------]     0 %" << std::flush;
         /* use all the training dataset */
         int batch_counter = 0;
-        begin = std::chrono::high_resolution_clock::now();
+        begin_epoch = std::chrono::high_resolution_clock::now();
         while(batch_counter<=training_set_len-batch_len) {
             /* SGD on the batch */
             SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
             batch_counter += batch_len;
-            now      = std::chrono::high_resolution_clock::now();
-            auto dur = now - begin;
-            auto ms  = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-            if(ms>=1000) {
-                double      per     = static_cast<int>(10000*batch_counter/static_cast<double>(training_set_len))/100.0;
-                std::string per_str = std::to_string(per);
-                std::string spaces  = "";
+            if(elapsed_time(begin_batch)>=0.25) {
+                double      per          = static_cast<int>(10000*batch_counter/static_cast<double>(training_set_len))/100.0;
+                std::string per_str      = std::to_string(per);
+                std::string spaces       = "";
+                std::string progress_bar = "[";
+                for(int i=0 ; i<static_cast<int>(per/10) ; i++)  progress_bar += "#";
+                for(int i=static_cast<int>(per/10) ; i<10 ; i++) progress_bar += "-";
+                progress_bar += "]";
                 for(int i=4 ; i>=0 ; i--) { if(per_str.at(i)=='0' || per_str.at(i)=='.') spaces += " "; else break; }
-                std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": " << spaces << per << " %" << std::flush;
-                begin = std::chrono::high_resolution_clock::now();
+                std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": " << progress_bar << " " << spaces << per << " %" << std::flush;
+                begin_batch = std::chrono::high_resolution_clock::now();
             }
         }
-        now      = std::chrono::high_resolution_clock::now();
-        auto dur = now - begin;
-        auto ms  = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-        ms       = static_cast<int>(10000*ms/static_cast<double>(ms/1000.0))/100.0;
-        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": complete (" << ms << " s)" << std::endl;
+        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s" << std::endl;
     }
+    std::cout << "training completed in " << elapsed_time(begin_training) << " s" << std::endl;
 }
 
 /*
@@ -455,6 +458,19 @@ void FNN<T>::SGD_batch_update(std::vector<const Matrix<T>*>* training_input, std
         delete nabla_CW[i];
         delete nabla_CB[i];
     }
+}
+
+
+
+/*
+Computes execution time.
+*/
+template<typename T>
+double FNN<T>::elapsed_time(chrono_clock begin) {
+    chrono_clock end = std::chrono::high_resolution_clock::now();
+    auto         dur = end - begin;
+    auto         ms  = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+    return static_cast<int>(ms/10.0)/100.0;
 }
 
 #endif

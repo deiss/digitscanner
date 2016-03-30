@@ -26,10 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "DigitScanner.hpp"
 #include "Window.hpp"
 
-typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_clock;
-
-void print_elapsed_time(chrono_clock);
-
 int main(int argc, char **argv) {
 
     /* parse arguments */
@@ -54,10 +50,8 @@ int main(int argc, char **argv) {
     else if(args.is_set("fnnin")) { if(!dgs.load(args.fnnin)) return 0; }
     
     /* actions */
-    chrono_clock begin = std::chrono::high_resolution_clock::now();
     if(args.is_set("train"))     { dgs.train(args.mnist, args.train_imgnb, args.train_imgskip, args.train_epochs, args.train_batch_len, args.train_eta, args.train_alpha); }
     else if(args.is_set("test")) { dgs.test(args.mnist, args.test_imgnb, args.test_imgskip); }
-    if(args.is_set("time"))      { print_elapsed_time(begin); }
 
     /* save */
     if(args.is_set("fnnout")) { dgs.save(args.fnnout); }
@@ -73,14 +67,4 @@ int main(int argc, char **argv) {
     
     return 0;
     
-}
-
-/*
-Computes and print execution time.
-*/
-void print_elapsed_time(chrono_clock begin) {
-    chrono_clock end = std::chrono::high_resolution_clock::now();
-    auto         dur = end - begin;
-    auto         ms  = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-    std::cout << static_cast<double>(ms)/1000 << " s" << std::endl;
 }
