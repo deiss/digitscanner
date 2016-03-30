@@ -32,6 +32,7 @@ class Matrix {
 
     public:
     
+        Matrix();
         Matrix(int, int);
         Matrix(const Matrix&);
         Matrix(const Matrix*);
@@ -82,6 +83,12 @@ class Matrix {
 };
 
 
+/*
+Default constructor.
+*/
+template<typename T>
+Matrix<T>::Matrix() {
+}
 
 /*
 Initializes the variables.
