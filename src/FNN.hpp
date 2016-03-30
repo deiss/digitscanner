@@ -379,7 +379,7 @@ template<typename T>
 void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
     /* epochs */
     for(int i=0 ; i<nb_epoch ; i++) {
-        std::cout << "epoch " << (i+1) << "/" << nb_epoch << " started" << std::endl;
+        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ":     0 %" << std::flush;
         /* shuffle the training data */
         std::map<int, int> shuffle;
         std::vector<int>   indexes;
@@ -400,13 +400,17 @@ void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
             now      = std::chrono::high_resolution_clock::now();
             auto dur = now - begin;
             auto ms  = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-            if(ms>=15000) {
-                double percentage = static_cast<int>(10000*batch_counter/static_cast<double>(training_set_len))/100.0;
-                std::cout << "   epoch " << (i+1) << "/" << nb_epoch << ": " << percentage << " %" << std::endl;
+            if(ms>=1000) {
+                double      per     = static_cast<int>(10000*batch_counter/static_cast<double>(training_set_len))/100.0;
+                std::string per_str = std::to_string(per);
+                std::string spaces  = "";
+                for(int i=4 ; i>=0 ; i--) { if(per_str.at(i)=='0' || per_str.at(i)=='.') spaces += " "; else break; }
+                std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": " << spaces << per << " %" << std::flush;
                 begin = std::chrono::high_resolution_clock::now();
             }
         }
-        std::cout << "epoch " << (i+1) << "/" << nb_epoch << " done" << std::endl;
+        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": complete" << std::endl;
+//////////////////// attention si nombre entier
     }
 }
 
