@@ -37,7 +37,8 @@ class Matrix {
         Matrix(const Matrix*);
         ~Matrix();
     
-        bool operator==(const Matrix<T>* B);
+        Matrix& operator=(const Matrix& B);
+        bool    operator==(const Matrix* B);
     
         int getI() const { return I; }
         int getJ() const { return J; }
@@ -45,12 +46,18 @@ class Matrix {
  static Matrix* Ones(int);
  static Matrix  Identity(int);
     
-        T       operator()(int, int) const ;
+        T       operator()(int, int) const;
         T&      operator()(int, int);
-        Matrix* operator*(T);
-        Matrix* operator*(const Matrix*);
-        Matrix* operator+(const Matrix*);
-        Matrix* operator-(const Matrix*);
+    
+        Matrix& operator*(T);
+        Matrix& operator*(const Matrix&);
+        Matrix& operator+(const Matrix&);
+        Matrix& operator-(const Matrix&);
+    
+        Matrix* operator_times(T);
+        Matrix* operator_times(const Matrix*);
+        Matrix* operator_plus(const Matrix*);
+        Matrix* operator_minus(const Matrix*);
     
         void    delete_matrix();
         Matrix* element_wise_product(const Matrix*);
@@ -109,7 +116,17 @@ Matrix<T>::Matrix(const Matrix<T>* B) :
 }
 
 /*
-Initializes this matrix doing a copy of matrix B.
+This matrix's coefficient are the same as B's (same pointer).
+*/
+template<typename T>
+Matrix<T>& Matrix<T>::operator=(const Matrix<T>& B) {
+    I      = B.I;
+    J      = B.J;
+    matrix = B.matrix;
+}
+
+/*
+Comparison operator.
 */
 template<typename T>
 bool Matrix<T>::operator==(const Matrix<T>* B) {
@@ -237,11 +254,75 @@ T& Matrix<T>::operator()(int i, int j) {
     return matrix[i*J + j];
 }
 
+/* Reference operators */
+
 /*
 Multiplication of a matrix by a number.
 */
 template<typename T>
-Matrix<T>* Matrix<T>::operator*(T lambda) {
+Matrix<T>& Matrix<T>::operator*(T lambda) {
+    for(int i=0 ; i<I ; i++) {
+        for(int j=0 ; j<J ; j++) {
+            matrix[i*J + j] *= lambda;
+        }
+    }
+    return *this;
+}
+
+/*
+Product of two matrices, can only be called on dynamically created
+(using 'new') Matrix objects.
+*/
+template<typename T>
+Matrix<T>& Matrix<T>::operator*(const Matrix& B) {
+    if(B.I!=J) std::cerr << "Matrix dimension dismatch! operator*" << std::endl;
+    Matrix res(I, B->J);
+    for(int i=0 ; i<I ; i++) {
+        for(int k=0 ; k<B.I ; k++) {
+            for(int j=0 ; j<B.J ; j++) {
+                res(i, j) += matrix[i*J + k]*B(k, j);
+            }
+        }
+    }
+    *this = res;
+    return *this;
+}
+
+/*
+Addition of two matrices.
+*/
+template<typename T>
+Matrix<T>& Matrix<T>::operator+(const Matrix& B) {
+    if(B.I!=I || B.J!=J) std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
+    for(int i=0 ; i<I ; i++) {
+        for(int j=0 ; j<J ; j++) {
+            matrix[i*J + j] += B(i, j);
+        }
+    }
+    return *this;
+}
+
+/*
+Substraction of two matrices.
+*/
+template<typename T>
+Matrix<T>& Matrix<T>::operator-(const Matrix& B) {
+    if(B.I!=I || B.J!=J) std::cerr << "Matrix dimension dismatch! operator-" << std::endl;
+    for(int i=0 ; i<I ; i++) {
+        for(int j=0 ; j<J ; j++) {
+            matrix[i*J + j] -= B(i, j);
+        }
+    }
+    return this;
+}
+
+/* Pointer operators */
+
+/*
+Multiplication of a matrix by a number.
+*/
+template<typename T>
+Matrix<T>* Matrix<T>::operator_times(T lambda) {
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
             matrix[i*J + j] *= lambda;
@@ -255,7 +336,7 @@ Product of two matrices, can only be called on dynamically created
 (using 'new') Matrix objects.
 */
 template<typename T>
-Matrix<T>* Matrix<T>::operator*(const Matrix* B) {
+Matrix<T>* Matrix<T>::operator_times(const Matrix* B) {
     if(B->I!=J) std::cerr << "Matrix dimension dismatch! operator*" << std::endl;
     Matrix* res = new Matrix(I, B->J);
     for(int i=0 ; i<I ; i++) {
@@ -273,7 +354,7 @@ Matrix<T>* Matrix<T>::operator*(const Matrix* B) {
 Addition of two matrices.
 */
 template<typename T>
-Matrix<T>* Matrix<T>::operator+(const Matrix* B) {
+Matrix<T>* Matrix<T>::operator_plus(const Matrix* B) {
     if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
@@ -287,7 +368,7 @@ Matrix<T>* Matrix<T>::operator+(const Matrix* B) {
 Substraction of two matrices.
 */
 template<typename T>
-Matrix<T>* Matrix<T>::operator-(const Matrix* B) {
+Matrix<T>* Matrix<T>::operator_minus(const Matrix* B) {
     if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! operator-" << std::endl;
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
