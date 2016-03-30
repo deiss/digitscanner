@@ -76,6 +76,7 @@ class Matrix {
         Matrix* sigmoid();
         Matrix* transpose_ret_p();
         Matrix& transpose_ret_r();
+        Matrix  transpose_ret_c() const;
     
     private:
     
@@ -461,6 +462,12 @@ template<typename T>
 Matrix<T>& Matrix<T>::transpose_ret_r() {
     transpose();
     return *this;
+}
+template<typename T>
+Matrix<T> Matrix<T>::transpose_ret_c() const {
+    Matrix copy(this);
+    copy.transpose();
+    return copy;
 }
 template<typename T>
 void Matrix<T>::transpose() {
