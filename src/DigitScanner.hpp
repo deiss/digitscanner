@@ -41,6 +41,8 @@ class DigitScanner {
 
     public:
 
+        typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_clock;
+    
         DigitScanner();
         DigitScanner(std::vector<int>);
         ~DigitScanner();
@@ -283,11 +285,12 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     const    int   label_header_len = 8;
     unsigned char* image = new unsigned char[image_len];
     unsigned char* label = new unsigned char[label_len];
+    chrono_clock begin = std::chrono::high_resolution_clock::now();
     /* skip the first images */
     file_images.seekg(image_header_len + nb_images_to_skip*image_len, std::ios_base::cur);
     file_labels.seekg(label_header_len + nb_images_to_skip*label_len, std::ios_base::cur);
     /* compute the results */
-    int        right_guesses = 0;
+    int        correct_classification = 0;
     Matrix<T>* test_input    = new Matrix<T>(image_len, 1);
     for(int i=0 ; i<nb_images ; i++) {
         /* create input matrix */
@@ -299,11 +302,15 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
         const Matrix<T>* y = fnn->feedforward(const_cast<const Matrix<T>*>(test_input));
         int kmax = 0;
         for(int k=0 ; k<10 ; k++) { if(y->operator()(k, 0)>y->operator()(kmax, 0)) kmax = k; }
-        if(kmax==label[0]) right_guesses++;
+        if(kmax==label[0]) correct_classification++;
         delete y;
     }
     /* displays the score */
-    std::cout << 100*static_cast<double>(right_guesses)/nb_images << " %" << std::endl;
+    chrono_clock end = std::chrono::high_resolution_clock::now();
+    auto         dur = end - begin;
+    auto         ms  = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+    std::cout << "test completed in " << static_cast<int>(ms/10.0)/100.0 << " s." << std::endl;
+    std::cout << correct_classification << "/" << nb_images << " (" << 100*static_cast<double>(correct_classification)/nb_images << " %) images correctly classified." << std::endl;
     delete test_input;
     delete [] image;
     delete [] label;
