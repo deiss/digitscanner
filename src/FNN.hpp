@@ -377,8 +377,10 @@ process can be run more than once.
 */
 template<typename T>
 void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
+    std::chrono::time_point<std::chrono::high_resolution_clock> begin, begin_batch, now;
     /* epochs */
     for(int i=0 ; i<nb_epoch ; i++) {
+        begin_batch = std::chrono::high_resolution_clock::now();
         std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ":     0 %" << std::flush;
         /* shuffle the training data */
         std::map<int, int> shuffle;
@@ -391,7 +393,6 @@ void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
         }
         /* use all the training dataset */
         int batch_counter = 0;
-        std::chrono::time_point<std::chrono::high_resolution_clock> begin, now;
         begin = std::chrono::high_resolution_clock::now();
         while(batch_counter<=training_set_len-batch_len) {
             /* SGD on the batch */
@@ -409,8 +410,11 @@ void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
                 begin = std::chrono::high_resolution_clock::now();
             }
         }
-        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": complete" << std::endl;
-//////////////////// attention si nombre entier
+        now      = std::chrono::high_resolution_clock::now();
+        auto dur = now - begin;
+        auto ms  = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+        ms       = static_cast<int>(10000*ms/static_cast<double>(ms/1000.0))/100.0;
+        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": complete (" << ms << " s)" << std::endl;
     }
 }
 
