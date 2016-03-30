@@ -141,6 +141,7 @@ Matrix<T>& Matrix<T>::operator=(const Matrix<T>& B) {
     I      = B.I;
     J      = B.J;
     matrix = B.matrix;
+    return *this;
 }
 
 /*
@@ -413,7 +414,6 @@ void Matrix<T>::operator-=(const Matrix& B) {
             matrix[i*J + j] -= B(i, j);
         }
     }
-    return *this;
 }
 template<typename T>
 Matrix<T>* Matrix<T>::operator_minus(const Matrix* B) {
