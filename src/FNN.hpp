@@ -460,8 +460,6 @@ void FNN<T>::SGD_batch_update(std::vector<const Matrix<T>*>* training_input, std
     }
 }
 
-
-
 /*
 Computes execution time.
 */
