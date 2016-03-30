@@ -55,6 +55,11 @@ class Matrix {
         Matrix& operator*(const Matrix&);
         Matrix& operator+(const Matrix&);
         Matrix& operator-(const Matrix&);
+        
+        void    operator*=(T);
+        void    operator*=(const Matrix&);
+        void    operator+=(const Matrix&);
+        void    operator-=(const Matrix&);
     
         Matrix* operator_times(T);
         Matrix* operator_times(const Matrix*);
@@ -289,9 +294,14 @@ Matrix<T>& Matrix<T>::operator*(T lambda) {
     }
     return *this;
 }
-/*
-Multiplication of a matrix by a number.
-*/
+template<typename T>
+void Matrix<T>::operator*=(T lambda) {
+    for(int i=0 ; i<I ; i++) {
+        for(int j=0 ; j<J ; j++) {
+            matrix[i*J + j] *= lambda;
+        }
+    }
+}
 template<typename T>
 Matrix<T>* Matrix<T>::operator_times(T lambda) {
     for(int i=0 ; i<I ; i++) {
@@ -309,7 +319,7 @@ Product of two matrices, can only be called on dynamically created
 template<typename T>
 Matrix<T>& Matrix<T>::operator*(const Matrix& B) {
     if(B.I!=J) std::cerr << "Matrix dimension dismatch! operator*" << std::endl;
-    Matrix res(I, B->J);
+    Matrix res(I, B.J);
     for(int i=0 ; i<I ; i++) {
         for(int k=0 ; k<B.I ; k++) {
             for(int j=0 ; j<B.J ; j++) {
@@ -320,10 +330,19 @@ Matrix<T>& Matrix<T>::operator*(const Matrix& B) {
     *this = res;
     return *this;
 }
-/*
-Product of two matrices, can only be called on dynamically created
-(using 'new') Matrix objects.
-*/
+template<typename T>
+void Matrix<T>::operator*=(const Matrix& B) {
+    if(B.I!=J) std::cerr << "Matrix dimension dismatch! operator*" << std::endl;
+    Matrix res(I, B.J);
+    for(int i=0 ; i<I ; i++) {
+        for(int k=0 ; k<B.I ; k++) {
+            for(int j=0 ; j<B.J ; j++) {
+                res(i, j) += matrix[i*J + k]*B(k, j);
+            }
+        }
+    }
+    *this = res;
+}
 template<typename T>
 Matrix<T>* Matrix<T>::operator_times(const Matrix* B) {
     if(B->I!=J) std::cerr << "Matrix dimension dismatch! operator*" << std::endl;
@@ -352,9 +371,15 @@ Matrix<T>& Matrix<T>::operator+(const Matrix& B) {
     }
     return *this;
 }
-/*
-Addition of two matrices.
-*/
+template<typename T>
+void Matrix<T>::operator+=(const Matrix& B) {
+    if(B.I!=I || B.J!=J) std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
+    for(int i=0 ; i<I ; i++) {
+        for(int j=0 ; j<J ; j++) {
+            matrix[i*J + j] += B(i, j);
+        }
+    }
+}
 template<typename T>
 Matrix<T>* Matrix<T>::operator_plus(const Matrix* B) {
     if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
@@ -377,11 +402,18 @@ Matrix<T>& Matrix<T>::operator-(const Matrix& B) {
             matrix[i*J + j] -= B(i, j);
         }
     }
-    return this;
+    return *this;
 }
-/*
-Substraction of two matrices.
-*/
+template<typename T>
+void Matrix<T>::operator-=(const Matrix& B) {
+    if(B.I!=I || B.J!=J) std::cerr << "Matrix dimension dismatch! operator-" << std::endl;
+    for(int i=0 ; i<I ; i++) {
+        for(int j=0 ; j<J ; j++) {
+            matrix[i*J + j] -= B(i, j);
+        }
+    }
+    return *this;
+}
 template<typename T>
 Matrix<T>* Matrix<T>::operator_minus(const Matrix* B) {
     if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! operator-" << std::endl;
@@ -406,9 +438,6 @@ Matrix<T>* Matrix<T>::element_wise_product(const Matrix* B) {
     }
     return this;
 }
-/*
-Element wise product of two matrices.
-*/
 template<typename T>
 Matrix<T>& Matrix<T>::element_wise_product(const Matrix& B) {
     if(B.I!=I || B.J!=J) std::cerr << "Matrix dimension dismatch! element_wise_product" << std::endl;
@@ -421,24 +450,18 @@ Matrix<T>& Matrix<T>::element_wise_product(const Matrix& B) {
 }
 
 /*
-Transpose the matrix and returns a pointer to this matrix.
+Transpose the matrix.
 */
 template<typename T>
 Matrix<T>* Matrix<T>::transpose_ret_p() {
     transpose();
     return this;
 }
-/*
-Transpose the matrix and returns a reference to this matrix.
-*/
 template<typename T>
 Matrix<T>& Matrix<T>::transpose_ret_r() {
     transpose();
     return *this;
 }
-/*
-Transpose algorithm.
-*/
 template<typename T>
 void Matrix<T>::transpose() {
     Matrix copy = *this;
