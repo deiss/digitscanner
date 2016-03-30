@@ -43,8 +43,9 @@ class Matrix {
         int getI() const { return I; }
         int getJ() const { return J; }
     
- static Matrix* Ones(int);
- static Matrix  Identity(int);
+ static Matrix* ones_ret_n(int);
+ static Matrix  ones_ret_c(int);
+ static Matrix  identity(int);
     
         T       operator()(int, int) const;
         T&      operator()(int, int);
@@ -61,6 +62,7 @@ class Matrix {
     
         void    delete_matrix();
         Matrix* element_wise_product(const Matrix*);
+        Matrix& element_wise_product(const Matrix&);
         void    init_matrix();
         void    print() const;
         void    resize(int, int);
@@ -222,12 +224,21 @@ void Matrix<T>::resize(int I, int J) {
 }
 
 /*
-Creates a vector of ones.
+Dynamically creates a vector of ones and return a pointer.
 */
 template<typename T>
-Matrix<T>* Matrix<T>::Ones(int I) {
+Matrix<T>* Matrix<T>::ones_ret_n(int I) {
     Matrix* R = new Matrix(I, 1);
     for(int i=0 ; i<I ; i++) R->operator()(i, 0) = 1;
+    return R;
+}
+/*
+Dynamically creates a vector of ones and returns a copy.
+*/
+template<typename T>
+Matrix<T> Matrix<T>::ones_ret_c(int I) {
+    Matrix R(I, 1);
+    for(int i=0 ; i<I ; i++) R(i, 0) = 1;
     return R;
 }
 
@@ -235,7 +246,7 @@ Matrix<T>* Matrix<T>::Ones(int I) {
 Creates the identity matrix.
 */
 template<typename T>
-Matrix<T> Matrix<T>::Identity(int I) {
+Matrix<T> Matrix<T>::identity(int I) {
     Matrix R(I, I);
     for(int i=0 ; i<I ; i++) R(i, i) = 1;
     return R;
@@ -271,6 +282,18 @@ Matrix<T>& Matrix<T>::operator*(T lambda) {
     }
     return *this;
 }
+/*
+Multiplication of a matrix by a number.
+*/
+template<typename T>
+Matrix<T>* Matrix<T>::operator_times(T lambda) {
+    for(int i=0 ; i<I ; i++) {
+        for(int j=0 ; j<J ; j++) {
+            matrix[i*J + j] *= lambda;
+        }
+    }
+    return this;
+}
 
 /*
 Product of two matrices, can only be called on dynamically created
@@ -290,50 +313,6 @@ Matrix<T>& Matrix<T>::operator*(const Matrix& B) {
     *this = res;
     return *this;
 }
-
-/*
-Addition of two matrices.
-*/
-template<typename T>
-Matrix<T>& Matrix<T>::operator+(const Matrix& B) {
-    if(B.I!=I || B.J!=J) std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            matrix[i*J + j] += B(i, j);
-        }
-    }
-    return *this;
-}
-
-/*
-Substraction of two matrices.
-*/
-template<typename T>
-Matrix<T>& Matrix<T>::operator-(const Matrix& B) {
-    if(B.I!=I || B.J!=J) std::cerr << "Matrix dimension dismatch! operator-" << std::endl;
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            matrix[i*J + j] -= B(i, j);
-        }
-    }
-    return this;
-}
-
-/* Pointer operators */
-
-/*
-Multiplication of a matrix by a number.
-*/
-template<typename T>
-Matrix<T>* Matrix<T>::operator_times(T lambda) {
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            matrix[i*J + j] *= lambda;
-        }
-    }
-    return this;
-}
-
 /*
 Product of two matrices, can only be called on dynamically created
 (using 'new') Matrix objects.
@@ -357,6 +336,19 @@ Matrix<T>* Matrix<T>::operator_times(const Matrix* B) {
 Addition of two matrices.
 */
 template<typename T>
+Matrix<T>& Matrix<T>::operator+(const Matrix& B) {
+    if(B.I!=I || B.J!=J) std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
+    for(int i=0 ; i<I ; i++) {
+        for(int j=0 ; j<J ; j++) {
+            matrix[i*J + j] += B(i, j);
+        }
+    }
+    return *this;
+}
+/*
+Addition of two matrices.
+*/
+template<typename T>
 Matrix<T>* Matrix<T>::operator_plus(const Matrix* B) {
     if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
     for(int i=0 ; i<I ; i++) {
@@ -367,6 +359,19 @@ Matrix<T>* Matrix<T>::operator_plus(const Matrix* B) {
     return this;
 }
 
+/*
+Substraction of two matrices.
+*/
+template<typename T>
+Matrix<T>& Matrix<T>::operator-(const Matrix& B) {
+    if(B.I!=I || B.J!=J) std::cerr << "Matrix dimension dismatch! operator-" << std::endl;
+    for(int i=0 ; i<I ; i++) {
+        for(int j=0 ; j<J ; j++) {
+            matrix[i*J + j] -= B(i, j);
+        }
+    }
+    return this;
+}
 /*
 Substraction of two matrices.
 */
@@ -394,6 +399,19 @@ Matrix<T>* Matrix<T>::element_wise_product(const Matrix* B) {
     }
     return this;
 }
+/*
+Element wise product of two matrices.
+*/
+template<typename T>
+Matrix<T>& Matrix<T>::element_wise_product(const Matrix& B) {
+    if(B.I!=I || B.J!=J) std::cerr << "Matrix dimension dismatch! element_wise_product" << std::endl;
+    for(int i=0 ; i<I ; i++) {
+        for(int j=0 ; j<J ; j++) {
+            matrix[i*J + j] *= B(i, j);
+        }
+    }
+    return *this;
+}
 
 /*
 Transpose the matrix and returns a pointer to this matrix.
@@ -403,7 +421,6 @@ Matrix<T>* Matrix<T>::transpose_ret_p() {
     transpose();
     return this;
 }
-
 /*
 Transpose the matrix and returns a reference to this matrix.
 */
@@ -412,9 +429,8 @@ Matrix<T>& Matrix<T>::transpose_ret_r() {
     transpose();
     return *this;
 }
-
 /*
-Transpose algorithm
+Transpose algorithm.
 */
 template<typename T>
 void Matrix<T>::transpose() {
