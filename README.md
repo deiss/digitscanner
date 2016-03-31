@@ -81,6 +81,8 @@ It gives good results but it is still not amazing. This is because it gets reall
     
 It is better but also shows that the training is really slow. This neural network is available in the *fnn* directory.
 
+Although not used in the previous examples, it is also possible to specify a weight decay factor when training. This improves training and reduces overfitting, if used properly. This parameter is hard to adjust, but a good value for this factor usually stands between 1/5000 and 1/10000 of the total size of the training set.
+
 ***
     
 ### File Format
