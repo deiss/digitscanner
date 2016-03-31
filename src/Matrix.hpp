@@ -713,8 +713,8 @@ Creates a new matrix which is the transposed of this one and returns it.
 template<typename T>
 Matrix<T> Matrix<T>::create_transpose() const {
     Matrix Mt(this, true);
-    if(Mt.transpose) Mt.transpose = false;
-    else             Mt.transpose = true;
+    if(!Mt.transpose) Mt.transpose = true;
+    else              Mt.transpose = false;
     return Mt;
 }
 
@@ -723,8 +723,8 @@ Transposes this matrix.
 */
 template<typename T>
 void Matrix<T>::self_transpose() {
-    if(transpose) transpose = false;
-    else          transpose = true;
+    if(!transpose) transpose = true;
+    else           transpose = false;
 }
 
 #endif
