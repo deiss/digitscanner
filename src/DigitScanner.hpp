@@ -144,11 +144,10 @@ output of the neural network that has the highest value.
 */
 template<typename T>
 void DigitScanner<T>::guess() {
-    const Matrix<T>* y = fnn->feedforward(const_cast<const Matrix<T>*>(digit));
+    const Matrix<T> y = fnn->feedforward(digit);
     int kmax = 0;
-    for(int k=0 ; k<10 ; k++) { if(y->operator()(k, 0)>y->operator()(kmax, 0)) kmax = k; }
+    for(int k=0 ; k<10 ; k++) { if(y(k, 0)>y(kmax, 0)) kmax = k; }
     std::cout << "You drew: " << kmax << std::endl;
-    delete y;
 }
 
 /*
@@ -188,18 +187,18 @@ bool DigitScanner<T>::load(std::string path) {
         /* weights and biases */
         for(int i=0 ; i<nb_layers-1 ; i++) {
             FNNRightLayer<T>* current = fnn->getRightLayer(i);
-            Matrix<T>*        W       = current->getWeights();
-            Matrix<T>*        B       = current->getBiases();
+            Matrix<T>        W       = current->getWeights();
+            Matrix<T>        B       = current->getBiases();
             /* W - n2 rows and n1 columns if the second layer has n2 nodes */
             /* and the first one has n1 nodes. */
-            for(int j=0 ; j<W->getI() ; j++) {
-                for(int k=0 ; k<W->getJ() ; k++) {
-                    file >> W->operator()(j, k);
+            for(int j=0 ; j<W.getI() ; j++) {
+                for(int k=0 ; k<W.getJ() ; k++) {
+                    file >> W.operator()(j, k);
                 }
             }
             /* B - one line, n2 values */
-            for(int j=0 ; j<B->getI() ; j++) {
-                file >> B->operator()(j, 0);
+            for(int j=0 ; j<B.getI() ; j++) {
+                file >> B(j, 0);
             }
         }
         std::cerr << "FNN successfully loaded: " << nb_layers << " layers (";
@@ -245,18 +244,18 @@ bool DigitScanner<T>::save(std::string path) {
         /* weights and biases */
         for(int i=0 ; i<fnn->getNbRightLayers() ; i++) {
             FNNRightLayer<T>* current = fnn->getRightLayer(i);
-            Matrix<T>*        W       = current->getWeights();
-            Matrix<T>*        B       = current->getBiases();
+            Matrix<T>        W       = current->getWeights();
+            Matrix<T>        B       = current->getBiases();
             /* W */
-            for(int j=0 ; j<W->getI() ; j++) {
-                for(int k=0 ; k<W->getJ() ; k++) {
-                    file << W->operator()(j, k) << " ";
+            for(int j=0 ; j<W.getI() ; j++) {
+                for(int k=0 ; k<W.getJ() ; k++) {
+                    file << W(j, k) << " ";
                 }
                 file << std::endl;
             }
             /* B */
-            for(int j=0 ; j<B->getI() ; j++) {
-                file << B->operator()(j, 0) << " ";
+            for(int j=0 ; j<B.getI() ; j++) {
+                file << B(j, 0) << " ";
             }
             file << std::endl;
         }
@@ -290,20 +289,19 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     file_images.seekg(image_header_len + nb_images_to_skip*image_len, std::ios_base::cur);
     file_labels.seekg(label_header_len + nb_images_to_skip*label_len, std::ios_base::cur);
     /* compute the results */
-    int        correct_classification = 0;
-    Matrix<T>* test_input    = new Matrix<T>(image_len, 1);
+    int       correct_classification = 0;
+    Matrix<T> test_input(image_len, 1);
     for(int i=0 ; i<nb_images ; i++) {
         /* create input matrix */
         file_images.read((char*)image, image_len);
-        for(int j=0 ; j<image_len ; j++) test_input->operator()(j, 0) = static_cast<double>(image[j])/256;
+        for(int j=0 ; j<image_len ; j++) test_input(j, 0) = static_cast<double>(image[j])/256;
         /* read output label */
         file_labels.read((char*)label, label_len);
         /* compute output */
-        const Matrix<T>* y = fnn->feedforward(const_cast<const Matrix<T>*>(test_input));
+        const Matrix<T> y = fnn->feedforward(&test_input);
         int kmax = 0;
-        for(int k=0 ; k<10 ; k++) { if(y->operator()(k, 0)>y->operator()(kmax, 0)) kmax = k; }
+        for(int k=0 ; k<10 ; k++) { if(y(k, 0)>y(kmax, 0)) kmax = k; }
         if(kmax==label[0]) correct_classification++;
-        delete y;
     }
     /* displays the score */
     chrono_clock end = std::chrono::high_resolution_clock::now();
@@ -311,7 +309,7 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     auto         ms  = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
     std::cout << "test completed in " << static_cast<int>(ms/10.0)/100.0 << " s." << std::endl;
     std::cout << correct_classification << "/" << nb_images << " (" << 100*static_cast<double>(correct_classification)/nb_images << " %) images correctly classified." << std::endl;
-    delete test_input;
+    test_input.free();
     delete [] image;
     delete [] label;
     file_images.close();
@@ -337,25 +335,31 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
     file_images.seekg(image_header_len + nb_images_to_skip*image_len, std::ios_base::cur);
     file_labels.seekg(label_header_len + nb_images_to_skip*label_len, std::ios_base::cur);
     /* train across the remaning data */
-    std::vector<const Matrix<T>*> training_input;  training_input.reserve(nb_images);
-    std::vector<const Matrix<T>*> training_output; training_output.reserve(nb_images);
+    std::vector<Matrix<T>> training_input;  training_input.reserve(nb_images);
+    std::vector<Matrix<T>> training_output; training_output.reserve(nb_images);
     /* create the training set */
     for(int i=0 ; i<nb_images ; i++) {
         /* read an image from the file */
-        Matrix<T>* input = new Matrix<T>(image_len, 1);
+        Matrix<T> input(image_len, 1);
         file_images.read((char*)image, image_len);
-        for(int j=0 ; j<image_len ; j++) input->operator()(j, 0) = static_cast<double>(image[j])/256;
+        for(int j=0 ; j<image_len ; j++) input(j, 0) = static_cast<double>(image[j])/256;
         training_input.push_back(input);
         /* read the label from the data set and create the expected output matrix */
-        Matrix<T>* output = new Matrix<T>(10, 1);
+        Matrix<T> output(10, 1);
         file_labels.read((char*)label, label_len);
-        output->operator()(label[0], 0) = 1;
+        output(label[0], 0) = 1;
         training_output.push_back(output);
     }
     /* Stochastic Gradient Descent */
-    fnn->SGD(&training_input, &training_output, nb_images, nb_epoch, batch_len, eta, alpha);
-    for(const Matrix<T>* m : training_input)  delete m;
-    for(const Matrix<T>* m : training_output) delete m;
+    fnn->SGD(&training_input,
+             &training_output,
+             nb_images,
+             nb_epoch,
+             batch_len,
+             eta,
+             alpha);
+    for(Matrix<T> m : training_input)  m.free();
+    for(Matrix<T> m : training_output) m.free();
     delete [] image;
     delete [] label;
     file_images.close();

@@ -67,7 +67,7 @@ template<typename T>
 class FNN {
 
     typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_clock;
-    typedef std::pair<const Matrix<T>**, const Matrix<T>**>             nabla_pair;
+    typedef std::pair<std::vector<Matrix<T>>, std::vector<Matrix<T>>>   nabla_pair;
 
     public:
 
@@ -81,12 +81,12 @@ class FNN {
         void train();
         void use();
     
-        const Matrix<T>*  feedforward(const Matrix<T>*);
-        const Matrix<T>** feedforward_complete(const Matrix<T>*);
+        const Matrix<T>   feedforward(Matrix<T>*);
+        std::vector<Matrix<T>>  feedforward_complete(Matrix<T>*);
         void              random_init_values(FNNRightLayer<T>*);
-        void              SGD(std::vector<const Matrix<T>*>*, std::vector<const Matrix<T>*>*, const int, const int, const int, const double, const double);
-        void              SGD_batch_update(std::vector<const Matrix<T>*>*, std::vector<const Matrix<T>*>*, std::map<int, int>*, const int, int, const int, const double, const double);
-        nabla_pair        backpropagation_cross_entropy(const Matrix<T>*, const Matrix<T>*);
+        void              SGD(std::vector<Matrix<T>>*, std::vector<Matrix<T>>*, const int, const int, const int, const double, const double);
+        void              SGD_batch_update(std::vector<Matrix<T>>*, std::vector<Matrix<T>>*, std::map<int, int>*, const int, int, const int, const double, const double);
+        nabla_pair        backpropagation_cross_entropy(Matrix<T>&, Matrix<T>&);
     
     private:
     
@@ -130,24 +130,24 @@ class FNNRightLayer: public FNNLayer<T> {
 
     public:
     
-        FNNRightLayer(int nb_nodes, FNNLayer<T>* previous_layer) : FNNLayer<T>(nb_nodes), previous_layer(previous_layer) {
-            W = new Matrix<T>(nb_nodes, previous_layer->getNbNodes());
-            B = new Matrix<T>(nb_nodes, 1);
+        FNNRightLayer(int nb_nodes, FNNLayer<T>* previous_layer) :
+            FNNLayer<T>(nb_nodes),
+            previous_layer(previous_layer),
+            W(nb_nodes, previous_layer->getNbNodes()),
+            B(nb_nodes, 1) {
         }
 virtual ~FNNRightLayer() {
-            delete W;
-            delete B;
         }
     
         FNNLayer<T>* getPreviousLayer() { return previous_layer; }
-        Matrix<T>*   getBiases()        { return B; }
-        Matrix<T>*   getWeights()       { return W; }
+        Matrix<T>*   getBiases()        { return &B; }
+        Matrix<T>*   getWeights()       { return &W; }
     
     private:
     
         FNNLayer<T>* previous_layer;
-        Matrix<T>*   W;
-        Matrix<T>*   B;
+        Matrix<T>    W;
+        Matrix<T>    B;
     
 };
 
@@ -220,7 +220,7 @@ With n the learning rate. What we will do here is:
 So we need to compute NablaCW and NablaCB:
 
         d = (a-y)
-        NablaCw = dC/dw = a_ * d
+        NablaCw = dC/dw = d * a_
         NablaCb = dC/db = d
         
 The calculus involves sigmoid'(z) = sigmoid(z)*(1-sigmoid(z)), since
@@ -282,35 +282,44 @@ In these expressions:
          *  means a product of matrices
 */
 template<typename T>
-typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(const Matrix<T>* training_input, const Matrix<T>* training_output) {
+typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(Matrix<T>& training_input, Matrix<T>& training_output) {
     /* feedforward */
-    const Matrix<T>** activations = feedforward_complete(training_input);
+    std::vector<Matrix<T>> activations = feedforward_complete(&training_input);
     /* backpropagation */
-    const Matrix<T>** nabla_CW = new const Matrix<T>*[nb_right_layers];
-    const Matrix<T>** nabla_CB = new const Matrix<T>*[nb_right_layers];
-          Matrix<T>*  d        = new Matrix<T>(activations[nb_right_layers]);
-    d->operator-(training_output);
-    Matrix<T>* at = new Matrix<T>(activations[nb_right_layers-1]); at->transpose();
-    Matrix<T>* nw = new Matrix<T>(d);                              nw = nw->operator*(at);
-    nabla_CW[nb_right_layers-1] = nw;
-    nabla_CB[nb_right_layers-1] = d;
-    delete at;
+    std::vector<Matrix<T>> nabla_CW; nabla_CW.resize(nb_right_layers);
+    std::vector<Matrix<T>> nabla_CB; nabla_CB.resize(nb_right_layers);
+    Matrix<T> D(activations[nb_right_layers], true);
+    Matrix<T> At(activations[nb_right_layers-1], true);
+        D -= training_output;
+        At.self_transpose();
+    Matrix<T> NCW(D, true);
+        NCW *= At;
+        At.free();
+    nabla_CW[nb_right_layers-1] = NCW;
+    nabla_CB[nb_right_layers-1] = D;
+    /* activations[0] = input, do not free */
     /* backward propagation */
     for(int i=nb_right_layers-2 ; i>=0 ; i--) {
-        const Matrix<T>* a  = activations[i+1];
-              Matrix<T>* sp = Matrix<T>::Ones(a->getI());                     sp->operator-(a); sp->element_wise_product(a);
-              Matrix<T>* wt = new Matrix<T>(right_layers[i+1]->getWeights()); wt->transpose();
-        d = wt->operator*(d); d->element_wise_product(sp);
-        Matrix<T>* at = new Matrix<T>(activations[i]); at->transpose();
-        Matrix<T>* nw = new Matrix<T>(d);              nw = nw->operator*(at);
-        nabla_CW[i] = nw;
-        nabla_CB[i] = d;
-        delete at;
-        delete sp;
+        Matrix<T> Wt(right_layers[i+1]->getWeights(), true);
+            Wt.self_transpose();
+            D = Wt*D;
+            Wt.free();
+        Matrix<T>* A = &activations[i+1];
+        Matrix<T> SP(A->getI(), 1);
+            SP.fill(1);
+            SP -= A;
+            SP.element_wise_product(A);
+            D.element_wise_product(SP);
+            SP.free();
+        Matrix<T> At(activations[i], true);
+            At.self_transpose();
+        Matrix<T> NCW(D, true);
+            NCW *= At;
+            At.free();
+        nabla_CW[i] = NCW;
+        nabla_CB[i] = D;
+        activations[i+1].free();
     }
-    /* do not delete activations[0] (that's the input) */
-    for(int i=1 ; i<=nb_right_layers ; i++) delete activations[i];
-    delete [] activations;
     return nabla_pair(nabla_CW, nabla_CB);
 }
 
@@ -321,18 +330,19 @@ the output in [0 1]. This function is to be called when just
 the output is needed.
 */
 template<typename T>
-const Matrix<T>* FNN<T>::feedforward(const Matrix<T>* X) {
-    const Matrix<T>* current = X;
+const Matrix<T> FNN<T>::feedforward(Matrix<T>* X) {
+    std::vector<Matrix<T>> activations;
+    activations.push_back(*X);
     for(int i=0 ; i<nb_right_layers ; i++) {
-        FNNRightLayer<T>* current_layer = right_layers[i];
-        Matrix<T>*        W             = current_layer->getWeights();
-        Matrix<T>*        B             = current_layer->getBiases();
-        Matrix<T>*        a             = new Matrix<T>(W);
-        a = a->operator*(current)->operator+(B)->sigmoid();
-        if(current!=X) delete current;
-        current = a;
+        FNNRightLayer<T>* layer = right_layers[i];
+        Matrix<T> a(layer->getWeights(), true);
+            a *= activations[i];
+            a += layer->getBiases();
+            a.sigmoid();
+            activations.push_back(a);
+            if(i>0) activations[i].free();
     }
-    return current;
+    return activations[nb_right_layers];
 }
 
 /*
@@ -341,16 +351,16 @@ This function is to be called when all the activations are needed,
 for instance during the backpropagation step.
 */
 template<typename T>
-const Matrix<T>** FNN<T>::feedforward_complete(const Matrix<T>* X) {
-    const Matrix<T>** activations = new const Matrix<T>*[nb_right_layers+1];
-    activations[0]             = X;
+std::vector<Matrix<T>> FNN<T>::feedforward_complete(Matrix<T>* X) {
+    std::vector<Matrix<T>> activations;
+    activations.push_back(*X);
     for(int i=0 ; i<nb_right_layers ; i++) {
-        FNNRightLayer<T>*current_layer = right_layers[i];
-        Matrix<T>*       W             = current_layer->getWeights();
-        Matrix<T>*       B             = current_layer->getBiases();
-        Matrix<T>*       a             = new Matrix<T>(W);
-        a = a->operator*(activations[i])->operator+(B)->sigmoid();
-        activations[i+1] = a;
+        FNNRightLayer<T>* layer = right_layers[i];
+        Matrix<T> a(layer->getWeights(), true);
+            a *= activations[i];
+            a += layer->getBiases();
+            a.sigmoid();
+            activations.push_back(a);
     }
     return activations;
 }
@@ -379,7 +389,7 @@ data set has been completed. Depending on the number of epochs, the whole
 process can be run more than once.
 */
 template<typename T>
-void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
+void FNN<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Matrix<T>>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
     chrono_clock begin_training, begin_epoch, begin_batch;
     begin_training = std::chrono::high_resolution_clock::now();
     /* epochs */
@@ -427,37 +437,38 @@ This function is the actual SGD algorithm. It runs the backpropagation
 on the whole batch before updating the weights and biases.
 */
 template<typename T>
-void FNN<T>::SGD_batch_update(std::vector<const Matrix<T>*>* training_input, std::vector<const Matrix<T>*>* training_output, std::map<int, int>* shuffle, const int training_set_len, int batch_counter, const int batch_len, const double eta, const double alpha) {
+void FNN<T>::SGD_batch_update(std::vector<Matrix<T>>* training_input, std::vector<Matrix<T>>* training_output, std::map<int, int>* shuffle, const int training_set_len, int batch_counter, const int batch_len, const double eta, const double alpha) {
     /* create nabla matrices vectors */
-    std::vector<Matrix<T>*> nabla_CW; nabla_CW.reserve(nb_right_layers);
-    std::vector<Matrix<T>*> nabla_CB; nabla_CB.reserve(nb_right_layers);
+    std::vector<Matrix<T>> nabla_CW;
+    std::vector<Matrix<T>> nabla_CB;
     for(int i=0 ; i<nb_right_layers ; i++) {
-        nabla_CW.push_back(new Matrix<T>(layers[i+1], layers[i]));
-        nabla_CB.push_back(new Matrix<T>(layers[i+1], 1));
+        nabla_CW.emplace_back(layers[i+1], layers[i]); nabla_CW.back().fill(0);
+        nabla_CB.emplace_back(layers[i+1], 1);         nabla_CB.back().fill(0);
     }
     /* feedforward-backpropagation for each data in the batch and sum the nablas */
     for(int i=0 ; i<batch_len ; i++) {
-        nabla_pair delta_nabla = backpropagation_cross_entropy(training_input->at(shuffle->at(batch_counter)),
-                                                               training_output->at(shuffle->at(batch_counter)));
+        nabla_pair delta_nabla = backpropagation_cross_entropy(
+        training_input->at(
+        shuffle->at(batch_counter)),
+        training_output->at(
+        shuffle->at(batch_counter)));
         batch_counter++;
         for(int j=0 ; j<nb_right_layers ; j++) {
-            nabla_CW[j]->operator+(delta_nabla.first[j]);
-            nabla_CB[j]->operator+(delta_nabla.second[j]);
-            delete delta_nabla.first[j];
-            delete delta_nabla.second[j];
+            nabla_CW[j] += delta_nabla.first[j];  delta_nabla.first[j].free();
+            nabla_CB[j] += delta_nabla.second[j]; delta_nabla.second[j].free();
         }
-        delete [] delta_nabla.first;
-        delete [] delta_nabla.second;
     }
     /* update the parameters */
     for(int i=0 ; i<nb_right_layers ; i++) {
-        nabla_CW[i]->operator*(eta/static_cast<double>(batch_len));
-        nabla_CB[i]->operator*(eta/static_cast<double>(batch_len));
-        right_layers[i]->getWeights()->operator*(1-(alpha*eta)/static_cast<double>(training_set_len))->operator-(nabla_CW[i]);
-        right_layers[i]->getBiases()->operator-(nabla_CB[i]);
-        delete nabla_CW[i];
-        delete nabla_CB[i];
+        nabla_CW[i] *= eta/static_cast<double>(batch_len);
+        nabla_CB[i] *= eta/static_cast<double>(batch_len);
+        right_layers[i]->getWeights()->operator*=((1-(alpha*eta)/static_cast<double>(training_set_len)));
+        right_layers[i]->getWeights()->operator-=(&nabla_CW[i]);
+        right_layers[i]->getBiases()->operator-=(&nabla_CB[i]);
+        nabla_CW[i].free();
+        nabla_CB[i].free();
     }
+
 }
 
 /*
