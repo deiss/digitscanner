@@ -406,21 +406,21 @@ Displays the matrix.
 */
 template<typename T>
 void Matrix<T>::print() const {
-    if(transpose) {
-        for(int i=0 ; i<J ; i++) {
+    if(!transpose) {
+        for(int i=0 ; i<I ; i++) {
             std::cout << "| ";
-            for(int j=0 ; j<I ; j++) {
-                std::cout << matrix[j*J + i] << " ";
+            for(int j=0 ; j<J ; j++) {
+                std::cout << matrix[i*J + j] << " ";
             }
             std::cout << "|" << std::endl;
         }
         std::cout << std::endl;
     }
     else {
-        for(int i=0 ; i<I ; i++) {
+        for(int i=0 ; i<J ; i++) {
             std::cout << "| ";
-            for(int j=0 ; j<J ; j++) {
-                std::cout << matrix[i*J + j] << " ";
+            for(int j=0 ; j<I ; j++) {
+                std::cout << matrix[j*J + i] << " ";
             }
             std::cout << "|" << std::endl;
         }
@@ -433,11 +433,11 @@ Returns the matrix coefficient at row i, column j.
 */
 template<typename T>
 T Matrix<T>::operator()(int i, int j) const {
-    if(transpose) {
-        return matrix[j*J + i];
+    if(!transpose) {
+        return matrix[i*J + j];
     }
     else {
-        return matrix[i*J + j];
+        return matrix[j*J + i];
     }
 }
 
@@ -446,11 +446,11 @@ Returns a reference to the matrix coefficient at row i, column j.
 */
 template<typename T>
 T& Matrix<T>::operator()(int i, int j) {
-    if(transpose) {
-        return matrix[j*J + i];
+    if(!transpose) {
+        return matrix[i*J + j];
     }
     else {
-        return matrix[i*J + j];
+        return matrix[j*J + i];
     }
 }
 
@@ -475,27 +475,7 @@ Product of two matrices.
 */
 template<typename T>
 void Matrix<T>::operator*=(const Matrix& B) {
-    if(transpose) {
-        if(B.getI()!=I) {
-            std::string desc     = "Unable to multiply these two matrices (A*B): dimensions don't match.";
-            std::string function = "void Matrix<T>::operator*=(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception    e(desc, function, infos);
-            throw e;
-        }
-        Matrix res(J, B.getJ());
-        res.fill(0);
-        for(int i=0 ; i<J ; i++) {
-            for(int k=0 ; k<B.getI() ; k++) {
-                for(int j=0 ; j<B.getJ() ; j++) {
-                    res(i, j) += matrix[k*J + i]*B(k, j);
-                }
-            }
-        }
-        free();
-        *this = res;
-    }
-    else {
+    if(!transpose) {
         if(B.getI()!=J) {
             std::string desc     = "Unable to multiply these two matrices (A*B): dimensions don't match.";
             std::string function = "void Matrix<T>::operator*=(const Matrix& B)";
@@ -509,6 +489,26 @@ void Matrix<T>::operator*=(const Matrix& B) {
             for(int k=0 ; k<B.getI() ; k++) {
                 for(int j=0 ; j<B.getJ() ; j++) {
                     res(i, j) += matrix[i*J + k]*B(k, j);
+                }
+            }
+        }
+        free();
+        *this = res;
+    }
+    else {
+        if(B.getI()!=I) {
+            std::string desc     = "Unable to multiply these two matrices (A*B): dimensions don't match.";
+            std::string function = "void Matrix<T>::operator*=(const Matrix& B)";
+            std::string infos    = Exception::create_infos_two_matrices(this, &B);
+            Exception    e(desc, function, infos);
+            throw e;
+        }
+        Matrix res(J, B.getJ());
+        res.fill(0);
+        for(int i=0 ; i<J ; i++) {
+            for(int k=0 ; k<B.getI() ; k++) {
+                for(int j=0 ; j<B.getJ() ; j++) {
+                    res(i, j) += matrix[k*J + i]*B(k, j);
                 }
             }
         }
@@ -522,26 +522,7 @@ void Matrix<T>::operator*=(const Matrix* B) {
 }
 template<typename T>
 Matrix<T> Matrix<T>::operator*(const Matrix& B) const {
-    if(transpose) {
-        if(B.getI()!=I) {
-            std::string desc     = "Unable to multiply these two matrices (A*B): dimensions don't match.";
-            std::string function = "void Matrix<T>::operator*=(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception    e(desc, function, infos);
-            throw e;
-        }
-        Matrix res(J, B.getJ());
-        res.fill(0);
-        for(int i=0 ; i<J ; i++) {
-            for(int k=0 ; k<B.getI() ; k++) {
-                for(int j=0 ; j<B.getJ() ; j++) {
-                    res(i, j) += matrix[k*J + i]*B(k, j);
-                }
-            }
-        }
-        return res;
-    }
-    else {
+    if(!transpose) {
         if(B.getI()!=J) {
             std::string desc     = "Unable to multiply these two matrices (A*B): dimensions don't match.";
             std::string function = "void Matrix<T>::operator*=(const Matrix& B)";
@@ -555,6 +536,25 @@ Matrix<T> Matrix<T>::operator*(const Matrix& B) const {
             for(int k=0 ; k<B.getI() ; k++) {
                 for(int j=0 ; j<B.getJ() ; j++) {
                     res(i, j) += matrix[i*J + k]*B(k, j);
+                }
+            }
+        }
+        return res;
+    }
+    else {
+        if(B.getI()!=I) {
+            std::string desc     = "Unable to multiply these two matrices (A*B): dimensions don't match.";
+            std::string function = "void Matrix<T>::operator*=(const Matrix& B)";
+            std::string infos    = Exception::create_infos_two_matrices(this, &B);
+            Exception    e(desc, function, infos);
+            throw e;
+        }
+        Matrix res(J, B.getJ());
+        res.fill(0);
+        for(int i=0 ; i<J ; i++) {
+            for(int k=0 ; k<B.getI() ; k++) {
+                for(int j=0 ; j<B.getJ() ; j++) {
+                    res(i, j) += matrix[k*J + i]*B(k, j);
                 }
             }
         }
@@ -571,21 +571,7 @@ Addition of two matrices.
 */
 template<typename T>
 void Matrix<T>::operator+=(const Matrix& B) {
-    if(transpose) {
-        if(B.getI()!=J || B.getJ()!=I) {
-            std::string desc     = "Unable to add these two matrices (A+B): dimensions don't match.";
-            std::string function = "void Matrix<T>::operator+=(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception   e(desc, function, infos);
-            throw e;
-        }
-        for(int i=0 ; i<J ; i++) {
-            for(int j=0 ; j<I ; j++) {
-                matrix[j*J + i] += B(i, j);
-            }
-        }
-    }
-    else {
+    if(!transpose) {
         if(B.getI()!=I || B.getJ()!=J) {
             std::string desc     = "Unable to add these two matrices (A+B): dimensions don't match.";
             std::string function = "void Matrix<T>::operator+=(const Matrix& B)";
@@ -596,6 +582,20 @@ void Matrix<T>::operator+=(const Matrix& B) {
         for(int i=0 ; i<I ; i++) {
             for(int j=0 ; j<J ; j++) {
                 matrix[i*J + j] += B(i, j);
+            }
+        }
+    }
+    else {
+        if(B.getI()!=J || B.getJ()!=I) {
+            std::string desc     = "Unable to add these two matrices (A+B): dimensions don't match.";
+            std::string function = "void Matrix<T>::operator+=(const Matrix& B)";
+            std::string infos    = Exception::create_infos_two_matrices(this, &B);
+            Exception   e(desc, function, infos);
+            throw e;
+        }
+        for(int i=0 ; i<J ; i++) {
+            for(int j=0 ; j<I ; j++) {
+                matrix[j*J + i] += B(i, j);
             }
         }
     }
@@ -622,21 +622,7 @@ Substraction of two matrices.
 */
 template<typename T>
 void Matrix<T>::operator-=(const Matrix& B) {
-    if(transpose) {
-        if(B.getI()!=J || B.getJ()!=I) {
-            std::string desc     = "Unable to substract these two matrices (A-B): dimensions don't match.";
-            std::string function = "void Matrix<T>::operator-=(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception   e(desc, function, infos);
-            throw e;
-        }
-        for(int i=0 ; i<J ; i++) {
-            for(int j=0 ; j<I ; j++) {
-                matrix[j*J + i] -= B(i, j);
-            }
-        }
-    }
-    else {
+    if(!transpose) {
         if(B.getI()!=I || B.getJ()!=J) {
             std::string desc     = "Unable to substract these two matrices (A-B): dimensions don't match.";
             std::string function = "void Matrix<T>::operator-=(const Matrix& B)";
@@ -647,6 +633,20 @@ void Matrix<T>::operator-=(const Matrix& B) {
         for(int i=0 ; i<I ; i++) {
             for(int j=0 ; j<J ; j++) {
                 matrix[i*J + j] -= B(i, j);
+            }
+        }
+    }
+    else {
+        if(B.getI()!=J || B.getJ()!=I) {
+            std::string desc     = "Unable to substract these two matrices (A-B): dimensions don't match.";
+            std::string function = "void Matrix<T>::operator-=(const Matrix& B)";
+            std::string infos    = Exception::create_infos_two_matrices(this, &B);
+            Exception   e(desc, function, infos);
+            throw e;
+        }
+        for(int i=0 ; i<J ; i++) {
+            for(int j=0 ; j<I ; j++) {
+                matrix[j*J + i] -= B(i, j);
             }
         }
     }
@@ -677,21 +677,7 @@ void Matrix<T>::element_wise_product(const Matrix* B) {
 }
 template<typename T>
 void Matrix<T>::element_wise_product(const Matrix& B) {
-    if(transpose) {
-        if(B.getI()!=J || B.getJ()!=I) {
-            std::string desc     = "Unable to perform Hadamard product with these two matrices (A°B): dimensions don't match.";
-            std::string function = "void Matrix<T>::self_element_wise_product(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception   e(desc, function, infos);
-            throw e;
-        }
-        for(int i=0 ; i<J ; i++) {
-            for(int j=0 ; j<I ; j++) {
-                matrix[j*J + i] *= B(i, j);
-            }
-        }
-    }
-    else {
+    if(!transpose) {
         if(B.getI()!=I || B.getJ()!=J) {
             std::string desc     = "Unable to perform Hadamard product with these two matrices (A°B): dimensions don't match.";
             std::string function = "void Matrix<T>::self_element_wise_product(const Matrix& B)";
@@ -702,6 +688,20 @@ void Matrix<T>::element_wise_product(const Matrix& B) {
         for(int i=0 ; i<I ; i++) {
             for(int j=0 ; j<J ; j++) {
                 matrix[i*J + j] *= B(i, j);
+            }
+        }
+    }
+    else {
+        if(B.getI()!=J || B.getJ()!=I) {
+            std::string desc     = "Unable to perform Hadamard product with these two matrices (A°B): dimensions don't match.";
+            std::string function = "void Matrix<T>::self_element_wise_product(const Matrix& B)";
+            std::string infos    = Exception::create_infos_two_matrices(this, &B);
+            Exception   e(desc, function, infos);
+            throw e;
+        }
+        for(int i=0 ; i<J ; i++) {
+            for(int j=0 ; j<I ; j++) {
+                matrix[j*J + i] *= B(i, j);
             }
         }
     }
