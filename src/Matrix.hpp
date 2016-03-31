@@ -712,7 +712,7 @@ Creates a new matrix which is the transposed of this one and returns it.
 */
 template<typename T>
 Matrix<T> Matrix<T>::create_transpose() const {
-    Matrix Mt(this);
+    Matrix Mt(this, true);
     if(Mt.transpose) Mt.transpose = false;
     else             Mt.transpose = true;
     return Mt;
