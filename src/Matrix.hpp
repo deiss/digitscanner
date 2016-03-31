@@ -181,8 +181,8 @@ class Matrix {
         virtual ~Exception() throw() {}
             
          static std::string create_infos_two_matrices(const Matrix<T>* A, const Matrix<T>* B) {
-                    std::stringstream s_A; s_A << (void*)A; std::string str_A(s_A.str());
-                    std::stringstream s_B; s_B << (void*)B; std::string str_B(s_B.str());
+                    std::stringstream s_A;  s_A  << (void*)A;         std::string str_A(s_A.str());
+                    std::stringstream s_B;  s_B  << (void*)B;         std::string str_B(s_B.str());
                     std::stringstream s_Am; s_Am << (void*)A->matrix; std::string str_Am(s_Am.str());
                     std::stringstream s_Bm; s_Bm << (void*)B->matrix; std::string str_Bm(s_Bm.str());
                     return "A: [" + str_A + ", " +
