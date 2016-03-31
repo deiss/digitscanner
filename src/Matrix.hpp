@@ -39,53 +39,58 @@ class Matrix {
         ~Matrix();
     
         Matrix& operator=(const Matrix& B);
-        bool    operator==(const Matrix* B);
     
-        int  getI() const { return I; }
-        int  getJ() const { return J; }
-        void setI(int p_I) { I = p_I; }
-        void setJ(int p_J) { J = p_J; }
+        bool    operator==(const Matrix& B) const;
+        bool    operator==(const Matrix* B) const;
     
- static Matrix* ones_ret_n(int);
- static Matrix  ones_ret_c(int);
- static Matrix  identity(int);
+        int     getI() const { if(transpose) return J; else return I; }
+        int     getJ() const { if(transpose) return I; else return J; }
     
-        T       operator()(int, int) const;
+        T       operator()(int, int)  const;
         T&      operator()(int, int);
     
-        Matrix  operator*(T)             const;
-        Matrix  operator*(const Matrix&) const;
-        Matrix  operator*(const Matrix*) const;
-        Matrix  operator+(const Matrix&) const;
-        Matrix  operator-(const Matrix&) const;
-        Matrix  operator-(const Matrix*) const;
-        Matrix  create_transpose()       const;
-        
         void    operator*=(T);
+        Matrix  operator*(T)   const;
+    
         void    operator*=(const Matrix&);
         void    operator*=(const Matrix*);
+        Matrix  operator*(const Matrix&)   const;
+        Matrix  operator*(const Matrix*)   const;
+    
         void    operator+=(const Matrix&);
         void    operator+=(const Matrix*);
+        Matrix  operator+(const Matrix&)   const;
+        Matrix  operator+(const Matrix*)   const;
+    
         void    operator-=(const Matrix&);
+        void    operator-=(const Matrix*);
+        Matrix  operator-(const Matrix&)   const;
+        Matrix  operator-(const Matrix*)   const;
+    
+        Matrix  create_transpose() const;
+    
         void    self_element_wise_product(const Matrix*);
         void    self_element_wise_product(const Matrix&);
         void    self_sigmoid();
         void    self_transpose();
     
+        void    fill(T);
+        void    fill_identity();
+    
  inline T       sigmoid(T) const;
  
         void    free();
         void    print() const;
-        void    resize(int, int);
     
     private:
     
         void copy_matrix(const Matrix<T>*);
         void init_matrix();
 
-        int I;        /* number of rows */
-        int J;        /* number of columns */
-        T*  matrix;   /* matrix' coefficients */
+        int  I;           /* number of rows */
+        int  J;           /* number of columns */
+        T*   matrix;      /* matrix' coefficients */
+        bool transpose;   /* tells whether the matrix is transposed or not */
 
 };
 
@@ -98,7 +103,8 @@ template<typename T>
 Matrix<T>::Matrix() :
     I(0),
     J(0),
-    matrix{0} {
+    matrix{0},
+    transpose(false) {
 }
 
 /*
@@ -108,7 +114,8 @@ template<typename T>
 Matrix<T>::Matrix(int I, int J) :
     I(I),
     J(J),
-    matrix{0} {
+    matrix{0},
+    transpose(false) {
     init_matrix();
 }
 
@@ -120,16 +127,16 @@ Matrix<T>::Matrix(const Matrix<T>& B, bool deep_copy) :
     I(B.I),
     J(B.J),
     matrix{0} {
-    if(deep_copy) { init_matrix(); copy_matrix(&B); }
-    else          { matrix=B.matrix; }
+    if(deep_copy) { init_matrix(); copy_matrix(&B); transpose = B.transpose; }
+    else          { matrix=B.matrix; transpose = B.transpose; }
 }
 template<typename T>
 Matrix<T>::Matrix(const Matrix<T>* B, bool deep_copy) :
     I(B->I),
     J(B->J),
     matrix{0} {
-    if(deep_copy) { init_matrix(); copy_matrix(B); }
-    else          { matrix=B->matrix; }
+    if(deep_copy) { init_matrix(); copy_matrix(B); transpose = B->transpose; }
+    else          { matrix=B->matrix; transpose = B->transpose; }
 }
 
 /*
@@ -149,9 +156,10 @@ This matrix's coefficient are the same as B's (same pointer).
 */
 template<typename T>
 Matrix<T>& Matrix<T>::operator=(const Matrix<T>& B) {
-    I      = B.I;
-    J      = B.J;
-    matrix = B.matrix;
+    I         = B.getI();
+    J         = B.getJ();
+    matrix    = B.matrix;
+    transpose = B.transpose;
     return *this;
 }
 
@@ -159,18 +167,37 @@ Matrix<T>& Matrix<T>::operator=(const Matrix<T>& B) {
 Comparison operator.
 */
 template<typename T>
-bool Matrix<T>::operator==(const Matrix<T>* B) {
-    if(I!=B->getI() || J!=B->getJ()) {
-        return false;
-    }
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            if(matrix[i*J + j]!=B->operator()(i, j)) {
-                return false;
+bool Matrix<T>::operator==(const Matrix<T>& B) const {
+    if(transpose) {
+        if(J!=B.getI() || I!=B.getJ()) {
+            return false;
+        }
+        for(int i=0 ; i<J ; i++) {
+            for(int j=0 ; j<I ; j++) {
+                if(matrix[j*J + i]!=B(i, j)) {
+                    return false;
+                }
             }
         }
+        return true;
     }
-    return true;
+    else {
+        if(I!=B.getI() || J!=B.getJ()) {
+            return false;
+        }
+        for(int i=0 ; i<I ; i++) {
+            for(int j=0 ; j<J ; j++) {
+                if(matrix[i*J + j]!=B(i, j)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+}
+template<typename T>
+bool Matrix<T>::operator==(const Matrix<T>* B) const {
+    return *this==*B;
 }
 
 /*
@@ -178,7 +205,10 @@ Deletes the coefficients.
 */
 template<typename T>
 void Matrix<T>::free() {
-    if(matrix) { delete [] matrix; matrix = 0; }
+    if(matrix) {
+        delete [] matrix;
+        matrix = 0;
+    }
 }
 
 /*
@@ -197,7 +227,8 @@ T Matrix<T>::sigmoid(T x) const {
 }
 
 /*
-Applies the sigmoid function to a matrix.
+Applies the sigmoid function to a matrix. This function is the same
+whether the matrix is transposed or not.
 */
 template<typename T>
 void Matrix<T>::self_sigmoid() {
@@ -209,13 +240,31 @@ void Matrix<T>::self_sigmoid() {
 }
 
 /*
-Sets the matrix' coefficients to 0.
+Creates the coefficients matrix.
 */
 template<typename T>
 void Matrix<T>::init_matrix() {
     matrix = new T[I*J];
+}
+
+/*
+Fills with zeros.
+*/
+template<typename T>
+void Matrix<T>::fill(T alpha) {
     for(int i=0 ; i<I*J ; i++) {
-        matrix[i] = 0;
+        matrix[i] = alpha;
+    }
+}
+
+/*
+Creates the identity matrix.
+*/
+template<typename T>
+void Matrix<T>::fill_identity() {
+    if(I!=J) std::cerr << "fill_identity(): Not a squared matrix" << std::endl;
+    for(int i=0 ; i<I ; i++) {
+        matrix[i*(I+1)] = 1;
     }
 }
 
@@ -224,55 +273,26 @@ Displays the matrix.
 */
 template<typename T>
 void Matrix<T>::print() const {
-    for(int i=0 ; i<I ; i++) {
-        std::cout << "| ";
-        for(int j=0 ; j<J ; j++) {
-            std::cout << matrix[i*J + j] << " ";
+    if(transpose) {
+        for(int i=0 ; i<J ; i++) {
+            std::cout << "| ";
+            for(int j=0 ; j<I ; j++) {
+                std::cout << matrix[j*J + i] << " ";
+            }
+            std::cout << "|" << std::endl;
         }
-        std::cout << "|" << std::endl;
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
-}
-
-/*
-Resizes the matrix. The old martrix is deleted and the new one
-has all coefficients to 0.
-*/
-template<typename T>
-void Matrix<T>::resize(int I, int J) {
-    free();
-    this->I = I;
-    this->J = J;
-    init_matrix();
-}
-
-/*
-Dynamically creates a vector of ones and return a pointer.
-*/
-template<typename T>
-Matrix<T>* Matrix<T>::ones_ret_n(int I) {
-    Matrix* R = new Matrix(I, 1);
-    for(int i=0 ; i<I ; i++) R->operator()(i, 0) = 1;
-    return R;
-}
-/*
-Dynamically creates a vector of ones and returns a copy.
-*/
-template<typename T>
-Matrix<T> Matrix<T>::ones_ret_c(int I) {
-    Matrix R(I, 1);
-    for(int i=0 ; i<I ; i++) R(i, 0) = 1;
-    return R;
-}
-
-/*
-Creates the identity matrix.
-*/
-template<typename T>
-Matrix<T> Matrix<T>::identity(int I) {
-    Matrix R(I, I);
-    for(int i=0 ; i<I ; i++) R(i, i) = 1;
-    return R;
+    else {
+        for(int i=0 ; i<I ; i++) {
+            std::cout << "| ";
+            for(int j=0 ; j<J ; j++) {
+                std::cout << matrix[i*J + j] << " ";
+            }
+            std::cout << "|" << std::endl;
+        }
+        std::cout << std::endl;
+    }
 }
 
 /*
@@ -280,7 +300,12 @@ Returns the matrix coefficient at row i, column j.
 */
 template<typename T>
 T Matrix<T>::operator()(int i, int j) const {
-    return matrix[i*J + j];
+    if(transpose) {
+        return matrix[j*J + i];
+    }
+    else {
+        return matrix[i*J + j];
+    }
 }
 
 /*
@@ -288,10 +313,13 @@ Returns a reference to the matrix coefficient at row i, column j.
 */
 template<typename T>
 T& Matrix<T>::operator()(int i, int j) {
-    return matrix[i*J + j];
+    if(transpose) {
+        return matrix[j*J + i];
+    }
+    else {
+        return matrix[i*J + j];
+    }
 }
-
-/* Reference operators */
 
 /*
 Multiplication of a matrix by a number.
@@ -299,156 +327,161 @@ Multiplication of a matrix by a number.
 template<typename T>
 Matrix<T> Matrix<T>::operator*(T lambda) const {
     Matrix<T> result(this, true);
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            result(i, j) = matrix[i*J + j] * lambda;
-        }
-    }
+    result *= lambda;
     return result;
 }
 template<typename T>
 void Matrix<T>::operator*=(T lambda) {
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            matrix[i*J + j] *= lambda;
-        }
+    for(int i=0 ; i<I*J ; i++) {
+        matrix[i] *= lambda;
     }
 }
 
 /*
-Product of two matrices, can only be called on dynamically created
-(using 'new') Matrix objects.
+Product of two matrices.
 */
 template<typename T>
-Matrix<T> Matrix<T>::operator*(const Matrix& B) const {
-    if(B.I!=J) std::cerr << "Matrix dimension dismatch! operator*" << std::endl;
-    Matrix result(I, B.J);
-    for(int i=0 ; i<I ; i++) {
-        for(int k=0 ; k<B.I ; k++) {
-            for(int j=0 ; j<B.J ; j++) {
-                result(i, j) += matrix[i*J + k]*B(k, j);
+void Matrix<T>::operator*=(const Matrix& B) {
+    if(transpose) {
+        if(B.getI()!=I) {
+            std::cerr << "Matrix dimension dismatch! operator*" << std::endl;
+            throw 1;
+        }
+        Matrix res(J, B.getJ());
+        res.fill(0);
+        for(int i=0 ; i<J ; i++) {
+            for(int k=0 ; k<B.getI() ; k++) {
+                for(int j=0 ; j<B.getJ() ; j++) {
+                    res(i, j) += matrix[k*J + i]*B(k, j);
+                }
             }
         }
+        free();
+        *this = res;
     }
+    else {
+        if(B.getI()!=J) {
+            std::cerr << "Matrix dimension dismatch! operator*" << std::endl;
+            throw 1;
+        }
+        Matrix res(I, B.getJ());
+        res.fill(0);
+        for(int i=0 ; i<I ; i++) {
+            for(int k=0 ; k<B.getI() ; k++) {
+                for(int j=0 ; j<B.getJ() ; j++) {
+                    res(i, j) += matrix[i*J + k]*B(k, j);
+                }
+            }
+        }
+        free();
+        *this = res;
+    }
+}
+template<typename T>
+void Matrix<T>::operator*=(const Matrix* B) {
+    *this *= *B;
+}
+template<typename T>
+Matrix<T> Matrix<T>::operator*(const Matrix& B) const {
+    Matrix result(this, true);
+    result *= B;
     return result;
 }
 template<typename T>
 Matrix<T> Matrix<T>::operator*(const Matrix* B) const {
-    if(B->I!=J) std::cerr << "Matrix dimension dismatch! operator*" << std::endl;
-    Matrix result(I, B->J);
-    for(int i=0 ; i<I ; i++) {
-        for(int k=0 ; k<B->I ; k++) {
-            for(int j=0 ; j<B->J ; j++) {
-                result(i, j) += matrix[i*J + k]*B(k, j);
-            }
-        }
-    }
+    Matrix result(this, true);
+    result *= *B;
     return result;
-}
-template<typename T>
-void Matrix<T>::operator*=(const Matrix& B) {
-    if(B.I!=J) std::cerr << "Matrix dimension dismatch! operator*" << std::endl;
-    Matrix res(I, B.J);
-    for(int i=0 ; i<I ; i++) {
-        for(int k=0 ; k<B.I ; k++) {
-            for(int j=0 ; j<B.J ; j++) {
-                res(i, j) += matrix[i*J + k]*B(k, j);
-            }
-        }
-    }
-    free();
-    *this = res;
-}
-template<typename T>
-void Matrix<T>::operator*=(const Matrix* B) {
-    if(B->I!=J) std::cerr << "Matrix dimension dismatch! operator*" << std::endl;
-    Matrix res(I, B->J);
-    for(int i=0 ; i<I ; i++) {
-        for(int k=0 ; k<B->I ; k++) {
-            for(int j=0 ; j<B->J ; j++) {
-                res(i, j) += matrix[i*J + k]*B->operator()(k, j);
-            }
-        }
-    }
-    free();
-    *this = res;
 }
 
 /*
 Addition of two matrices.
 */
 template<typename T>
-Matrix<T> Matrix<T>::operator+(const Matrix& B) const {
-    Matrix result(this, true);
-    if(B.I!=I || B.J!=J) {
-        std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
-        throw 1;
-    }
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            result(i, j) = matrix[i*J + j] + B(i, j);
+void Matrix<T>::operator+=(const Matrix& B) {
+    if(transpose) {
+        if(B.getI()!=J || B.getJ()!=I) {
+            std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
+            throw 2;
+        }
+        for(int i=0 ; i<J ; i++) {
+            for(int j=0 ; j<I ; j++) {
+                matrix[j*J + i] += B(i, j);
+            }
         }
     }
-    return result;
-}
-template<typename T>
-void Matrix<T>::operator+=(const Matrix& B) {
-    if(B.I!=I || B.J!=J) {
-        std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
-        throw 2;
-    }
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            matrix[i*J + j] += B(i, j);
+    else {
+        if(B.getI()!=I || B.getJ()!=J) {
+            std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
+            throw 2;
+        }
+        for(int i=0 ; i<I ; i++) {
+            for(int j=0 ; j<J ; j++) {
+                matrix[i*J + j] += B(i, j);
+            }
         }
     }
 }
 template<typename T>
 void Matrix<T>::operator+=(const Matrix* B) {
-    if(B->I!=I || B->J!=J) {
-        std::cerr << "Matrix dimension dismatch! operator+" << std::endl;
-        throw 3;
-    }
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            matrix[i*J + j] += B->operator()(i, j);
-        }
-    }
+    *this += *B;
+}
+template<typename T>
+Matrix<T> Matrix<T>::operator+(const Matrix& B) const {
+    Matrix result(this, true);
+    result += B;
+    return result;
+}
+template<typename T>
+Matrix<T> Matrix<T>::operator+(const Matrix* B) const {
+    Matrix result(this, true);
+    result += *B;
+    return result;
 }
 
 /*
 Substraction of two matrices.
 */
 template<typename T>
-Matrix<T> Matrix<T>::operator-(const Matrix& B) const {
-    Matrix<T> result(this, true);
-    if(B.I!=I || B.J!=J) std::cerr << "Matrix dimension dismatch! operator-" << std::endl;
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            result(i, j) = matrix[i*J + j] - B(i, j);
+void Matrix<T>::operator-=(const Matrix& B) {
+    if(transpose) {
+        if(B.getI()!=J || B.getJ()!=I) {
+            std::cerr << "Matrix dimension dismatch! operator-" << std::endl;
+            throw 2;
+        }
+        for(int i=0 ; i<J ; i++) {
+            for(int j=0 ; j<I ; j++) {
+                matrix[j*J + i] -= B(i, j);
+            }
         }
     }
+    else {
+        if(B.getI()!=I || B.getJ()!=J) {
+            std::cerr << "Matrix dimension dismatch! operator-" << std::endl;
+            throw 2;
+        }
+        for(int i=0 ; i<I ; i++) {
+            for(int j=0 ; j<J ; j++) {
+                matrix[i*J + j] -= B(i, j);
+            }
+        }
+    }
+}
+template<typename T>
+void Matrix<T>::operator-=(const Matrix* B) {
+    *this -= *B;
+}
+template<typename T>
+Matrix<T> Matrix<T>::operator-(const Matrix& B) const {
+    Matrix<T> result(this, true);
+    result -= B;
     return result;
 }
 template<typename T>
 Matrix<T> Matrix<T>::operator-(const Matrix* B) const {
     Matrix<T> result(this, true);
-    if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! operator-" << std::endl;
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            result(i, j) = matrix[i*J + j] - B->operator()(i, j);
-        }
-    }
+    result -= *B;
     return result;
-}
-template<typename T>
-void Matrix<T>::operator-=(const Matrix& B) {
-    if(B.I!=I || B.J!=J) std::cerr << "Matrix dimension dismatch! operator-" << std::endl;
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            matrix[i*J + j] -= B(i, j);
-        }
-    }
 }
 
 /*
@@ -456,19 +489,30 @@ Element wise product of two matrices.
 */
 template<typename T>
 void Matrix<T>::self_element_wise_product(const Matrix* B) {
-    if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! element_wise_product" << std::endl;
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            matrix[i*J + j] *= B->operator()(i, j);
-        }
-    }
+    self_element_wise_product(*B);
 }
 template<typename T>
 void Matrix<T>::self_element_wise_product(const Matrix& B) {
-    if(B.I!=I || B.J!=J) std::cerr << "Matrix dimension dismatch! element_wise_product" << std::endl;
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            matrix[i*J + j] *= B(i, j);
+    if(transpose) {
+        if(B.getI()!=J || B.getJ()!=I) {
+            std::cerr << "Matrix dimension dismatch! element_wise_product" << std::endl;
+            throw 1;
+        }
+        for(int i=0 ; i<J ; i++) {
+            for(int j=0 ; j<I ; j++) {
+                matrix[j*J + i] *= B(i, j);
+            }
+        }
+    }
+    else {
+        if(B.getI()!=I || B.getJ()!=J) {
+            std::cerr << "Matrix dimension dismatch! element_wise_product" << std::endl;
+            throw 1;
+        }
+        for(int i=0 ; i<I ; i++) {
+            for(int j=0 ; j<J ; j++) {
+                matrix[i*J + j] *= B(i, j);
+            }
         }
     }
 }
@@ -479,8 +523,8 @@ Creates a new matrix which is the transposed of this one and returns it.
 template<typename T>
 Matrix<T> Matrix<T>::create_transpose() const {
     Matrix Mt(this);
-    Mt.setI(J);
-    Mt.setJ(I);
+    if(Mt.transpose) Mt.transpose = false;
+    else             Mt.transpose = true;
     return Mt;
 }
 
@@ -489,9 +533,8 @@ In-place transpose of the matrix.
 */
 template<typename T>
 void Matrix<T>::self_transpose() {
-    int I_old = I;
-    I = J;
-    J = I_old;
+    if(transpose) transpose = false;
+    else          transpose = true;
 }
 
 #endif

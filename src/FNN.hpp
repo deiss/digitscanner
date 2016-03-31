@@ -306,7 +306,8 @@ typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(Matrix<T>& tra
             wt.free();
             // d = W^t * D
         Matrix<T>* a = &activations[i+1];
-        Matrix<T> sp = Matrix<T>::ones_ret_c(a->getI());
+        Matrix<T> sp(a->getI(), 1);
+            sp.fill(1);
             sp -= a;
             sp.self_element_wise_product(a);
             d.self_element_wise_product(sp);
@@ -446,12 +447,16 @@ void FNN<T>::SGD_batch_update(std::vector<Matrix<T>>* training_input, std::vecto
     std::vector<Matrix<T>> nabla_CW;
     std::vector<Matrix<T>> nabla_CB;
     for(int i=0 ; i<nb_right_layers ; i++) {
-        nabla_CW.emplace_back(layers[i+1], layers[i]);
-        nabla_CB.emplace_back(layers[i+1], 1);
+        nabla_CW.emplace_back(layers[i+1], layers[i]); nabla_CW.back().fill(0);
+        nabla_CB.emplace_back(layers[i+1], 1);         nabla_CB.back().fill(0);
     }
     /* feedforward-backpropagation for each data in the batch and sum the nablas */
     for(int i=0 ; i<batch_len ; i++) {
-        nabla_pair delta_nabla = backpropagation_cross_entropy(training_input->at(shuffle->at(batch_counter)), training_output->at(shuffle->at(batch_counter)));
+        nabla_pair delta_nabla = backpropagation_cross_entropy(
+        training_input->at(
+        shuffle->at(batch_counter)),
+        training_output->at(
+        shuffle->at(batch_counter)));
         batch_counter++;
         for(int j=0 ; j<nb_right_layers ; j++) {
             nabla_CW[j] += delta_nabla.first[j];  delta_nabla.first[j].free();
