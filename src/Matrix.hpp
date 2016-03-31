@@ -57,6 +57,7 @@ class Matrix {
         Matrix  operator+(const Matrix&) const;
         Matrix  operator-(const Matrix&) const;
         Matrix  operator-(const Matrix*) const;
+        Matrix  create_transpose()       const;
         
         void    operator*=(T);
         void    operator*=(const Matrix&);
@@ -64,22 +65,21 @@ class Matrix {
         void    operator+=(const Matrix&);
         void    operator+=(const Matrix*);
         void    operator-=(const Matrix&);
+        void    self_element_wise_product(const Matrix*);
+        void    self_element_wise_product(const Matrix&);
+        void    self_sigmoid();
+        void    self_transpose();
     
+ inline T       sigmoid(T) const;
+ 
         void    free();
-        Matrix* self_element_wise_product(const Matrix*);
-        Matrix& self_element_wise_product(const Matrix&);
         void    print() const;
         void    resize(int, int);
- inline T       sigmoid(T) const;
-        void    self_sigmoid();
-        Matrix  create_transpose() const;
-        void    self_transpose();
     
     private:
     
         void copy_matrix(const Matrix<T>*);
         void init_matrix();
-        void delete_matrix();
 
         int I;        /* number of rows */
         int J;        /* number of columns */
@@ -172,11 +172,11 @@ bool Matrix<T>::operator==(const Matrix<T>* B) {
 }
 
 /*
-Frees the memory.
+Deletes the coefficients.
 */
 template<typename T>
 void Matrix<T>::free() {
-    delete_matrix();
+    if(matrix) { delete [] matrix; matrix = 0; }
 }
 
 /*
@@ -204,15 +204,6 @@ void Matrix<T>::self_sigmoid() {
             matrix[i*J + j] = sigmoid(matrix[i*J + j]);
         }
     }
-}
-
-/*
-Deletes the coefficients.
-*/
-template<typename T>
-void Matrix<T>::delete_matrix() {
-    if(matrix) delete [] matrix;
-    matrix = 0;
 }
 
 /*
@@ -247,7 +238,7 @@ has all coefficients to 0.
 */
 template<typename T>
 void Matrix<T>::resize(int I, int J) {
-    delete_matrix();
+    free();
     this->I = I;
     this->J = J;
     init_matrix();
@@ -363,7 +354,7 @@ void Matrix<T>::operator*=(const Matrix& B) {
             }
         }
     }
-    delete_matrix();
+    free();
     *this = res;
 }
 template<typename T>
@@ -377,7 +368,7 @@ void Matrix<T>::operator*=(const Matrix* B) {
             }
         }
     }
-    delete_matrix();
+    free();
     *this = res;
 }
 
@@ -462,24 +453,22 @@ void Matrix<T>::operator-=(const Matrix& B) {
 Element wise product of two matrices.
 */
 template<typename T>
-Matrix<T>* Matrix<T>::self_element_wise_product(const Matrix* B) {
+void Matrix<T>::self_element_wise_product(const Matrix* B) {
     if(B->I!=I || B->J!=J) std::cerr << "Matrix dimension dismatch! element_wise_product" << std::endl;
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
             matrix[i*J + j] *= B->operator()(i, j);
         }
     }
-    return this;
 }
 template<typename T>
-Matrix<T>& Matrix<T>::self_element_wise_product(const Matrix& B) {
+void Matrix<T>::self_element_wise_product(const Matrix& B) {
     if(B.I!=I || B.J!=J) std::cerr << "Matrix dimension dismatch! element_wise_product" << std::endl;
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
             matrix[i*J + j] *= B(i, j);
         }
     }
-    return *this;
 }
 
 /*
@@ -487,24 +476,30 @@ Transpose the matrix.
 */
 template<typename T>
 Matrix<T> Matrix<T>::create_transpose() const {
-    Matrix copy(J, I);
+    Matrix Mt(J, I);
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
-            copy(j, i) = matrix[i*J + j];
+            Mt(j, i) = matrix[i*J + j];
         }
     }
-    return copy;
+    return Mt;
 }
+
 template<typename T>
 void Matrix<T>::self_transpose() {
-    Matrix copy(this, true);
-    resize(J, I);
+    /*
+    Matrix Mt(J, I);
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
-            matrix[i*J + j] = copy(j, i);
+            Mt(j, i) = matrix[i*J + j];
         }
     }
-    copy.free();
+    free();
+    matrix = Mt.matrix;
+    */
+    int I_old = I;
+    I = J;
+    J = I_old;
 }
 
 #endif
