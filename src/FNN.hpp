@@ -220,7 +220,7 @@ With n the learning rate. What we will do here is:
 So we need to compute NablaCW and NablaCB:
 
         d = (a-y)
-        NablaCw = dC/dw = a_ * d
+        NablaCw = dC/dw = d * a_
         NablaCb = dC/db = d
         
 The calculus involves sigmoid'(z) = sigmoid(z)*(1-sigmoid(z)), since
@@ -281,7 +281,6 @@ In these expressions:
          °  means an element wise product (Hadamard product)
          *  means a product of matrices
 */
-//////////////////////////////// nabla_pair (no *) --> memory leak
 template<typename T>
 typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(Matrix<T>& training_input, Matrix<T>& training_output) {
     /* feedforward */
@@ -289,40 +288,37 @@ typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(Matrix<T>& tra
     /* backpropagation */
     std::vector<Matrix<T>> nabla_CW; nabla_CW.resize(nb_right_layers);
     std::vector<Matrix<T>> nabla_CB; nabla_CB.resize(nb_right_layers);
-    Matrix<T> d(activations[nb_right_layers], true);
-    Matrix<T> at(activations[nb_right_layers-1], true);
-        d -= training_output;
-        at.self_transpose();
-    Matrix<T> nw(d, true);
-        nw *= at;
-        at.free();
-    nabla_CW[nb_right_layers-1] = nw;
-    nabla_CB[nb_right_layers-1] = d;
+    Matrix<T> D(activations[nb_right_layers], true);
+    Matrix<T> At(activations[nb_right_layers-1], true);
+        D -= training_output;
+        At.self_transpose();
+    Matrix<T> NCW(D, true);
+        NCW *= At;
+        At.free();
+    nabla_CW[nb_right_layers-1] = NCW;
+    nabla_CB[nb_right_layers-1] = D;
+    /* activations[0] = input, do not free */
     /* backward propagation */
     for(int i=nb_right_layers-2 ; i>=0 ; i--) {
-        Matrix<T> wt(right_layers[i+1]->getWeights(), true);
-            wt.self_transpose();
-            d = wt*d;
-            wt.free();
-            // d = W^t * D
-        Matrix<T>* a = &activations[i+1];
-        Matrix<T> sp(a->getI(), 1);
-            sp.fill(1);
-            sp -= a;
-            sp.self_element_wise_product(a);
-            d.self_element_wise_product(sp);
-            sp.free();
-            // d = [ W^t * D ] ° [ (1-a) ° a ]
-        Matrix<T> at(activations[i], true);
-            at.self_transpose();
-        Matrix<T> nw(d, true);
-            nw *= at;
-            at.free();
-            // nw = [ W^t * D ] ° [ (1-a) ° a ] * a_^t
-        nabla_CW[i] = nw;
-        nabla_CB[i] = d;
+        Matrix<T> Wt(right_layers[i+1]->getWeights(), true);
+            Wt.self_transpose();
+            D = Wt*D;
+            Wt.free();
+        Matrix<T>* A = &activations[i+1];
+        Matrix<T> SP(A->getI(), 1);
+            SP.fill(1);
+            SP -= A;
+            SP.self_element_wise_product(A);
+            D.self_element_wise_product(SP);
+            SP.free();
+        Matrix<T> At(activations[i], true);
+            At.self_transpose();
+        Matrix<T> NCW(D, true);
+            NCW *= At;
+            At.free();
+        nabla_CW[i] = NCW;
+        nabla_CB[i] = D;
         activations[i+1].free();
-        /* activations[0] = input, do not delete */
     }
     
     return nabla_pair(nabla_CW, nabla_CB);
