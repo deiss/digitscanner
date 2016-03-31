@@ -294,10 +294,23 @@ bool Matrix<T>::operator==(const Matrix<T>& B) const {
         if(J!=B.getI() || I!=B.getJ()) {
             return false;
         }
-        for(int i=0 ; i<J ; i++) {
-            for(int j=0 ; j<I ; j++) {
-                if(matrix[j*J + i]!=B(i, j)) {
-                    return false;
+        int BI = B.getI();
+        int BJ = B.getJ();
+        if(!B.transpose) {
+            for(int i=0 ; i<J ; i++) {
+                for(int j=0 ; j<I ; j++) {
+                    if(matrix[j*J + i]!=B.matrix[i*BJ + j]) {
+                        return false;
+                    }
+                }
+            }
+        }
+        else {
+            for(int i=0 ; i<J ; i++) {
+                for(int j=0 ; j<I ; j++) {
+                    if(matrix[j*J + i]!=B.matrix[j*BI + i]) {
+                        return false;
+                    }
                 }
             }
         }
@@ -307,10 +320,23 @@ bool Matrix<T>::operator==(const Matrix<T>& B) const {
         if(I!=B.getI() || J!=B.getJ()) {
             return false;
         }
-        for(int i=0 ; i<I ; i++) {
-            for(int j=0 ; j<J ; j++) {
-                if(matrix[i*J + j]!=B(i, j)) {
-                    return false;
+        int BI = B.getI();
+        int BJ = B.getJ();
+        if(!B.transpose) {
+            for(int i=0 ; i<I ; i++) {
+                for(int j=0 ; j<J ; j++) {
+                    if(matrix[i*J + j]!=B.matrix[i*BJ + j]) {
+                        return false;
+                    }
+                }
+            }
+        }
+        else {
+            for(int i=0 ; i<I ; i++) {
+                for(int j=0 ; j<J ; j++) {
+                    if(matrix[i*J + j]!=B.matrix[j*BI + i]) {
+                        return false;
+                    }
                 }
             }
         }
