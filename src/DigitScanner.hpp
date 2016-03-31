@@ -62,8 +62,8 @@ class DigitScanner {
     
     private:
     
-        FNN<T>*        fnn;           /* feedforward neural network */
-        Matrix<float>* digit;         /* input digit, 784 pixels of the picture */
+        FNN<T>*        fnn;     /* feedforward neural network */
+        Matrix<float>* digit;   /* input digit, 784 pixels of the picture */
 
 };
 
@@ -187,13 +187,13 @@ bool DigitScanner<T>::load(std::string path) {
         /* weights and biases */
         for(int i=0 ; i<nb_layers-1 ; i++) {
             FNNRightLayer<T>* current = fnn->getRightLayer(i);
-            Matrix<T>        W       = current->getWeights();
-            Matrix<T>        B       = current->getBiases();
+            Matrix<T>         W = current->getWeights();
+            Matrix<T>         B = current->getBiases();
             /* W - n2 rows and n1 columns if the second layer has n2 nodes */
             /* and the first one has n1 nodes. */
             for(int j=0 ; j<W.getI() ; j++) {
                 for(int k=0 ; k<W.getJ() ; k++) {
-                    file >> W.operator()(j, k);
+                    file >> W(j, k);
                 }
             }
             /* B - one line, n2 values */
@@ -205,13 +205,13 @@ bool DigitScanner<T>::load(std::string path) {
         for(int i=0 ; i<nb_layers ; i++) {
             std::cerr << layers.at(i);
             if(i<nb_layers-1) std::cerr << ", ";
-            else std::cerr << ")." << std::endl;
+            else std::cerr << ")" << std::endl;
         }
         file.close();
         return true;
     }
     else {
-        std::cerr << "Couldn't open file \"" << path << "\"." << std::endl;
+        std::cerr << "Couldn't open file \"" << path << "\"" << std::endl;
         return false;
     }
 }
@@ -244,8 +244,8 @@ bool DigitScanner<T>::save(std::string path) {
         /* weights and biases */
         for(int i=0 ; i<fnn->getNbRightLayers() ; i++) {
             FNNRightLayer<T>* current = fnn->getRightLayer(i);
-            Matrix<T>        W       = current->getWeights();
-            Matrix<T>        B       = current->getBiases();
+            Matrix<T>         W       = current->getWeights();
+            Matrix<T>         B       = current->getBiases();
             /* W */
             for(int j=0 ; j<W.getI() ; j++) {
                 for(int k=0 ; k<W.getJ() ; k++) {
@@ -259,12 +259,12 @@ bool DigitScanner<T>::save(std::string path) {
             }
             file << std::endl;
         }
-        std::cerr << "FNN successfully saved to \"" << path << "\"." << std::endl;
+        std::cerr << "FNN successfully saved to \"" << path << "\"" << std::endl;
         file.close();
         return true;
     }
     else {
-        std::cerr << "Couldn't create file \"" << path << "\"." << std::endl;
+        std::cerr << "Couldn't create file \"" << path << "\"" << std::endl;
         return false;
     }
 }
@@ -307,8 +307,8 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     chrono_clock end = std::chrono::high_resolution_clock::now();
     auto         dur = end - begin;
     auto         ms  = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-    std::cout << "test completed in " << static_cast<int>(ms/10.0)/100.0 << " s." << std::endl;
-    std::cout << correct_classification << "/" << nb_images << " (" << 100*static_cast<double>(correct_classification)/nb_images << " %) images correctly classified." << std::endl;
+    std::cout << "test completed in " << static_cast<int>(ms/10.0)/100.0 << " s" << std::endl;
+    std::cout << correct_classification << "/" << nb_images << " (" << 100*static_cast<double>(correct_classification)/nb_images << " %) images correctly classified" << std::endl;
     test_input.free();
     delete [] image;
     delete [] label;
