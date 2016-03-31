@@ -631,9 +631,20 @@ void Matrix<T>::operator+=(const Matrix& B) {
             Exception   e(desc, function, infos);
             throw e;
         }
-        for(int i=0 ; i<I ; i++) {
-            for(int j=0 ; j<J ; j++) {
-                matrix[i*J + j] += B(i, j);
+        int BI = B.getI();
+        int BJ = B.getJ();
+        if(!B.transpose) {
+            for(int i=0 ; i<I ; i++) {
+                for(int j=0 ; j<J ; j++) {
+                    matrix[i*J + j] += B.matrix[i*BJ + j];
+                }
+            }
+        }
+        else {
+            for(int i=0 ; i<I ; i++) {
+                for(int j=0 ; j<J ; j++) {
+                    matrix[i*J + j] += B.matrix[j*BI + i];
+                }
             }
         }
     }
@@ -645,9 +656,20 @@ void Matrix<T>::operator+=(const Matrix& B) {
             Exception   e(desc, function, infos);
             throw e;
         }
-        for(int i=0 ; i<J ; i++) {
-            for(int j=0 ; j<I ; j++) {
-                matrix[j*J + i] += B(i, j);
+        int BI = B.getI();
+        int BJ = B.getJ();
+        if(!B.transpose) {
+            for(int i=0 ; i<J ; i++) {
+                for(int j=0 ; j<I ; j++) {
+                    matrix[j*J + i] += B.matrix[i*BJ + j];
+                }
+            }
+        }
+        else {
+            for(int i=0 ; i<J ; i++) {
+                for(int j=0 ; j<I ; j++) {
+                    matrix[j*J + i] += B.matrix[j*BI + i];
+                }
             }
         }
     }
@@ -682,9 +704,20 @@ void Matrix<T>::operator-=(const Matrix& B) {
             Exception   e(desc, function, infos);
             throw e;
         }
-        for(int i=0 ; i<I ; i++) {
-            for(int j=0 ; j<J ; j++) {
-                matrix[i*J + j] -= B(i, j);
+        int BI = B.getI();
+        int BJ = B.getJ();
+        if(!B.transpose) {
+            for(int i=0 ; i<I ; i++) {
+                for(int j=0 ; j<J ; j++) {
+                    matrix[i*J + j] -= B.matrix[i*BJ + j];
+                }
+            }
+        }
+        else {
+            for(int i=0 ; i<I ; i++) {
+                for(int j=0 ; j<J ; j++) {
+                    matrix[i*J + j] -= B.matrix[j*BI + i];
+                }
             }
         }
     }
@@ -696,9 +729,20 @@ void Matrix<T>::operator-=(const Matrix& B) {
             Exception   e(desc, function, infos);
             throw e;
         }
-        for(int i=0 ; i<J ; i++) {
-            for(int j=0 ; j<I ; j++) {
-                matrix[j*J + i] -= B(i, j);
+        int BI = B.getI();
+        int BJ = B.getJ();
+        if(!B.transpose) {
+            for(int i=0 ; i<J ; i++) {
+                for(int j=0 ; j<I ; j++) {
+                    matrix[j*J + i] -= B.matrix[i*BJ + j];
+                }
+            }
+        }
+        else {
+            for(int i=0 ; i<J ; i++) {
+                for(int j=0 ; j<I ; j++) {
+                    matrix[j*J + i] -= B.matrix[j*BI + i];
+                }
             }
         }
     }
