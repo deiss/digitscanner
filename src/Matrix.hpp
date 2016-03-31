@@ -485,10 +485,23 @@ void Matrix<T>::operator*=(const Matrix& B) {
         }
         Matrix res(I, B.getJ());
         res.fill(0);
-        for(int i=0 ; i<I ; i++) {
-            for(int k=0 ; k<B.getI() ; k++) {
-                for(int j=0 ; j<B.getJ() ; j++) {
-                    res(i, j) += matrix[i*J + k]*B(k, j);
+        int BI = B.getI();
+        int BJ = B.getJ();
+        if(!B.transpose) {
+            for(int i=0 ; i<I ; i++) {
+                for(int k=0 ; k<BI ; k++) {
+                    for(int j=0 ; j<BJ ; j++) {
+                        res.matrix[i*BJ + j] += matrix[i*J + k]*B.matrix[k*BJ + j];
+                    }
+                }
+            }
+        }
+        else {
+            for(int i=0 ; i<I ; i++) {
+                for(int k=0 ; k<BI ; k++) {
+                    for(int j=0 ; j<BJ; j++) {
+                        res.matrix[i*BJ + j] += matrix[i*J + k]*B.matrix[j*BI + k];
+                    }
                 }
             }
         }
@@ -505,10 +518,23 @@ void Matrix<T>::operator*=(const Matrix& B) {
         }
         Matrix res(J, B.getJ());
         res.fill(0);
-        for(int i=0 ; i<J ; i++) {
-            for(int k=0 ; k<B.getI() ; k++) {
-                for(int j=0 ; j<B.getJ() ; j++) {
-                    res(i, j) += matrix[k*J + i]*B(k, j);
+        int BI = B.getI();
+        int BJ = B.getJ();
+        if(!B.transpose) {
+            for(int i=0 ; i<J ; i++) {
+                for(int k=0 ; k<BI ; k++) {
+                    for(int j=0 ; j<BJ ; j++) {
+                        res.matrix[i*BJ + j] += matrix[k*J + i]*B.matrix[k*BJ + j];
+                    }
+                }
+            }
+        }
+        else {
+            for(int i=0 ; i<J ; i++) {
+                for(int k=0 ; k<BI ; k++) {
+                    for(int j=0 ; j<BJ ; j++) {
+                        res.matrix[i*BJ + j] += matrix[k*J + i]*B.matrix[j*BI + k];
+                    }
                 }
             }
         }
@@ -532,10 +558,23 @@ Matrix<T> Matrix<T>::operator*(const Matrix& B) const {
         }
         Matrix res(I, B.getJ());
         res.fill(0);
-        for(int i=0 ; i<I ; i++) {
-            for(int k=0 ; k<B.getI() ; k++) {
-                for(int j=0 ; j<B.getJ() ; j++) {
-                    res(i, j) += matrix[i*J + k]*B(k, j);
+        int BI = B.getI();
+        int BJ = B.getJ();
+        if(!B.transpose) {
+            for(int i=0 ; i<I ; i++) {
+                for(int k=0 ; k<BI ; k++) {
+                    for(int j=0 ; j<BJ ; j++) {
+                        res.matrix[i*BJ + j] += matrix[i*J + k]*B.matrix[k*BJ + j];
+                    }
+                }
+            }
+        }
+        else {
+            for(int i=0 ; i<I ; i++) {
+                for(int k=0 ; k<BI ; k++) {
+                    for(int j=0 ; j<BJ; j++) {
+                        res.matrix[i*BJ + j] += matrix[i*J + k]*B.matrix[j*BI + k];
+                    }
                 }
             }
         }
@@ -551,10 +590,23 @@ Matrix<T> Matrix<T>::operator*(const Matrix& B) const {
         }
         Matrix res(J, B.getJ());
         res.fill(0);
-        for(int i=0 ; i<J ; i++) {
-            for(int k=0 ; k<B.getI() ; k++) {
-                for(int j=0 ; j<B.getJ() ; j++) {
-                    res(i, j) += matrix[k*J + i]*B(k, j);
+        int BI = B.getI();
+        int BJ = B.getJ();
+        if(!B.transpose) {
+            for(int i=0 ; i<J ; i++) {
+                for(int k=0 ; k<BI ; k++) {
+                    for(int j=0 ; j<BJ ; j++) {
+                        res.matrix[i*BJ + j] += matrix[k*J + i]*B.matrix[k*BJ + j];
+                    }
+                }
+            }
+        }
+        else {
+            for(int i=0 ; i<J ; i++) {
+                for(int k=0 ; k<BI ; k++) {
+                    for(int j=0 ; j<BJ ; j++) {
+                        res.matrix[i*BJ + j] += matrix[k*J + i]*B.matrix[j*BI + k];
+                    }
                 }
             }
         }
