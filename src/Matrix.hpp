@@ -41,8 +41,10 @@ class Matrix {
         Matrix& operator=(const Matrix& B);
         bool    operator==(const Matrix* B);
     
-        int getI() const { return I; }
-        int getJ() const { return J; }
+        int  getI() const { return I; }
+        int  getJ() const { return J; }
+        void setI(int p_I) { I = p_I; }
+        void setJ(int p_J) { J = p_J; }
     
  static Matrix* ones_ret_n(int);
  static Matrix  ones_ret_c(int);
@@ -472,31 +474,21 @@ void Matrix<T>::self_element_wise_product(const Matrix& B) {
 }
 
 /*
-Transpose the matrix.
+Creates a new matrix which is the transposed of this one and returns it.
 */
 template<typename T>
 Matrix<T> Matrix<T>::create_transpose() const {
-    Matrix Mt(J, I);
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            Mt(j, i) = matrix[i*J + j];
-        }
-    }
+    Matrix Mt(this);
+    Mt.setI(J);
+    Mt.setJ(I);
     return Mt;
 }
 
+/*
+In-place transpose of the matrix.
+*/
 template<typename T>
 void Matrix<T>::self_transpose() {
-    /*
-    Matrix Mt(J, I);
-    for(int i=0 ; i<I ; i++) {
-        for(int j=0 ; j<J ; j++) {
-            Mt(j, i) = matrix[i*J + j];
-        }
-    }
-    free();
-    matrix = Mt.matrix;
-    */
     int I_old = I;
     I = J;
     J = I_old;
