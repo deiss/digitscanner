@@ -416,7 +416,7 @@ void FNN<T>::SGD(std::vector<const Matrix<T>*>* training_input, std::vector<cons
                 begin_batch = std::chrono::high_resolution_clock::now();
             }
         }
-        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s" << std::endl;
+        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s          " << std::endl;
     }
     std::cout << "training completed in " << elapsed_time(begin_training) << " s" << std::endl;
 }
