@@ -64,7 +64,8 @@ class DigitScanner {
 
     private:
     
-        double elapsed_time(chrono_clock);
+        std::string create_progress_bar(double);
+        double      elapsed_time(chrono_clock);
 
         FNN<T>*        fnn;     /* feedforward neural network */
         Matrix<float>* digit;   /* input digit, 784 pixels of the picture */
@@ -178,6 +179,7 @@ Loads a Neural Network from a file.
 */
 template<typename T>
 bool DigitScanner<T>::load(std::string path) {
+    std::cerr << "loading FNN... " << std::flush;
     int              nb_layers;
     std::vector<int> layers;
     std::ifstream    file(path);
@@ -215,7 +217,7 @@ bool DigitScanner<T>::load(std::string path) {
         return true;
     }
     else {
-        std::cerr << "Couldn't open file \"" << path << "\"" << std::endl;
+        std::cerr << "couldn't open file \"" << path << "\"" << std::endl;
         return false;
     }
 }
@@ -225,13 +227,14 @@ Saves a Neural Network into a file.
 */
 template<typename T>
 bool DigitScanner<T>::save(std::string path) {
+    std::cerr << "saving FNN... " << std::flush;
     std::ofstream file(path);
     if(!file) {
         std::string answer = "";
-        std::cout << "Couldn't create file \"" << path << "\". Change filename? (y/n): ";
+        std::cout << "couldn't create file \"" << path << "\": change filename? (y/n): ";
         std::cin >> answer; std::cin.ignore();
         if(answer=="y") {
-            std::cout << "New path: ";
+            std::cout << "new path: ";
             std::cin >> path; std::cin.ignore();
             file.open(path);
         }
@@ -268,70 +271,9 @@ bool DigitScanner<T>::save(std::string path) {
         return true;
     }
     else {
-        std::cerr << "Couldn't create file \"" << path << "\"" << std::endl;
+        std::cerr << "couldn't create file \"" << path << "\"" << std::endl;
         return false;
     }
-}
-
-/*
-Tests a Neural Network across the MNIST dataset.
-*/
-template<typename T>
-void DigitScanner<T>::test(std::string path_data, const int nb_images, const int nb_images_to_skip) {
-    std::string    test_images = path_data + "t10k-images.idx3-ubyte";
-    std::string    test_labels = path_data + "t10k-labels.idx1-ubyte";
-    std::ifstream  file_images(test_images, std::ifstream::in | std::ifstream::binary);
-    std::ifstream  file_labels(test_labels, std::ifstream::in | std::ifstream::binary);
-    const    int   image_len        = 784;
-    const    int   label_len        = 1;
-    const    int   image_header_len = 16;
-    const    int   label_header_len = 8;
-    unsigned char* image = new unsigned char[image_len];
-    unsigned char* label = new unsigned char[label_len];
-    /* beginning */
-    chrono_clock begin = std::chrono::high_resolution_clock::now();
-    std::cout << "\rtesting [----------]     0 %" << std::flush;
-    /* skip the first images */
-    file_images.seekg(image_header_len + nb_images_to_skip*image_len, std::ios_base::cur);
-    file_labels.seekg(label_header_len + nb_images_to_skip*label_len, std::ios_base::cur);
-    /* compute the results */
-    int       correct_classification = 0;
-    Matrix<T> test_input(image_len, 1);
-    for(int i=0 ; i<nb_images ; i++) {
-        /* create input matrix */
-        file_images.read((char*)image, image_len);
-        for(int j=0 ; j<image_len ; j++) test_input(j, 0) = static_cast<double>(image[j])/256;
-        /* read output label */
-        file_labels.read((char*)label, label_len);
-        /* compute output */
-        const Matrix<T> y = fnn->feedforward(&test_input);
-        int kmax = 0;
-        for(int j=0 ; j<10 ; j++) { if(y(j, 0)>y(kmax, 0)) kmax = j; }
-        if(kmax==label[0]) correct_classification++;
-        if(elapsed_time(begin)>=0.25) {
-            double      per          = static_cast<int>(10000*i/static_cast<double>(nb_images-nb_images_to_skip))/100.0;
-            std::string per_str      = std::to_string(per);
-            std::string spaces       = "";
-            std::string progress_bar = "[";
-            for(int j=0 ; j<static_cast<int>(per/10) ; j++)  progress_bar += "#";
-            for(int j=static_cast<int>(per/10) ; j<10 ; j++) progress_bar += "-";
-            progress_bar += "]";
-            for(int j=4 ; j>=0 ; j--) {
-                if(per_str.at(j)=='0')      { spaces += " "; }
-                else if(per_str.at(j)=='.') { spaces += " "; break; }
-                else                        { break; }
-            }
-            std::cout << "\rtesting: " << progress_bar << " " << spaces << per << " %" << std::flush;
-            begin = std::chrono::high_resolution_clock::now();
-        }
-    }
-    std::cout << "\rtesting completed in " << elapsed_time(begin) << " s          " << std::endl;
-    std::cout << correct_classification << "/" << nb_images << " (" << 100*static_cast<double>(correct_classification)/nb_images << " %) images correctly classified" << std::endl;
-    test_input.free();
-    delete [] image;
-    delete [] label;
-    file_images.close();
-    file_labels.close();
 }
 
 /*
@@ -349,6 +291,10 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
     const    int   label_header_len = 8;
     unsigned char* image            = new unsigned char[image_len];
     unsigned char* label            = new unsigned char[label_len];
+    /* beginning */
+    chrono_clock begin = std::chrono::high_resolution_clock::now();
+    std::cerr << "training on " << (nb_images-nb_images_to_skip) << " images:" << std::endl;
+    std::cerr << "    loading MNIST dataset: [----------]     0 %" << std::flush;
     /* skips the first images */
     file_images.seekg(image_header_len + nb_images_to_skip*image_len, std::ios_base::cur);
     file_labels.seekg(label_header_len + nb_images_to_skip*label_len, std::ios_base::cur);
@@ -368,7 +314,14 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
         file_labels.read((char*)label, label_len);
         output(label[0], 0) = 1;
         training_output.push_back(output);
+        /* prints progress bar */
+        if(elapsed_time(begin)>=0.25) {
+            double percentage = static_cast<int>(10000*i/static_cast<double>(nb_images-nb_images_to_skip))/100.0;
+            std::cerr << "\r    loading MNIST dataset: " << create_progress_bar(percentage) << percentage << " %" << std::flush;
+            begin = std::chrono::high_resolution_clock::now();
+        }
     }
+    std::cerr << "\r    MNIST dataset loaded in " << elapsed_time(begin) << " s                " << std::endl;
     /* Stochastic Gradient Descent */
     SGD(&training_input,
         &training_output,
@@ -386,6 +339,58 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
 }
 
 /*
+Tests a Neural Network across the MNIST dataset.
+*/
+template<typename T>
+void DigitScanner<T>::test(std::string path_data, const int nb_images, const int nb_images_to_skip) {
+    std::string    test_images = path_data + "t10k-images.idx3-ubyte";
+    std::string    test_labels = path_data + "t10k-labels.idx1-ubyte";
+    std::ifstream  file_images(test_images, std::ifstream::in | std::ifstream::binary);
+    std::ifstream  file_labels(test_labels, std::ifstream::in | std::ifstream::binary);
+    const    int   image_len        = 784;
+    const    int   label_len        = 1;
+    const    int   image_header_len = 16;
+    const    int   label_header_len = 8;
+    unsigned char* image = new unsigned char[image_len];
+    unsigned char* label = new unsigned char[label_len];
+    /* beginning */
+    chrono_clock begin = std::chrono::high_resolution_clock::now();
+    std::cerr << "testing on " << (nb_images-nb_images_to_skip) << " images:" << std::endl;
+    std::cerr << "    testing [----------]     0 %" << std::flush;
+    /* skip the first images */
+    file_images.seekg(image_header_len + nb_images_to_skip*image_len, std::ios_base::cur);
+    file_labels.seekg(label_header_len + nb_images_to_skip*label_len, std::ios_base::cur);
+    /* compute the results */
+    int       correct_classification = 0;
+    Matrix<T> test_input(image_len, 1);
+    for(int i=0 ; i<nb_images ; i++) {
+        /* create input matrix */
+        file_images.read((char*)image, image_len);
+        for(int j=0 ; j<image_len ; j++) test_input(j, 0) = static_cast<double>(image[j])/256;
+        /* read output label */
+        file_labels.read((char*)label, label_len);
+        /* compute output */
+        const Matrix<T> y = fnn->feedforward(&test_input);
+        int kmax = 0;
+        for(int j=0 ; j<10 ; j++) { if(y(j, 0)>y(kmax, 0)) kmax = j; }
+        if(kmax==label[0]) correct_classification++;
+        /* prints progress bar */
+        if(elapsed_time(begin)>=0.25) {
+            double percentage = static_cast<int>(10000*i/static_cast<double>(nb_images-nb_images_to_skip))/100.0;
+            std::cerr << "\r    testing: " << create_progress_bar(percentage) << percentage << " %" << std::flush;
+            begin = std::chrono::high_resolution_clock::now();
+        }
+    }
+    std::cerr << "\r    testing completed in " << elapsed_time(begin) << " s          " << std::endl;
+    std::cerr << "    " << correct_classification << "/" << nb_images << " (" << 100*static_cast<double>(correct_classification)/nb_images << " %) images correctly classified" << std::endl;
+    test_input.free();
+    delete [] image;
+    delete [] label;
+    file_images.close();
+    file_labels.close();
+}
+
+/*
 Stochastic Gradient Descent algorithm. This function generates multiple
 batches of training data, shuffled among the whole training data set, runs
 the backpropagation algorithm on this batch, and continues until the whole
@@ -396,10 +401,9 @@ template<typename T>
 void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Matrix<T>>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
     chrono_clock begin_training, begin_epoch, begin_batch;
     begin_training = std::chrono::high_resolution_clock::now();
-    /* epochs */
+    /* run for each epoch */
     for(int i=0 ; i<nb_epoch ; i++) {
-        begin_batch = std::chrono::high_resolution_clock::now();
-        std::cout << "shuffling training set..." << std::flush;
+        begin_epoch = std::chrono::high_resolution_clock::now();
         /* shuffle the training data */
         std::map<int, int> shuffle;
         std::vector<int>   indexes;
@@ -409,40 +413,50 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
             shuffle[j] = indexes.at(index);
             indexes.erase(indexes.begin()+index);
         }
+        /* variables for progress bar */
         unsigned long int nb_epoch_len = std::to_string(nb_epoch).length();
         unsigned long int this_epo_len = std::to_string(i+1).length();
         std::string       begin_spaces = "";
         for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
-        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << "[----------]     0 %" << std::flush;
+        std::cerr << "    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << "[----------]     0 %" << std::flush;
         /* use all the training dataset */
         int batch_counter = 0;
-        begin_epoch = std::chrono::high_resolution_clock::now();
+        begin_batch = std::chrono::high_resolution_clock::now();
         while(batch_counter<=training_set_len-batch_len) {
             /* SGD on the batch */
             fnn->SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
             batch_counter += batch_len;
+            /* draw progress bar */
             if(elapsed_time(begin_batch)>=0.25) {
-                double      per          = static_cast<int>(10000*batch_counter/static_cast<double>(training_set_len))/100.0;
-                std::string per_str      = std::to_string(per);
-                std::string spaces       = "";
-                std::string progress_bar = "";
-                for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) progress_bar += " ";
-                progress_bar += "[";
-                for(int j=0 ; j<static_cast<int>(per/10) ; j++)  progress_bar += "#";
-                for(int j=static_cast<int>(per/10) ; j<10 ; j++) progress_bar += "-";
-                progress_bar += "]";
-                for(int j=4 ; j>=0 ; j--) {
-                    if(per_str.at(j)=='0')      { spaces += " "; }
-                    else if(per_str.at(j)=='.') { spaces += " "; break; }
-                    else                        { break; }
-                }
-                std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": " << progress_bar << " " << spaces << per << " %" << std::flush;
+                double percentage = static_cast<int>(10000*batch_counter/static_cast<double>(training_set_len))/100.0;
+                std::string begin_spaces = "";
+                for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
+                std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " %" << std::flush;
                 begin_batch = std::chrono::high_resolution_clock::now();
             }
         }
-        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s          " << std::endl;
+        std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s          " << std::endl;
     }
-    std::cout << "training completed in " << elapsed_time(begin_training) << " s" << std::endl;
+    std::cerr << "    training completed in " << elapsed_time(begin_training) << " s" << std::endl;
+}
+
+/*
+Creates a textual progress bar.
+*/
+template<typename T>
+std::string DigitScanner<T>::create_progress_bar(double percentage) {
+    std::string percentage_str = std::to_string(percentage);
+    std::string spaces         = "";
+    std::string progress_bar   = "[";
+    for(int j=0 ; j<static_cast<int>(percentage/10) ; j++)  progress_bar += "#";
+    for(int j=static_cast<int>(percentage/10) ; j<10 ; j++) progress_bar += "-";
+    progress_bar += "]";
+    for(int j=4 ; j>=0 ; j--) {
+        if(percentage_str.at(j)=='0')      { spaces += " "; }
+        else if(percentage_str.at(j)=='.') { spaces += " "; break; }
+        else                               { break; }
+    }
+    return progress_bar + " " + spaces;
 }
 
 /*
