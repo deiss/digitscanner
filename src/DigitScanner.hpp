@@ -350,6 +350,7 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
         training_input.push_back(input);
         /* read the label from the data set and create the expected output matrix */
         Matrix<T> output(10, 1);
+        output.fill(0);
         file_labels.read((char*)label, label_len);
         output(label[0], 0) = 1;
         training_output.push_back(output);
@@ -394,7 +395,11 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
             shuffle[j] = indexes.at(index);
             indexes.erase(indexes.begin()+index);
         }
-        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": [----------]     0 %" << std::flush;
+        unsigned long int nb_epoch_len = std::to_string(nb_epoch).length();
+        unsigned long int this_epo_len = std::to_string(i+1).length();
+        std::string       begin_spaces = "";
+        for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
+        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << "[----------]     0 %" << std::flush;
         /* use all the training dataset */
         int batch_counter = 0;
         begin_epoch = std::chrono::high_resolution_clock::now();
@@ -406,11 +411,17 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
                 double      per          = static_cast<int>(10000*batch_counter/static_cast<double>(training_set_len))/100.0;
                 std::string per_str      = std::to_string(per);
                 std::string spaces       = "";
-                std::string progress_bar = "[";
-                for(int i=0 ; i<static_cast<int>(per/10) ; i++)  progress_bar += "#";
-                for(int i=static_cast<int>(per/10) ; i<10 ; i++) progress_bar += "-";
+                std::string progress_bar = "";
+                for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) progress_bar += " ";
+                progress_bar += "[";
+                for(int j=0 ; j<static_cast<int>(per/10) ; j++)  progress_bar += "#";
+                for(int j=static_cast<int>(per/10) ; j<10 ; j++) progress_bar += "-";
                 progress_bar += "]";
-                for(int i=4 ; i>=0 ; i--) { if(per_str.at(i)=='0' || per_str.at(i)=='.') spaces += " "; else break; }
+                for(int j=4 ; j>=0 ; j--) {
+                    if(per_str.at(j)=='0')      { spaces += " "; }
+                    else if(per_str.at(j)=='.') { spaces += " "; break; }
+                    else                        { break; }
+                }
                 std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": " << progress_bar << " " << spaces << per << " %" << std::flush;
                 begin_batch = std::chrono::high_resolution_clock::now();
             }
