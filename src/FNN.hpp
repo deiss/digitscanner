@@ -305,7 +305,7 @@ typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(Matrix<T>& tra
             D = Wt*D;
             Wt.free();
         Matrix<T>* A = &activations[i+1];
-        Matrix<T> SP(A->getI(), 1);
+        Matrix<T> SP(A->get_I(), 1);
             SP.fill(1);
             SP -= A;
             SP.element_wise_product(A);
@@ -375,8 +375,8 @@ void FNN<T>::random_init_values(FNNRightLayer<T>* l) {
     std::default_random_engine       generator;
     std::normal_distribution<double> gauss_biases(0, 1);
     std::normal_distribution<double> gauss_weights(0, 1.0/sqrt(l->getPreviousLayer()->getNbNodes()));
-    for(int i = 0 ; i<W->getI() ; i++) {
-        for(int j = 0 ; j<W->getJ() ; j++) W->operator()(i, j) = gauss_weights(generator);
+    for(int i = 0 ; i<W->get_I() ; i++) {
+        for(int j = 0 ; j<W->get_J() ; j++) W->operator()(i, j) = gauss_weights(generator);
         B->operator()(i, 0) = gauss_biases(generator);
     }
 }

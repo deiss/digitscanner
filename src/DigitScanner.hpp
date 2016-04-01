@@ -191,13 +191,13 @@ bool DigitScanner<T>::load(std::string path) {
             Matrix<T>         B = current->getBiases();
             /* W - n2 rows and n1 columns if the second layer has n2 nodes */
             /* and the first one has n1 nodes. */
-            for(int j=0 ; j<W.getI() ; j++) {
-                for(int k=0 ; k<W.getJ() ; k++) {
+            for(int j=0 ; j<W.get_I() ; j++) {
+                for(int k=0 ; k<W.get_J() ; k++) {
                     file >> W(j, k);
                 }
             }
             /* B - one line, n2 values */
-            for(int j=0 ; j<B.getI() ; j++) {
+            for(int j=0 ; j<B.get_I() ; j++) {
                 file >> B(j, 0);
             }
         }
@@ -247,14 +247,14 @@ bool DigitScanner<T>::save(std::string path) {
             Matrix<T>         W       = current->getWeights();
             Matrix<T>         B       = current->getBiases();
             /* W */
-            for(int j=0 ; j<W.getI() ; j++) {
-                for(int k=0 ; k<W.getJ() ; k++) {
+            for(int j=0 ; j<W.get_I() ; j++) {
+                for(int k=0 ; k<W.get_J() ; k++) {
                     file << W(j, k) << " ";
                 }
                 file << std::endl;
             }
             /* B */
-            for(int j=0 ; j<B.getI() ; j++) {
+            for(int j=0 ; j<B.get_I() ; j++) {
                 file << B(j, 0) << " ";
             }
             file << std::endl;
