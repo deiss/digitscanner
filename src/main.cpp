@@ -32,12 +32,8 @@ int main(int argc, char **argv) {
     Arguments args(argc, argv);
     int err = args.parse_arguments();
     if(err<0) {
-        if(err==-2) {
-            args.print_help();
-        }
-        if(err==-4) {
-            args.print_license();
-        }
+        if(err==-2) { args.print_help(); }
+        if(err==-4) { args.print_license(); }
         return 0;
     }
     
