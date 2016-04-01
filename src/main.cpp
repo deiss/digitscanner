@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     else if(args.is_set("fnnin")) { if(!dgs.load(args.fnnin)) return 0; }
     
     /* actions */
-    if(args.is_set("train"))     { dgs.train(args.mnist, args.train_imgnb, args.train_imgskip, args.train_epochs, args.train_batch_len, args.train_eta, args.train_alpha); }
+    if(args.is_set("train"))     { dgs.train(args.mnist, args.train_imgnb, args.train_imgskip, args.train_epochs, args.train_batch_len, args.train_eta, args.train_alpha, args.threads); }
     else if(args.is_set("test")) { dgs.test(args.mnist, args.test_imgnb, args.test_imgskip); }
 
     /* save */

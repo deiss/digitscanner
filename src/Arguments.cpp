@@ -30,6 +30,7 @@ Arguments::Arguments(int p_argc, char** p_argv) :
     fnnout(""),
     mnist(""),
     gui(false),
+    threads(1),
     train_imgnb(0),
     train_imgskip(0),
     train_epochs(0),
@@ -71,6 +72,9 @@ void Arguments::print_help() {
     std::cout << "   --gui                                Creates a window that enables you to draw numbers. Commands:" << std::endl;
     std::cout << "                                           g: using the neural network, guess the number" << std::endl;
     std::cout << "                                           r: resets the drawing area" << std::endl;
+    std::cout << "   --threads 1|2                        Enables multithreading on 1 or 2 threads for the training. Default: 1." << std::endl;
+    std::cout << "                                           1: uses one thread." << std::endl;
+    std::cout << "                                           2: uses two threads." << std::endl;
 }
 
 /*
@@ -105,6 +109,15 @@ int Arguments::parse_arguments() {
             else if(arg_value=="--fnnout") {
                 if(!parse_string_arg(std::string(argv[i]), &i, &fnnout, "You must specify the output neural network file.\n" + help_msg)) { return -1; }
             }
+            /* integers */
+            else if(arg_value=="--threads") {
+                if(++i<argc) {
+                    std::string threads_str(argv[i]);
+                    try                            { threads = std::stoi(threads_str); }
+                    catch(std::exception const& e) { std::cerr << "The number of threads to be used for training must be equal to 1 or 2." << std::endl; return -1; }
+                    if(threads!=1 && threads!=2) { std::cerr << "The number of threads to be used for training must be equal to 1 or 2." << std::endl; return -1; }
+                }
+                else { std::cerr << "The number of threads to be used for training is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }            }
             /* commands */
             else if(arg_value=="--train") {
                 if(++i<argc) {

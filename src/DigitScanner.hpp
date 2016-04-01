@@ -52,7 +52,7 @@ class DigitScanner {
     
         bool load(std::string);
         bool save(std::string);
-        void train(std::string, const int, const int, const int, const int, const double, const double);
+        void train(std::string, const int, const int, const int, const int, const double, const double, const int);
         void test(std::string, const int, const int);
     
         void draw(bool);
@@ -60,7 +60,7 @@ class DigitScanner {
         void scan(int, int, unsigned char);
         void reset();
     
-        void SGD(std::vector<Matrix<T>>*, std::vector<Matrix<T>>*, const int, const int, const int, const double, const double);
+        void SGD(std::vector<Matrix<T>>*, std::vector<Matrix<T>>*, const int, const int, const int, const double, const double, const int);
 
     private:
     
@@ -231,10 +231,10 @@ bool DigitScanner<T>::save(std::string path) {
     std::ofstream file(path);
     if(!file) {
         std::string answer = "";
-        std::cout << "couldn't create file \"" << path << "\": change filename? (y/n): ";
+        std::cerr << "couldn't create file \"" << path << "\": change filename? (y/n): ";
         std::cin >> answer; std::cin.ignore();
         if(answer=="y") {
-            std::cout << "new path: ";
+            std::cerr << "new path: ";
             std::cin >> path; std::cin.ignore();
             file.open(path);
         }
@@ -280,7 +280,7 @@ bool DigitScanner<T>::save(std::string path) {
 Trains a Neural Network using the Stochastic Gradient Descent algorithm.
 */
 template<typename T>
-void DigitScanner<T>::train(std::string path_data, const int nb_images, const int nb_images_to_skip, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
+void DigitScanner<T>::train(std::string path_data, const int nb_images, const int nb_images_to_skip, const int nb_epoch, const int batch_len, const double eta, const double alpha, const int threads) {
     std::string    train_images = path_data + "train-images.idx3-ubyte";
     std::string    train_labels = path_data + "train-labels.idx1-ubyte";
     std::ifstream  file_images(train_images, std::ifstream::in | std::ifstream::binary);
@@ -323,13 +323,7 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
     }
     std::cerr << "\r    MNIST dataset loaded in " << elapsed_time(begin) << " s                " << std::endl;
     /* Stochastic Gradient Descent */
-    SGD(&training_input,
-        &training_output,
-        nb_images,
-        nb_epoch,
-        batch_len,
-        eta,
-        alpha);
+    SGD(&training_input, &training_output, nb_images, nb_epoch, batch_len, eta, alpha, threads);
     for(Matrix<T> m : training_input)  m.free();
     for(Matrix<T> m : training_output) m.free();
     delete [] image;
@@ -398,7 +392,7 @@ data set has been completed. Depending on the number of epochs, the whole
 process can be run more than once.
 */
 template<typename T>
-void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Matrix<T>>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
+void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Matrix<T>>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha, const int nb_threads) {
     chrono_clock begin_training, begin_epoch, begin_batch;
     begin_training = std::chrono::high_resolution_clock::now();
     /* run for each epoch */
@@ -413,29 +407,84 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
             shuffle[j] = indexes.at(index);
             indexes.erase(indexes.begin()+index);
         }
-        /* variables for progress bar */
-        unsigned long int nb_epoch_len = std::to_string(nb_epoch).length();
-        unsigned long int this_epo_len = std::to_string(i+1).length();
-        std::string       begin_spaces = "";
-        for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
-        std::cerr << "    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << "[----------]     0 %" << std::flush;
-        /* use all the training dataset */
-        int batch_counter = 0;
-        begin_batch = std::chrono::high_resolution_clock::now();
-        while(batch_counter<=training_set_len-batch_len) {
-            /* SGD on the batch */
-            fnn->SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
-            batch_counter += batch_len;
-            /* draw progress bar */
-            if(elapsed_time(begin_batch)>=0.25) {
-                double percentage = static_cast<int>(10000*batch_counter/static_cast<double>(training_set_len))/100.0;
-                std::string begin_spaces = "";
+        switch(nb_threads) {
+        
+            case 2: {
+            
+                /* variables for progress bar */
+                unsigned long int nb_epoch_len = std::to_string(nb_epoch).length();
+                unsigned long int this_epo_len = std::to_string(i+1).length();
+                std::string       begin_spaces = "";
                 for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
-                std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " %" << std::flush;
-                begin_batch = std::chrono::high_resolution_clock::now();
+                std::cerr << "    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << "[----------]     0 %" << std::flush;
+                /* use all the training dataset */
+                begin_batch              = std::chrono::high_resolution_clock::now();
+                int batch_counter        = 0;
+                int batch_counter_offset = training_set_len/2;
+                
+                std::thread t1([=]() mutable {
+                    while(batch_counter<training_set_len-batch_counter_offset-batch_len) {
+                        /* SGD on the batch */
+                        fnn->SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
+                        batch_counter += batch_len;
+                        /* draw progress bar for thread 1 */
+                        if(elapsed_time(begin_batch)>=0.25) {
+                            double percentage = static_cast<int>(10000*batch_counter/static_cast<double>(training_set_len-batch_counter_offset))/100.0;
+                            std::string begin_spaces = "";
+                            for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
+                            std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " % (thread 1)" << std::flush;
+                            begin_batch = std::chrono::high_resolution_clock::now();
+                        }
+                    }
+                });
+                
+                std::thread t2([=]() mutable {
+                    batch_counter += batch_counter_offset;
+                    while(batch_counter<=training_set_len-batch_len) {
+                        /* SGD on the batch */
+                        fnn->SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
+                        batch_counter += batch_len;
+                    }
+                });
+                
+                t1.join();
+                t2.join();
+                
+                std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s                     " << std::endl;
+                break;
+                
             }
+            
+            default: {
+            
+                /* variables for progress bar */
+                unsigned long int nb_epoch_len = std::to_string(nb_epoch).length();
+                unsigned long int this_epo_len = std::to_string(i+1).length();
+                std::string       begin_spaces = "";
+                for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
+                std::cerr << "    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << "[----------]     0 %" << std::flush;
+                /* use all the training dataset */
+                int batch_counter = 0;
+                begin_batch = std::chrono::high_resolution_clock::now();
+                while(batch_counter<=training_set_len-batch_len) {
+                    /* SGD on the batch */
+                    fnn->SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
+                    batch_counter += batch_len;
+                    /* draw progress bar */
+                    if(elapsed_time(begin_batch)>=0.25) {
+                        double percentage = static_cast<int>(10000*batch_counter/static_cast<double>(training_set_len))/100.0;
+                        std::string begin_spaces = "";
+                        for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
+                        std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " %" << std::flush;
+                        begin_batch = std::chrono::high_resolution_clock::now();
+                    }
+                }
+                std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s          " << std::endl;
+                break;
+                
+            }
+            
         }
-        std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s          " << std::endl;
     }
     std::cerr << "    training completed in " << elapsed_time(begin_training) << " s" << std::endl;
 }
