@@ -180,21 +180,25 @@ class Matrix {
                 }
         virtual ~Exception() throw() {}
             
+         static std::string create_infos_one_matrix(const Matrix<T>* A) {
+                    return "matrix: [" + std::to_string(A) + ", " +
+                               "I:" + std::to_string(A->I) + ", " +
+                               "J:" + std::to_string(A->J) + ", " +
+                               "matrix:" + std::to_string(A->matrix) +
+                               "transpose:" + std::to_string(A->transpose) +
+                           "]";
+                }
          static std::string create_infos_two_matrices(const Matrix<T>* A, const Matrix<T>* B) {
-                    std::stringstream s_A;  s_A  << (void*)A;         std::string str_A(s_A.str());
-                    std::stringstream s_B;  s_B  << (void*)B;         std::string str_B(s_B.str());
-                    std::stringstream s_Am; s_Am << (void*)A->matrix; std::string str_Am(s_Am.str());
-                    std::stringstream s_Bm; s_Bm << (void*)B->matrix; std::string str_Bm(s_Bm.str());
-                    return "A: [" + str_A + ", " +
+                    return "A: [" + std::to_string(A) + ", " +
                                    "I:" + std::to_string(A->I) + ", " +
                                    "J:" + std::to_string(A->J) + ", " +
-                                   "matrix:" + str_Am +
+                                   "matrix:" + std::to_string(A->matrix) +
                                    "transpose:" + std::to_string(A->transpose) +
                                 "] " +
-                           "B: [" + str_B + ", " +
+                           "B: [" + std::to_string(B) + ", " +
                                    "I:" + std::to_string(B->I) + ", " +
                                    "J:" + std::to_string(B->J) + ", " +
-                                   "matrix:" + str_Bm +
+                                   "matrix:" + std::to_string(B->matrix) +
                                    "transpose:" + std::to_string(B->transpose) +
                                 "]";
                 }
@@ -394,7 +398,16 @@ Allocates memory for the matrix of coefficients.
 */
 template<typename T>
 void Matrix<T>::create_matrix() {
-    matrix = new T[I*J];
+    try {
+        matrix = new T[I*J];
+    }
+    catch(std::exception exc) {
+        std::string description = "Unable to allocate memory for the matrix: " + std::string(exc.what());
+        std::string function    = "void Matrix<T>::create_matrix()";
+        std::string infos       = create_infos_one_matrix(this);
+        Exception   e(description, function, infos);
+        throw e;
+    }
 }
 
 /*
@@ -418,7 +431,7 @@ void Matrix<T>::identity() {
     if(I!=J) {
         std::string description = "Unable to create identity matrix, this is not a square matrix.";
         std::string function    = "void Matrix<T>::fill_identity()";
-        std::string infos       = "matrix: [" << std::to_string(this) << ", I:" << I << ", J:" << J << ", matrix:" << matrix << "transpose:" << transpose << "]";
+        std::string infos       = create_infos_one_matrix(this);
         Exception   e(description, function, infos);
         throw e;
     }
