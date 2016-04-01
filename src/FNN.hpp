@@ -369,14 +369,14 @@ Initializes the network's weights and biases with a Gaussian generator.
 */
 template<typename T>
 void FNN<T>::random_init_values(FNNRightLayer<T>* l) {
-    Matrix<T>* W = l->getWeights();
-    Matrix<T>* B = l->getBiases();
+    Matrix<T> W = l->getWeights();
+    Matrix<T> B = l->getBiases();
     std::default_random_engine       generator;
     std::normal_distribution<double> gauss_biases(0, 1);
     std::normal_distribution<double> gauss_weights(0, 1.0/sqrt(l->getPreviousLayer()->getNbNodes()));
-    for(int i = 0 ; i<W->get_I() ; i++) {
-        for(int j = 0 ; j<W->get_J() ; j++) W->operator()(i, j) = gauss_weights(generator);
-        B->operator()(i, 0) = gauss_biases(generator);
+    for(int i = 0 ; i<W.get_I() ; i++) {
+        for(int j = 0 ; j<W.get_J() ; j++) W(i, j) = gauss_weights(generator);
+        B(i, 0) = gauss_biases(generator);
     }
 }
 
