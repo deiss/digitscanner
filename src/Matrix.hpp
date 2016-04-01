@@ -181,24 +181,30 @@ class Matrix {
         virtual ~Exception() throw() {}
             
          static std::string create_infos_one_matrix(const Matrix<T>* A) {
-                    return "matrix: [" + std::to_string(A) + ", " +
-                               "I:" + std::to_string(A->I) + ", " +
-                               "J:" + std::to_string(A->J) + ", " +
-                               "matrix:" + std::to_string(A->matrix) +
+                    std::stringstream s_A;   s_A   << (void*)A;         std::string str_A(s_A.str());
+                    std::stringstream s_A_m; s_A_m << (void*)A->matrix; std::string str_A_m(s_A_m.str());
+                    return "matrix: ["      + str_A + ", " +
+                               "I:"         + std::to_string(A->I) + ", " +
+                               "J:"         + std::to_string(A->J) + ", " +
+                               "matrix:"    + str_A_m +
                                "transpose:" + std::to_string(A->transpose) +
                            "]";
                 }
          static std::string create_infos_two_matrices(const Matrix<T>* A, const Matrix<T>* B) {
-                    return "A: [" + std::to_string(A) + ", " +
-                                   "I:" + std::to_string(A->I) + ", " +
-                                   "J:" + std::to_string(A->J) + ", " +
-                                   "matrix:" + std::to_string(A->matrix) +
+                    std::stringstream s_A;   s_A   << (void*)A;         std::string str_A(s_A.str());
+                    std::stringstream s_B;   s_B   << (void*)B;         std::string str_B(s_B.str());
+                    std::stringstream s_A_m; s_A_m << (void*)A->matrix; std::string str_A_m(s_A_m.str());
+                    std::stringstream s_B_m; s_B_m << (void*)B->matrix; std::string str_B_m(s_B_m.str());
+                    return "A: [" + str_A + ", " +
+                                   "I:"         + std::to_string(A->I) + ", " +
+                                   "J:"         + std::to_string(A->J) + ", " +
+                                   "matrix:"    + str_A_m +
                                    "transpose:" + std::to_string(A->transpose) +
                                 "] " +
-                           "B: [" + std::to_string(B) + ", " +
-                                   "I:" + std::to_string(B->I) + ", " +
-                                   "J:" + std::to_string(B->J) + ", " +
-                                   "matrix:" + std::to_string(B->matrix) +
+                           "B: ["               + str_B + ", " +
+                                   "I:"         + std::to_string(B->I) + ", " +
+                                   "J:"         + std::to_string(B->J) + ", " +
+                                   "matrix:"    + str_B_m +
                                    "transpose:" + std::to_string(B->transpose) +
                                 "]";
                 }
@@ -404,7 +410,7 @@ void Matrix<T>::create_matrix() {
     catch(std::exception exc) {
         std::string description = "Unable to allocate memory for the matrix: " + std::string(exc.what());
         std::string function    = "void Matrix<T>::create_matrix()";
-        std::string infos       = create_infos_one_matrix(this);
+        std::string infos       = Exception::create_infos_one_matrix(this);
         Exception   e(description, function, infos);
         throw e;
     }
@@ -431,7 +437,7 @@ void Matrix<T>::identity() {
     if(I!=J) {
         std::string description = "Unable to create identity matrix, this is not a square matrix.";
         std::string function    = "void Matrix<T>::fill_identity()";
-        std::string infos       = create_infos_one_matrix(this);
+        std::string infos       = "matrix: [" << std::to_string(this) << ", I:" << I << ", J:" << J << ", matrix:" << matrix << "transpose:" << transpose << "]";
         Exception   e(description, function, infos);
         throw e;
     }
