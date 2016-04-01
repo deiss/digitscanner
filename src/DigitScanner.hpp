@@ -60,8 +60,12 @@ class DigitScanner {
         void scan(int, int, unsigned char);
         void reset();
     
+        void SGD(std::vector<Matrix<T>>*, std::vector<Matrix<T>>*, const int, const int, const int, const double, const double);
+
     private:
     
+        double elapsed_time(chrono_clock);
+
         FNN<T>*        fnn;     /* feedforward neural network */
         Matrix<float>* digit;   /* input digit, 784 pixels of the picture */
 
@@ -351,19 +355,80 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
         training_output.push_back(output);
     }
     /* Stochastic Gradient Descent */
-    fnn->SGD(&training_input,
-             &training_output,
-             nb_images,
-             nb_epoch,
-             batch_len,
-             eta,
-             alpha);
+    SGD(&training_input,
+        &training_output,
+        nb_images,
+        nb_epoch,
+        batch_len,
+        eta,
+        alpha);
     for(Matrix<T> m : training_input)  m.free();
     for(Matrix<T> m : training_output) m.free();
     delete [] image;
     delete [] label;
     file_images.close();
     file_labels.close();
+}
+
+/*
+Stochastic Gradient Descent algorithm. This function generates multiple
+batches of training data, shuffled among the whole training data set, runs
+the backpropagation algorithm on this batch, and continues until the whole
+data set has been completed. Depending on the number of epochs, the whole
+process can be run more than once.
+*/
+template<typename T>
+void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Matrix<T>>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha) {
+    chrono_clock begin_training, begin_epoch, begin_batch;
+    begin_training = std::chrono::high_resolution_clock::now();
+    /* epochs */
+    for(int i=0 ; i<nb_epoch ; i++) {
+        begin_batch = std::chrono::high_resolution_clock::now();
+        std::cout << "shuffling training set..." << std::flush;
+        /* shuffle the training data */
+        std::map<int, int> shuffle;
+        std::vector<int>   indexes;
+        for(int j=0 ; j<training_set_len ; j++) { indexes.push_back(j); }
+        for(int j=0 ; j<training_set_len ; j++) {
+            int index = rand() % indexes.size();
+            shuffle[j] = indexes.at(index);
+            indexes.erase(indexes.begin()+index);
+        }
+        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": [----------]     0 %" << std::flush;
+        /* use all the training dataset */
+        int batch_counter = 0;
+        begin_epoch = std::chrono::high_resolution_clock::now();
+        while(batch_counter<=training_set_len-batch_len) {
+            /* SGD on the batch */
+            fnn->SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
+            batch_counter += batch_len;
+            if(elapsed_time(begin_batch)>=0.25) {
+                double      per          = static_cast<int>(10000*batch_counter/static_cast<double>(training_set_len))/100.0;
+                std::string per_str      = std::to_string(per);
+                std::string spaces       = "";
+                std::string progress_bar = "[";
+                for(int i=0 ; i<static_cast<int>(per/10) ; i++)  progress_bar += "#";
+                for(int i=static_cast<int>(per/10) ; i<10 ; i++) progress_bar += "-";
+                progress_bar += "]";
+                for(int i=4 ; i>=0 ; i--) { if(per_str.at(i)=='0' || per_str.at(i)=='.') spaces += " "; else break; }
+                std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": " << progress_bar << " " << spaces << per << " %" << std::flush;
+                begin_batch = std::chrono::high_resolution_clock::now();
+            }
+        }
+        std::cout << "\repoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s          " << std::endl;
+    }
+    std::cout << "training completed in " << elapsed_time(begin_training) << " s" << std::endl;
+}
+
+/*
+Computes execution time.
+*/
+template<typename T>
+double DigitScanner<T>::elapsed_time(chrono_clock begin) {
+    chrono_clock end = std::chrono::high_resolution_clock::now();
+    auto         dur = end - begin;
+    auto         ms  = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+    return static_cast<int>(ms/10.0)/100.0;
 }
 
 #endif
