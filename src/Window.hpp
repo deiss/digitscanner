@@ -37,9 +37,9 @@ class Window {
         Window(const int, const int);
         ~Window() {}
 
-        void setDgs(DigitScanner<float>* dgs) { this->dgs = dgs; }
-        void setSceneWidth(int scene_width)   { this->scene_width = scene_width; }
-        void setSleepTime(int sleep_time)     { this->sleep_time = sleep_time; }
+        void set_dgs(DigitScanner<float>* dgs) { this->dgs = dgs; }
+        void set_scene_width(int scene_width)  { this->scene_width = scene_width; }
+        void set_sleep_time(int sleep_time)    { this->sleep_time = sleep_time; }
 
         void init();
         void launch() const;

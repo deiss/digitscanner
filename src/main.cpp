@@ -59,8 +59,8 @@ int main(int argc, char **argv) {
     /* gui */
     if(args.is_set("gui")) {
         Window *w = new Window(280, 280);
-        w->setDgs(&dgs);
-        w->setSceneWidth(280);
+        w->set_dgs(&dgs);
+        w->set_scene_width(280);
         w->init();
         w->launch();
     }
