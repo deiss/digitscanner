@@ -67,8 +67,8 @@ class DigitScanner {
         std::string create_progress_bar(double);
         double      elapsed_time(chrono_clock);
 
-        FNN<T>*        fnn;     /* feedforward neural network */
-        Matrix<float>* digit;   /* input digit, 784 pixels of the picture */
+        FNN<T>*       fnn;     /* feedforward neural network */
+        Matrix<float> digit;   /* input digit, 784 pixels of the picture */
 
 };
 
@@ -98,7 +98,7 @@ and the input matrix.
 template<typename T>
 DigitScanner<T>::~DigitScanner() {
     delete fnn;
-    delete digit;
+    digit.free();
 }
 
 /*
@@ -106,8 +106,8 @@ Creates the input matrix and fill it with 0.
 */
 template<typename T>
 void DigitScanner<T>::init() {
-    digit = new Matrix<float>(784, 1);
-    for(int i=0 ; i<784 ; i++) digit->operator()(i, 0) = 0;
+    digit.set_dimensions(784, 1);
+    for(int i=0 ; i<784 ; i++) digit(i, 0) = 0;
 }
 
 /*
@@ -127,7 +127,7 @@ template<typename T>
 void DigitScanner<T>::draw(bool background) {
     for(int i=0 ; i<28 ; i++) {
         for(int j=0 ; j<28 ; j++) {
-            unsigned char color = digit->operator()(i*28+j, 0);
+            unsigned char color = digit(i*28+j, 0);
             if((background && color==0) || (!background && color>0)) {
                 glColor3ub(color, color, color);
                 glBegin(GL_QUADS);
@@ -149,7 +149,7 @@ output of the neural network that has the highest value.
 */
 template<typename T>
 void DigitScanner<T>::guess() {
-    const Matrix<T> y = fnn->feedforward(digit);
+    const Matrix<T> y = fnn->feedforward(&digit);
     int kmax = 0;
     for(int k=0 ; k<10 ; k++) { if(y(k, 0)>y(kmax, 0)) kmax = k; }
     std::cout << "You drew: " << kmax << std::endl;
@@ -161,7 +161,7 @@ Clears the drawing area.
 template<typename T>
 void DigitScanner<T>::reset() {
     for(int i=0 ; i<784 ; i++) {
-        digit->operator()(i, 0) = 0;
+        digit(i, 0) = 0;
     }
 }
 
@@ -171,7 +171,7 @@ is whiter than the previous one, the color is updated.
 */
 template<typename T>
 void DigitScanner<T>::scan(int i, int j, unsigned char value) {
-    if(value>digit->operator()(28*i + j, 0)) digit->operator()(28*i + j, 0) = value;
+    if(value>digit(28*i + j, 0)) digit(28*i + j, 0) = value;
 }
 
 /*

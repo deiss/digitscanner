@@ -106,6 +106,8 @@ class Matrix {
         Matrix(const Matrix*, bool=false);
         ~Matrix();
     
+        void    set_dimensions(int, int);
+    
         Matrix& operator=(const Matrix& B);
     
         bool    operator==(const Matrix& B) const;
@@ -268,6 +270,18 @@ Matrix<T>::Matrix(const Matrix<T>* B, bool deep_copy) :
     matrix{0} {
     if(deep_copy) { create_matrix(); copy_matrix(B); transpose = B->transpose; }
     else          { matrix=B->matrix; transpose = B->transpose; }
+}
+
+/*
+Allows to set the size. Should be used if a matrix is created with
+no size parameters. This is not a resizing method!
+*/
+template<typename T>
+void Matrix<T>::set_dimensions(int p_I, int p_J) {
+    I = p_I;
+    J = p_J;
+    free();
+    create_matrix();
 }
 
 /*
