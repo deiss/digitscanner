@@ -288,7 +288,9 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     const    int   label_header_len = 8;
     unsigned char* image = new unsigned char[image_len];
     unsigned char* label = new unsigned char[label_len];
+    /* beginning */
     chrono_clock begin = std::chrono::high_resolution_clock::now();
+    std::cout << "\rtesting [----------]     0 %" << std::flush;
     /* skip the first images */
     file_images.seekg(image_header_len + nb_images_to_skip*image_len, std::ios_base::cur);
     file_labels.seekg(label_header_len + nb_images_to_skip*label_len, std::ios_base::cur);
@@ -304,14 +306,26 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
         /* compute output */
         const Matrix<T> y = fnn->feedforward(&test_input);
         int kmax = 0;
-        for(int k=0 ; k<10 ; k++) { if(y(k, 0)>y(kmax, 0)) kmax = k; }
+        for(int j=0 ; j<10 ; j++) { if(y(j, 0)>y(kmax, 0)) kmax = j; }
         if(kmax==label[0]) correct_classification++;
+        if(elapsed_time(begin)>=0.25) {
+            double      per          = static_cast<int>(10000*i/static_cast<double>(nb_images-nb_images_to_skip))/100.0;
+            std::string per_str      = std::to_string(per);
+            std::string spaces       = "";
+            std::string progress_bar = "[";
+            for(int j=0 ; j<static_cast<int>(per/10) ; j++)  progress_bar += "#";
+            for(int j=static_cast<int>(per/10) ; j<10 ; j++) progress_bar += "-";
+            progress_bar += "]";
+            for(int j=4 ; j>=0 ; j--) {
+                if(per_str.at(j)=='0')      { spaces += " "; }
+                else if(per_str.at(j)=='.') { spaces += " "; break; }
+                else                        { break; }
+            }
+            std::cout << "\rtesting: " << progress_bar << " " << spaces << per << " %" << std::flush;
+            begin = std::chrono::high_resolution_clock::now();
+        }
     }
-    /* displays the score */
-    chrono_clock end = std::chrono::high_resolution_clock::now();
-    auto         dur = end - begin;
-    auto         ms  = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-    std::cout << "test completed in " << static_cast<int>(ms/10.0)/100.0 << " s" << std::endl;
+    std::cout << "\rtesting completed in " << elapsed_time(begin) << " s          " << std::endl;
     std::cout << correct_classification << "/" << nb_images << " (" << 100*static_cast<double>(correct_classification)/nb_images << " %) images correctly classified" << std::endl;
     test_input.free();
     delete [] image;
