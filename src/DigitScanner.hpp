@@ -432,7 +432,7 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
                             double percentage = static_cast<int>(10000*batch_counter/static_cast<double>(nb_batches_per_subsets*batch_len))/100.0;
                             std::string begin_spaces = "";
                             for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
-                            std::cerr << "\r    epoch 1/" << nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " % (thread 1)" << std::flush;
+                            std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " % (thread 1)" << std::flush;
                             begin_batch = std::chrono::high_resolution_clock::now();
                         }
                     }
