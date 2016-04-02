@@ -418,10 +418,10 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
         int                      nb_batches             = training_set_len/batch_len;
         int                      nb_batches_per_subsets = nb_batches/nb_threads;
         std::vector<std::thread> threads;
-        for(int i=0 ; i<nb_threads ; i++) {
+        for(int j=0 ; j<nb_threads ; j++) {
             threads.push_back(std::thread([=]() mutable {
                 /* first thread shows progress */
-                if(i==0) {
+                if(j==0) {
                     int batch_counter = 0;
                     while(batch_counter<nb_batches_per_subsets*batch_len) {
                         /* SGD on the batch */
@@ -431,17 +431,17 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
                         if(elapsed_time(begin_batch)>=0.25) {
                             double percentage = static_cast<int>(10000*batch_counter/static_cast<double>(nb_batches_per_subsets*batch_len))/100.0;
                             std::string begin_spaces = "";
-                            for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
+                            for(int k=0 ; k<nb_epoch_len-this_epo_len ; k++) begin_spaces += " ";
                             std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " % (thread 1)" << std::flush;
                             begin_batch = std::chrono::high_resolution_clock::now();
                         }
                     }
                 }
                 /* last thread computes maximum batches available */
-                else if(i==nb_threads-1) {
-                    int nb_batches_available = nb_batches - i*nb_batches_per_subsets;
+                else if(j==nb_threads-1) {
+                    int nb_batches_available = nb_batches - j*nb_batches_per_subsets;
                     int batch_counter        = i*nb_batches_per_subsets*batch_len;
-                    while(batch_counter<(i*nb_batches_per_subsets + nb_batches_available)*batch_len) {
+                    while(batch_counter<(j*nb_batches_per_subsets + nb_batches_available)*batch_len) {
                         /* SGD on the batch */
                         fnn->SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
                         batch_counter += batch_len;
@@ -449,8 +449,8 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
                 }
                 /* middle thread computes nb_batches_per_subset batches */
                 else {
-                    int batch_counter = i*nb_batches_per_subsets*batch_len;
-                    while(batch_counter<(i+1)*nb_batches_per_subsets*batch_len) {
+                    int batch_counter = j*nb_batches_per_subsets*batch_len;
+                    while(batch_counter<(j+1)*nb_batches_per_subsets*batch_len) {
                         /* SGD on the batch */
                         fnn->SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
                         batch_counter += batch_len;
