@@ -432,7 +432,9 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
                             double percentage = static_cast<int>(10000*batch_counter/static_cast<double>(nb_batches_per_subsets*batch_len))/100.0;
                             std::string begin_spaces = "";
                             for(int k=0 ; k<nb_epoch_len-this_epo_len ; k++) begin_spaces += " ";
-                            std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " % (thread 1)" << std::flush;
+                            std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " %";
+                            if(nb_threads>1) std::cout << " (thread 1)";
+                            std::cout << std::flush;
                             begin_batch = std::chrono::high_resolution_clock::now();
                         }
                     }
@@ -440,7 +442,7 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
                 /* last thread computes maximum batches available */
                 else if(j==nb_threads-1) {
                     int nb_batches_available = nb_batches - j*nb_batches_per_subsets;
-                    int batch_counter        = i*nb_batches_per_subsets*batch_len;
+                    int batch_counter        = j*nb_batches_per_subsets*batch_len;
                     while(batch_counter<(j*nb_batches_per_subsets + nb_batches_available)*batch_len) {
                         /* SGD on the batch */
                         fnn->SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
@@ -459,8 +461,8 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
             }));
         }
         /* join all threads */
-        for(int i=0 ; i<nb_threads ; i++) {
-            threads.at(i).join();
+        for(int j=0 ; j<nb_threads ; j++) {
+            threads.at(j).join();
         }
         std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s                     " << std::endl;
     }
