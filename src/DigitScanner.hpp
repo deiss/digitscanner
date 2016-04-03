@@ -433,7 +433,7 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
                             std::string begin_spaces = "";
                             for(int k=0 ; k<nb_epoch_len-this_epo_len ; k++) begin_spaces += " ";
                             std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " %";
-                            if(nb_threads>1) std::cout << " (thread 1)";
+                            if(nb_threads>1) std::cout << " (thread 1/" << nb_threads << ")";
                             std::cout << std::flush;
                             begin_batch = std::chrono::high_resolution_clock::now();
                         }

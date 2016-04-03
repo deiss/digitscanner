@@ -414,7 +414,6 @@ void FNN<T>::SGD_batch_update(std::vector<Matrix<T>>* training_input, std::vecto
         nabla_CW[i].free();
         nabla_CB[i].free();
     }
-
 }
 
 /*
