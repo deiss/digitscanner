@@ -348,15 +348,16 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     unsigned char* image = new unsigned char[image_len];
     unsigned char* label = new unsigned char[label_len];
     /* beginning */
-    chrono_clock begin = std::chrono::high_resolution_clock::now();
+    chrono_clock begin_test = std::chrono::high_resolution_clock::now();
     std::cerr << "testing on " << (nb_images-nb_images_to_skip) << " images:" << std::endl;
     std::cerr << "    testing [----------]     0 %" << std::flush;
     /* skip the first images */
     file_images.seekg(image_header_len + nb_images_to_skip*image_len, std::ios_base::cur);
     file_labels.seekg(label_header_len + nb_images_to_skip*label_len, std::ios_base::cur);
     /* compute the results */
-    int       correct_classification = 0;
-    Matrix<T> test_input(image_len, 1);
+    Matrix<T>    test_input(image_len, 1);
+    chrono_clock begin_sub_test         = std::chrono::high_resolution_clock::now();
+    int          correct_classification = 0;
     for(int i=0 ; i<nb_images ; i++) {
         /* create input matrix */
         file_images.read((char*)image, image_len);
@@ -369,13 +370,13 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
         for(int j=0 ; j<10 ; j++) { if(y(j, 0)>y(kmax, 0)) kmax = j; }
         if(kmax==label[0]) correct_classification++;
         /* prints progress bar */
-        if(elapsed_time(begin)>=0.25) {
+        if(elapsed_time(begin_sub_test)>=0.25) {
             double percentage = static_cast<int>(10000*i/static_cast<double>(nb_images-nb_images_to_skip))/100.0;
             std::cerr << "\r    testing: " << create_progress_bar(percentage) << percentage << " %" << std::flush;
-            begin = std::chrono::high_resolution_clock::now();
+            begin_sub_test = std::chrono::high_resolution_clock::now();
         }
     }
-    std::cerr << "\r    testing completed in " << elapsed_time(begin) << " s          " << std::endl;
+    std::cerr << "\r    testing completed in " << elapsed_time(begin_test) << " s          " << std::endl;
     std::cerr << "    " << correct_classification << "/" << nb_images << " (" << 100*static_cast<double>(correct_classification)/nb_images << " %) images correctly classified" << std::endl;
     test_input.free();
     delete [] image;
