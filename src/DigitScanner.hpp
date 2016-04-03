@@ -419,9 +419,9 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
         int                      nb_batches_per_subsets = nb_batches/nb_threads;
         std::vector<std::thread> threads;
         for(int j=0 ; j<nb_threads ; j++) {
-            threads.push_back(std::thread([=]() mutable {
-                /* first thread shows progress */
-                if(j==0) {
+            /* first thread shows progress */
+            if(j==0) {
+                threads.push_back(std::thread([=]() mutable {
                     int batch_counter = 0;
                     while(batch_counter<nb_batches_per_subsets*batch_len) {
                         /* SGD on the batch */
@@ -438,9 +438,11 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
                             begin_batch = std::chrono::high_resolution_clock::now();
                         }
                     }
-                }
-                /* last thread computes maximum batches available */
-                else if(j==nb_threads-1) {
+                }));
+            }
+            /* last thread computes maximum batches available */
+            else if(j==nb_threads-1) {
+                threads.push_back(std::thread([=]() mutable {
                     int nb_batches_available = nb_batches - j*nb_batches_per_subsets;
                     int batch_counter        = j*nb_batches_per_subsets*batch_len;
                     while(batch_counter<(j*nb_batches_per_subsets + nb_batches_available)*batch_len) {
@@ -448,17 +450,19 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
                         fnn->SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
                         batch_counter += batch_len;
                     }
-                }
-                /* middle thread computes nb_batches_per_subset batches */
-                else {
+                }));
+            }
+            /* middle threads compute nb_batches_per_subset batches */
+            else {
+                threads.push_back(std::thread([=]() mutable {
                     int batch_counter = j*nb_batches_per_subsets*batch_len;
                     while(batch_counter<(j+1)*nb_batches_per_subsets*batch_len) {
                         /* SGD on the batch */
                         fnn->SGD_batch_update(training_input, training_output, &shuffle, training_set_len, batch_counter, batch_len, eta, alpha);
                         batch_counter += batch_len;
                     }
-                }
-            }));
+                }));
+            }
         }
         /* join all threads */
         for(int j=0 ; j<nb_threads ; j++) {
