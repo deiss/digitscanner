@@ -32,7 +32,7 @@ You can get a list of the parameters and options with:
 
 You can start with the existing neural networks in the *fnn* directory and test them with the mnist dataset:
 
-    bin/digitscanner --fnnin fnn/fnn_100.txt --test 10000 0 --mnist mnist_data
+    bin/digitscanner --fnnin fnn/fnn_50.txt --test 10000 0 --mnist mnist_data
 
 Note that the files in the mnist folder must have the following names:
 * train images: *train-images.idx3-ubyte*
@@ -42,46 +42,24 @@ Note that the files in the mnist folder must have the following names:
     
 You can also create a new neural network, with 784 neurons in input, a hidden layer of 50 neurons and an output layer of 10 neurons, and train it twice over the whole dataset with batches of 10 pictures and a learning factor of 0.1. Do not forget to save this neural network with the `--fnnout` parameter. The neural network available in *fnn/fnn_50.txt* has been created with the following command:
 
-    bin/digitscanner --layers 3 784 50 10 --train 60000 0 2 10 0.1 0 --fnnout fnn_50.txt --mnist mnist_data
+    bin/digitscanner --layers 3 784 50 10 --train 60000 0 2 10 0.5 0 --fnnout fnn_50.txt --mnist mnist_data
     
-You can also try to see if adding another hidden layer will improve the test result. It may take a long time, so you can train it over only 20000 pictures to make the process quicker. You could also use the `--threads 2` to enable multithreading on two cores. Let's use the last 20000 pictures. The neural network available in *fnn/fnn_100.txt* has been created with the following command:
+Before testing it, you can also try to see if adding another hidden layer will improve the results. This may take a long time, so you can enable multithreading with the `--threads <nb>` parameter. The number of threads depends on the number of cores of your CPU. You can also specify a weight decay factor to reduce overfitting. The value depends on the length of the training set, here a value of 5 gives good results. The value should usually stand between 1/5000 and 1/10000 of the total size of the training set. The neural network available in *fnn/fnn_100_50.txt* has been created with the following command:
 
-    bin/digitscanner --layers 3 784 100 10 --train 20000 40000 1 10 0.1 0 --fnnout fnn_100.txt --mnist mnist_data
+    bin/digitscanner --layers 4 784 100 50 10 --train 60000 0 2 10 0.5 5 --fnnout fnn_100_50.txt --mnist mnist_data --threads 4
     
 Then you can load the previously created neural networks and test them:
 
-    bin/digitscanner --fnnin fnn_100.txt --test 10000 0 --mnist mnist_data   # 88.64%
-    bin/digitscanner --fnnin fnn_50.txt --test 10000 0 --mnist mnist_data    # 94.59%
+    bin/digitscanner --fnnin fnn_50.txt --test 10000 0 --mnist mnist_data       # 95.78 %
+    bin/digitscanner --fnnin fnn_100_50.txt --test 10000 0 --mnist mnist_data   # 96.46 %
     
-So the second neural network with 100 neurons in the hidden layer did not do a really good job, but it has only been trained on 20000 pictures once. You can train it again:
+In this case, adding a second hidden layer and a weight decay factor resulted in better results. You can also load a previously created network and train it again with the `--fnnin` parameter. You can finally use the `--gui` option to display a window and draw numbers in it. Type `g` to guess the number and `r` to reset the drawing area.
 
-    bin/digitscanner --fnnin fnn_100.txt --train 60000 0 20 5 0.1 0 --fnnout fnn_100_improved.txt --mnist mnist_data
+    bin/digitscanner --fnnin fnn_100_50.txt --gui
     
-And test this last neural network:
-
-    bin/digitscanner --fnnin fnn_100_improved.txt --test 10000 0 --mnist mnist_data   # 96.38%
-
-It gives a better result. You can finally use the `--gui` option to display a window and draw numbers in it. Type `g` to guess the number and `r` to reset the drawing area.
-
-    bin/digitscanner --fnnin fnn_100_improved.txt --gui
-    
-When using this option, try to draw the digit within the displayed box to obtain better results. For instance, among the three digits below, only the middle one was correctly labeled by the *fnn/fnn_200_100_improved.txt* neural network.
+When using this option, try to draw the digit within the displayed box to obtain better results. For instance, among the three digits below, only the middle one was correctly labeled by the *fnn/fnn_100_50.txt* neural network.
 
 ![Example](media/examples.png)
-    
-Finally, let's try with two hidden layers and ten epochs:
-
-    bin/digitscanner --layers 4 784 200 100 10 --train 60000 0 10 5 0.1 0 --fnnout fnn_200_100.txt --mnist mnist_data
-    bin/digitscanner --fnnin fnn_200_100.txt --test 10000 0 --mnist mnist_data   # 96.57 %
-    
-It gives good results but it is still not amazing. This is because it gets really hard to train. What if we do twenty more epochs:
-
-    bin/digitscanner --train 60000 0 15 5 0.1 0 --fnnout fnn_200_100_improved.txt --fnnin fnn/fnn_200_100.txt --mnist mnist_data
-    bin/digitscanner --fnnin fnn_200_100_improved.txt --test 10000 0 --mnist mnist_data   # 98.25%
-    
-It is better but also shows that the training is really slow. This neural network is available in the *fnn* directory.
-
-Although not used in the previous examples, it is also possible to specify a weight decay factor when training. This improves training and reduces overfitting, if used properly. This parameter is hard to adjust, but a good value for this factor usually stands between 1/5000 and 1/10000 of the total size of the training set.
 
 ***
     
