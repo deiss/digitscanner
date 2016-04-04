@@ -62,6 +62,16 @@ When using this option, drawing the digit within the displayed box leads to bett
 ![Example](media/examples.png)
 
 ***
+
+### Multithreading
+
+The parameter `--threads` enables multithreading when training. I am aware that ressources should be locked (for instance with mutexes), but it turns out that the loss in mathematical efficiency is worth the gain in speed. The figure below shows the averaged testing results for networks taught using multithreading (4 threads) and for networks taught with a single thread. The results are the average of the results of three different neural networks with 400 hidden neurons. They were all trained using the 60000 images of the dataset at each epoch of training, using a learning factor of 0.5 and a weight decay factor of 5.
+
+![Multithreading](media/test_multithreading.png)
+
+This figure shows that asynchronous learning leads to slightly less accurate networks. However, the comparison in speed is definitely worth it. To learn more about asynchronous learning, read [*"Hogwild!: A Lock-Free Approach to Parallelizing Stochastic Gradient Descent"*](https://www.eecs.berkeley.edu/~brecht/papers/hogwildTR.pdf).
+
+***
     
 ### File Format
 
