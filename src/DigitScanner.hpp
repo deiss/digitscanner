@@ -292,7 +292,8 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
     unsigned char* image            = new unsigned char[image_len];
     unsigned char* label            = new unsigned char[label_len];
     /* beginning */
-    chrono_clock begin = std::chrono::high_resolution_clock::now();
+    chrono_clock begin_loading     = std::chrono::high_resolution_clock::now();
+    chrono_clock begin_sub_loading = std::chrono::high_resolution_clock::now();
     std::cerr << "training on " << (nb_images-nb_images_to_skip) << " images:" << std::endl;
     std::cerr << "    loading MNIST dataset: [----------]     0 %" << std::flush;
     /* skips the first images */
@@ -315,13 +316,13 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
         output(label[0], 0) = 1;
         training_output.push_back(output);
         /* prints progress bar */
-        if(elapsed_time(begin)>=0.25) {
+        if(elapsed_time(begin_sub_loading)>=0.25) {
             double percentage = static_cast<int>(10000*i/static_cast<double>(nb_images-nb_images_to_skip))/100.0;
             std::cerr << "\r    loading MNIST dataset: " << create_progress_bar(percentage) << percentage << " %" << std::flush;
-            begin = std::chrono::high_resolution_clock::now();
+            begin_sub_loading = std::chrono::high_resolution_clock::now();
         }
     }
-    std::cerr << "\r    MNIST dataset loaded in " << elapsed_time(begin) << " s                " << std::endl;
+    std::cerr << "\r    MNIST dataset loaded in " << elapsed_time(begin_loading) << " s                " << std::endl;
     /* Stochastic Gradient Descent */
     SGD(&training_input, &training_output, nb_images, nb_epoch, batch_len, eta, alpha, threads);
     for(Matrix<T> m : training_input)  m.free();
