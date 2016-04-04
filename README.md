@@ -69,7 +69,7 @@ The parameter `--threads` enables multithreading when training. I am aware that 
 
 ![Multithreading](media/test_multithreading.png)
 
-This figure shows that asynchronous learning leads to slightly less accurate networks. However, the comparison in speed is definitely worth it. To learn more about asynchronous learning, read [*"Hogwild!: A Lock-Free Approach to Parallelizing Stochastic Gradient Descent"*](https://www.eecs.berkeley.edu/~brecht/papers/hogwildTR.pdf).
+Let's assume that this figure shows that asynchronous learning leads to slightly less accurate networks. However, the comparison in speed is definitely worth it. If you are not satisfied with this very quick and simple analysis, you can learn more about asynchronous learning with [*"Hogwild!: A Lock-Free Approach to Parallelizing Stochastic Gradient Descent"*](https://www.eecs.berkeley.edu/~brecht/papers/hogwildTR.pdf).
 
 ***
     
