@@ -53,6 +53,7 @@ class DigitScanner {
         bool load(std::string);
         bool save(std::string);
         void train(std::string, const int, const int, const int, const int, const double, const double, const int);
+        void train_thread(std::string, const int, const int, const int, const int, const double, const double, const int, const int, const int, const int, std::map<int, int>, bool);
         void test(std::string, const int, const int, const int);
     
         void draw(bool);
@@ -60,8 +61,6 @@ class DigitScanner {
         void scan(int, int, unsigned char);
         void reset();
     
-        void SGD(std::vector<Matrix<T>>*, std::vector<Matrix<T>>*, const int, const int, const int, const double, const double, const int);
-
     private:
     
         std::string create_progress_bar(double);
@@ -277,24 +276,21 @@ bool DigitScanner<T>::save(std::string path) {
 
 /*
 Trains a Neural Network using the Stochastic Gradient Descent algorithm.
+The whole dataset is shuffled and sliced in groups of ten pictures. For
+every batch, the gradient is computed and the matrices are updated using
+the backpropagation algorithm. This runs until the whole dataset has been
+completed. Depending on the number of epochs, the whole process can be
+run more than once.
 */
 template<typename T>
 void DigitScanner<T>::train(std::string path_data, const int nb_images, const int nb_images_to_skip, const int nb_epoch, const int batch_len, const double eta, const double alpha, const int nb_threads) {
-    std::string    train_images = path_data + "train-images.idx3-ubyte";
-    std::string    train_labels = path_data + "train-labels.idx1-ubyte";
-    const    int   image_len        = 784;
-    const    int   label_len        = 1;
-    const    int   image_header_len = 16;
-    const    int   label_header_len = 8;
-    /* train across the remaning data */
-    
-    /* Stochastic Gradient Descent */
-    chrono_clock begin_training, begin_epoch, begin_batch;
+    /* begining */
+    chrono_clock begin_training, begin_epoch;
     begin_training = std::chrono::high_resolution_clock::now();
     /* run for each epoch */
     for(int i=0 ; i<nb_epoch ; i++) {
         begin_epoch = std::chrono::high_resolution_clock::now();
-        /* shuffle the training data */
+        /* shuffle the training set */
         std::map<int, int> shuffle;
         std::vector<int>   indexes;
         for(int j=nb_images_to_skip ; j<nb_images ; j++)   { indexes.push_back(j); }
@@ -303,139 +299,23 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
             shuffle[j] = indexes.at(index);
             indexes.erase(indexes.begin()+index);
         }
-        /* variables for progress bar */
-        unsigned long int nb_epoch_len = std::to_string(nb_epoch).length();
-        unsigned long int this_epo_len = std::to_string(i+1).length();
-        std::string       begin_spaces = "";
-        for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
-        std::cerr << "    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << "[----------]     0 %" << std::flush;
-        begin_batch = std::chrono::high_resolution_clock::now();
-        /* use all the training dataset */
+        /* launch threads */
+        std::vector<std::thread> threads;
         int                      nb_batches             = nb_images/batch_len;
         int                      nb_batches_per_subsets = nb_batches/nb_threads;
-        std::vector<std::thread> threads;
         for(int j=0 ; j<nb_threads ; j++) {
             /* first thread shows progress */
             if(j==0) {
-                threads.push_back(std::thread([=]() mutable {
-                    std::ifstream          file_images(train_images, std::ifstream::in | std::ifstream::binary);
-                    std::ifstream          file_labels(train_labels, std::ifstream::in | std::ifstream::binary);
-                    std::vector<Matrix<T>> batch_input;  batch_input.reserve(batch_len);
-                    std::vector<Matrix<T>> batch_output; batch_output.reserve(batch_len);
-                    unsigned char*         image         = new unsigned char[image_len];
-                    unsigned char*         label         = new unsigned char[label_len];
-                    int                    batch_counter = 0;
-                    for(int k=0 ; k<batch_len ; k++) { Matrix<T> m(image_len, 1); batch_input.push_back(m); }
-                    for(int k=0 ; k<batch_len ; k++) { Matrix<T> m(10, 1);        batch_output.push_back(m); }
-                    while(batch_counter<nb_batches_per_subsets*batch_len) {
-                        /* create batch */
-                        for(int k=0 ; k<batch_len ; k++, batch_counter++) {
-                            /* set cursor in file */
-                            file_images.seekg(image_header_len + (nb_images_to_skip + shuffle.at(batch_counter))*image_len, std::ios_base::beg);
-                            file_labels.seekg(label_header_len + (nb_images_to_skip + shuffle.at(batch_counter))*label_len, std::ios_base::beg);
-                            /* read an image from the file */
-                            file_images.read((char*)image, image_len);
-                            for(int j=0 ; j<image_len ; j++) batch_input.at(k)(j, 0) = static_cast<double>(image[j])/256;
-                            /* read the label from the data set and create the expected output matrix */
-                            file_labels.read((char*)label, label_len);
-                            batch_output.at(k).fill(0);
-                            batch_output.at(k)(label[0], 0) = 1;
-                        }
-                        /* SGD on the batch */
-                        fnn->SGD_batch_update(batch_input, batch_output, nb_images, batch_len, eta, alpha);
-                        /* draw progress bar for thread 1 */
-                        if(elapsed_time(begin_batch)>=0.25) {
-                            double percentage = static_cast<int>(10000*batch_counter/static_cast<double>(nb_batches_per_subsets*batch_len))/100.0;
-                            std::string begin_spaces = "";
-                            for(int k=0 ; k<nb_epoch_len-this_epo_len ; k++) begin_spaces += " ";
-                            std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " %";
-                            if(nb_threads>1) std::cout << " (thread 1/" << nb_threads << ")";
-                            std::cout << std::flush;
-                            begin_batch = std::chrono::high_resolution_clock::now();
-                        }
-                    }
-                    for(Matrix<T> m : batch_input)  m.free();
-                    for(Matrix<T> m : batch_output) m.free();
-                    delete [] image;
-                    delete [] label;
-                    file_images.close();
-                    file_labels.close();
-                }));
+                threads.push_back(&DigitScanner<T>::train_thread, this, path_data, nb_images, nb_images_to_skip, nb_epoch, batch_len, eta, alpha, nb_threads, 0, nb_batches_per_subsets*batch_len, i, shuffle);
             }
             /* last thread computes maximum batches available */
             else if(j==nb_threads-1) {
-                threads.push_back(std::thread([=]() mutable {
-                    std::ifstream          file_images(train_images, std::ifstream::in | std::ifstream::binary);
-                    std::ifstream          file_labels(train_labels, std::ifstream::in | std::ifstream::binary);
-                    std::vector<Matrix<T>> batch_input;  batch_input.reserve(batch_len);
-                    std::vector<Matrix<T>> batch_output; batch_output.reserve(batch_len);
-                    unsigned char*         image                = new unsigned char[image_len];
-                    unsigned char*         label                = new unsigned char[label_len];
-                    int                    nb_batches_available = nb_batches - j*nb_batches_per_subsets;
-                    int                    batch_counter        = j*nb_batches_per_subsets*batch_len;
-                    for(int k=0 ; k<batch_len ; k++) { Matrix<T> m(image_len, 1); batch_input.push_back(m); }
-                    for(int k=0 ; k<batch_len ; k++) { Matrix<T> m(10, 1);        batch_output.push_back(m); }
-                    while(batch_counter<(j*nb_batches_per_subsets + nb_batches_available)*batch_len) {
-                        /* create batch */
-                        for(int k=0 ; k<batch_len ; k++, batch_counter++) {
-                            /* set cursor in file */
-                            file_images.seekg(image_header_len + (nb_images_to_skip + shuffle.at(batch_counter))*image_len, std::ios_base::beg);
-                            file_labels.seekg(label_header_len + (nb_images_to_skip + shuffle.at(batch_counter))*label_len, std::ios_base::beg);
-                            /* read an image from the file */
-                            file_images.read((char*)image, image_len);
-                            for(int j=0 ; j<image_len ; j++) batch_input.at(k)(j, 0) = static_cast<double>(image[j])/256;
-                            /* read the label from the data set and create the expected output matrix */
-                            file_labels.read((char*)label, label_len);
-                            batch_output.at(k).fill(0);
-                            batch_output.at(k)(label[0], 0) = 1;
-                        }
-                        /* SGD on the batch */
-                        fnn->SGD_batch_update(batch_input, batch_output, nb_images, batch_len, eta, alpha);
-                    }
-                    for(Matrix<T> m : batch_input)  m.free();
-                    for(Matrix<T> m : batch_output) m.free();
-                    delete [] image;
-                    delete [] label;
-                    file_images.close();
-                    file_labels.close();
-                }));
+                int nb_batches_available = nb_batches - j*nb_batches_per_subsets;
+                threads.push_back(&DigitScanner<T>::train_thread, this, path_data, nb_images, nb_images_to_skip, nb_epoch, batch_len, eta, alpha, nb_threads, j*nb_batches_per_subsets*batch_len, (j*nb_batches_per_subsets + nb_batches_available)*batch_len, i, shuffle);
             }
             /* middle threads compute nb_batches_per_subset batches */
             else {
-                threads.push_back(std::thread([=]() mutable {
-                    std::ifstream          file_images(train_images, std::ifstream::in | std::ifstream::binary);
-                    std::ifstream          file_labels(train_labels, std::ifstream::in | std::ifstream::binary);
-                    std::vector<Matrix<T>> batch_input;  batch_input.reserve(batch_len);
-                    std::vector<Matrix<T>> batch_output; batch_output.reserve(batch_len);
-                    unsigned char*         image         = new unsigned char[image_len];
-                    unsigned char*         label         = new unsigned char[label_len];
-                    int                    batch_counter = j*nb_batches_per_subsets*batch_len;
-                    for(int k=0 ; k<batch_len ; k++) { Matrix<T> m(image_len, 1); batch_input.push_back(m); }
-                    for(int k=0 ; k<batch_len ; k++) { Matrix<T> m(10, 1);        batch_output.push_back(m); }
-                    while(batch_counter<(j+1)*nb_batches_per_subsets*batch_len) {
-                        /* create batch */
-                        for(int k=0 ; k<batch_len ; k++, batch_counter++) {
-                            /* set cursor in file */
-                            file_images.seekg(image_header_len + (nb_images_to_skip + shuffle.at(batch_counter))*image_len, std::ios_base::cur);
-                            file_labels.seekg(label_header_len + (nb_images_to_skip + shuffle.at(batch_counter))*label_len, std::ios_base::cur);
-                            /* read an image from the file */
-                            file_images.read((char*)image, image_len);
-                            for(int j=0 ; j<image_len ; j++) batch_input.at(k)(j, 0) = static_cast<double>(image[j])/256;
-                            /* read the label from the data set and create the expected output matrix */
-                            file_labels.read((char*)label, label_len);
-                            batch_output.at(k).fill(0);
-                            batch_output.at(k)(label[0], 0) = 1;
-                        }
-                        /* SGD on the batch */
-                        fnn->SGD_batch_update(batch_input, batch_output, nb_images, batch_len, eta, alpha);
-                    }
-                    for(Matrix<T> m : batch_input)  m.free();
-                    for(Matrix<T> m : batch_output) m.free();
-                    delete [] image;
-                    delete [] label;
-                    file_images.close();
-                    file_labels.close();
-                }));
+                threads.push_back(&DigitScanner<T>::train_thread, this, path_data, nb_images, nb_images_to_skip, nb_epoch, batch_len, eta, alpha, nb_threads, j*nb_batches_per_subsets*batch_len, (j+1)*nb_batches_per_subsets*batch_len, i, shuffle);
             }
         }
         /* join all threads */
@@ -445,6 +325,69 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
         std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s                          " << std::endl;
     }
     std::cerr << "    training completed in " << elapsed_time(begin_training) << " s" << std::endl;
+}
+
+template<typename T>
+void DigitScanner<T>::train_thread(std::string path_data, const int nb_images, const int nb_images_to_skip, const int nb_epoch, const int batch_len, const double eta, const double alpha, const int nb_threads, const int data_counter_init, const int data_upper_lim, const int epoch, std::map<int, int> shuffle, bool display) {
+    std::string            train_images           = path_data + "train-images.idx3-ubyte";
+    std::string            train_labels           = path_data + "train-labels.idx1-ubyte";
+    const    int           image_len              = 784;
+    const    int           label_len              = 1;
+    const    int           image_header_len       = 16;
+    const    int           label_header_len       = 8;
+    unsigned char*         image                  = new unsigned char[image_len];
+    unsigned char*         label                  = new unsigned char[label_len];
+    int                    image_counter          = data_counter_init;
+    int                    nb_batches             = nb_images/batch_len;
+    int                    nb_batches_per_subsets = nb_batches/nb_threads;
+    chrono_clock           begin_batch            = std::chrono::high_resolution_clock::now();
+    std::ifstream          file_images(train_images, std::ifstream::in | std::ifstream::binary);
+    std::ifstream          file_labels(train_labels, std::ifstream::in | std::ifstream::binary);
+    std::vector<Matrix<T>> batch_input;  batch_input.reserve(batch_len);
+    std::vector<Matrix<T>> batch_output; batch_output.reserve(batch_len);
+    for(int k=0 ; k<batch_len ; k++) { Matrix<T> m(image_len, 1); batch_input.push_back(m); }
+    for(int k=0 ; k<batch_len ; k++) { Matrix<T> m(10, 1);        batch_output.push_back(m); }
+    /* variables for progress bar */
+    unsigned long int nb_epoch_len = std::to_string(nb_epoch).length();
+    unsigned long int this_epo_len = std::to_string(epoch+1).length();
+    std::string       begin_spaces = "";
+    if(display) {
+        for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
+        std::cerr << "    epoch " << (epoch+1) << "/" << nb_epoch << ": " << begin_spaces << "[----------]     0 %" << std::flush;
+    }
+    while(image_counter<data_upper_lim) {
+        /* create batch */
+        for(int k=0 ; k<batch_len ; k++, image_counter++) {
+            /* set cursor in file */
+            file_images.seekg(image_header_len + (nb_images_to_skip + shuffle.at(image_counter))*image_len, std::ios_base::beg);
+            file_labels.seekg(label_header_len + (nb_images_to_skip + shuffle.at(image_counter))*label_len, std::ios_base::beg);
+            /* read an image from the file */
+            file_images.read((char*)image, image_len);
+            for(int j=0 ; j<image_len ; j++) batch_input.at(k)(j, 0) = static_cast<double>(image[j])/256;
+            /* read the label from the data set and create the expected output matrix */
+            file_labels.read((char*)label, label_len);
+            batch_output.at(k).fill(0);
+            batch_output.at(k)(label[0], 0) = 1;
+        }
+        /* SGD on the batch */
+        fnn->SGD_batch_update(batch_input, batch_output, nb_images, batch_len, eta, alpha);
+        /* draw progress bar for thread 1 */
+        if(display && elapsed_time(begin_batch)>=0.25) {
+            double percentage = static_cast<int>(10000*image_counter/static_cast<double>(nb_batches_per_subsets*batch_len))/100.0;
+            std::string begin_spaces = "";
+            for(int k=0 ; k<nb_epoch_len-this_epo_len ; k++) begin_spaces += " ";
+            std::cerr << "\r    epoch " << (epoch+1) << "/" << nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " %";
+            if(nb_threads>1) std::cout << " (thread 1/" << nb_threads << ")";
+            std::cout << std::flush;
+            begin_batch = std::chrono::high_resolution_clock::now();
+        }
+    }
+    for(Matrix<T> m : batch_input)  m.free();
+    for(Matrix<T> m : batch_output) m.free();
+    delete [] image;
+    delete [] label;
+    file_images.close();
+    file_labels.close();
 }
 
 /*
@@ -582,18 +525,6 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     for(int c : correct_classification) correct += c;
     std::cerr << "\r    testing completed in " << elapsed_time(begin_test) << " s                           " << std::endl;
     std::cerr << "    " << correct << "/" << nb_images << " (" << 100*static_cast<double>(correct)/nb_images << " %) images correctly classified" << std::endl;
-}
-
-/*
-Stochastic Gradient Descent algorithm. This function generates multiple
-batches of training data, shuffled among the whole training data set, runs
-the backpropagation algorithm on this batch, and continues until the whole
-data set has been completed. Depending on the number of epochs, the whole
-process can be run more than once.
-*/
-template<typename T>
-void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Matrix<T>>* training_output, const int training_set_len, const int nb_epoch, const int batch_len, const double eta, const double alpha, const int nb_threads) {
-    
 }
 
 /*
