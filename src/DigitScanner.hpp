@@ -53,7 +53,7 @@ class DigitScanner {
         bool load(std::string);
         bool save(std::string);
         void train(std::string, const int, const int, const int, const int, const double, const double, const int);
-        void test(std::string, const int, const int, int);
+        void test(std::string, const int, const int, const int);
     
         void draw(bool);
         void guess();
@@ -337,7 +337,7 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
 Tests a Neural Network across the MNIST dataset.
 */
 template<typename T>
-void DigitScanner<T>::test(std::string path_data, const int nb_images, const int nb_images_to_skip,  int nb_threads) {
+void DigitScanner<T>::test(std::string path_data, const int nb_images, const int nb_images_to_skip, const int nb_threads) {
     std::string    test_images = path_data + "t10k-images.idx3-ubyte";
     std::string    test_labels = path_data + "t10k-labels.idx1-ubyte";
     const    int   image_len        = 784;
@@ -386,7 +386,7 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
                         std::cout << std::flush;
                         begin_sub_test = std::chrono::high_resolution_clock::now();
                     }
-                }
+                 }
                 test_input.free();
                 delete [] image;
                 delete [] label;
