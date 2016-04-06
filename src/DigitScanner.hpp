@@ -327,6 +327,9 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
     std::cerr << "    training completed in " << elapsed_time(begin_training) << " s" << std::endl;
 }
 
+/*
+Training function callback.
+*/
 template<typename T>
 void DigitScanner<T>::train_thread(std::string path_data, const int nb_images, const int nb_images_to_skip, const int nb_epoch, const int batch_len, const double eta, const double alpha, const int nb_threads, const int data_counter_init, const int data_upper_lim, const int epoch, std::map<int, int> shuffle, bool display) {
     std::string            train_images           = path_data + "train-images.idx3-ubyte";
