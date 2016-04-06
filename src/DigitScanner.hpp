@@ -304,17 +304,17 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
         int                      nb_batches             = nb_images/batch_len;
         int                      nb_batches_per_subsets = nb_batches/nb_threads;
         for(int j=0 ; j<nb_threads ; j++) {
-            /* first thread shows progress */
             if(j==0) {
+                /* first thread shows progress */
                 threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, path_data, nb_images, nb_images_to_skip, nb_epoch, batch_len, eta, alpha, nb_threads, 0, nb_batches_per_subsets*batch_len, i, shuffle, true));
             }
-            /* last thread computes maximum batches available */
             else if(j==nb_threads-1) {
+                /* last thread computes maximum batches available */
                 int nb_batches_available = nb_batches - j*nb_batches_per_subsets;
                 threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, path_data, nb_images, nb_images_to_skip, nb_epoch, batch_len, eta, alpha, nb_threads, j*nb_batches_per_subsets*batch_len, (j*nb_batches_per_subsets + nb_batches_available)*batch_len, i, shuffle, false));
             }
-            /* middle threads compute nb_batches_per_subset batches */
             else {
+                /* middle threads compute nb_batches_per_subset batches */
                 threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, path_data, nb_images, nb_images_to_skip, nb_epoch, batch_len, eta, alpha, nb_threads, j*nb_batches_per_subsets*batch_len, (j+1)*nb_batches_per_subsets*batch_len, i, shuffle, false));
             }
         }
