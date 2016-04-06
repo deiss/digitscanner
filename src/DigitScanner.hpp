@@ -41,13 +41,26 @@ class DigitScanner {
 
     public:
     
+        struct train_settings {
+            std::string  path_data;
+            int          nb_images;
+            int          nb_images_to_skip;
+            int          nb_epoch;
+            int          batch_len;
+            double       eta;
+            double       alpha;
+            int          nb_threads;
+            int          data_counter_init;
+            int          data_upper_lim;
+        };
+    
         struct test_settings {
             std::string path_data;
-            const int   nb_images;
-            const int   nb_images_to_skip;
-            const int   nb_threads;
-            const int   img_offset;
-            const int   img_upper_limit;
+            int         nb_images;
+            int         nb_images_to_skip;
+            int         nb_threads;
+            int         img_offset;
+            int         img_upper_limit;
             bool        display;
             int*        correct_classifications;
         };
@@ -64,7 +77,7 @@ class DigitScanner {
         bool load(std::string);
         bool save(std::string);
         void train(std::string, const int, const int, const int, const int, const double, const double, const int);
-        void train_thread(std::string, const int, const int, const int, const int, const double, const double, const int, const int, const int, const int, std::map<int, int>, bool);
+        void train_thread(train_settings, const int, std::map<int, int>, bool);
         void test(std::string, const int, const int, const int);
         void test_thread(test_settings, bool, int*);
     
@@ -316,18 +329,33 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
         int                      nb_batches             = nb_images/batch_len;
         int                      nb_batches_per_subsets = nb_batches/nb_threads;
         for(int j=0 ; j<nb_threads ; j++) {
+            train_settings ts;
+            ts.path_data         = path_data;
+            ts.nb_images         = nb_images;
+            ts.nb_images_to_skip = nb_images_to_skip;
+            ts.nb_epoch          = nb_epoch;
+            ts.batch_len         = batch_len;
+            ts.eta               = eta;
+            ts.alpha             = alpha;
+            ts.nb_threads        = nb_threads;
             if(j==0) {
                 /* first thread shows progress */
-                threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, path_data, nb_images, nb_images_to_skip, nb_epoch, batch_len, eta, alpha, nb_threads, 0, nb_batches_per_subsets*batch_len, i, shuffle, true));
+                ts.data_counter_init = 0;
+                ts.data_upper_lim    = nb_batches_per_subsets*batch_len;
+                threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, ts, i, shuffle, true));
             }
             else if(j==nb_threads-1) {
                 /* last thread computes maximum batches available */
                 int nb_batches_available = nb_batches - j*nb_batches_per_subsets;
-                threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, path_data, nb_images, nb_images_to_skip, nb_epoch, batch_len, eta, alpha, nb_threads, j*nb_batches_per_subsets*batch_len, (j*nb_batches_per_subsets + nb_batches_available)*batch_len, i, shuffle, false));
+                ts.data_counter_init     = j*nb_batches_per_subsets*batch_len;
+                ts.data_upper_lim        = (j*nb_batches_per_subsets + nb_batches_available)*batch_len;
+                threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, ts, i, shuffle, false));
             }
             else {
                 /* middle threads compute nb_batches_per_subset batches */
-                threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, path_data, nb_images, nb_images_to_skip, nb_epoch, batch_len, eta, alpha, nb_threads, j*nb_batches_per_subsets*batch_len, (j+1)*nb_batches_per_subsets*batch_len, i, shuffle, false));
+                ts.data_counter_init = j*nb_batches_per_subsets*batch_len;
+                ts.data_upper_lim    = (j+1)*nb_batches_per_subsets*batch_len;
+                threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, ts, i, shuffle, false));
             }
         }
         /* join all threads */
@@ -343,39 +371,39 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
 Training function callback.
 */
 template<typename T>
-void DigitScanner<T>::train_thread(std::string path_data, const int nb_images, const int nb_images_to_skip, const int nb_epoch, const int batch_len, const double eta, const double alpha, const int nb_threads, const int data_counter_init, const int data_upper_lim, const int epoch, std::map<int, int> shuffle, bool display) {
-    std::string            train_images           = path_data + "train-images.idx3-ubyte";
-    std::string            train_labels           = path_data + "train-labels.idx1-ubyte";
+void DigitScanner<T>::train_thread(train_settings settings, const int epoch, std::map<int, int> shuffle, bool display) {
+    std::string            train_images           = settings.path_data + "train-images.idx3-ubyte";
+    std::string            train_labels           = settings.path_data + "train-labels.idx1-ubyte";
     const    int           image_len              = 784;
     const    int           label_len              = 1;
     const    int           image_header_len       = 16;
     const    int           label_header_len       = 8;
     unsigned char*         image                  = new unsigned char[image_len];
     unsigned char*         label                  = new unsigned char[label_len];
-    int                    image_counter          = data_counter_init;
-    int                    nb_batches             = nb_images/batch_len;
-    int                    nb_batches_per_subsets = nb_batches/nb_threads;
+    int                    image_counter          = settings.data_counter_init;
+    int                    nb_batches             = settings.nb_images/settings.batch_len;
+    int                    nb_batches_per_subsets = nb_batches/settings.nb_threads;
     chrono_clock           begin_batch            = std::chrono::high_resolution_clock::now();
     std::ifstream          file_images(train_images, std::ifstream::in | std::ifstream::binary);
     std::ifstream          file_labels(train_labels, std::ifstream::in | std::ifstream::binary);
-    std::vector<Matrix<T>> batch_input;  batch_input.reserve(batch_len);
-    std::vector<Matrix<T>> batch_output; batch_output.reserve(batch_len);
-    for(int k=0 ; k<batch_len ; k++) { Matrix<T> m(image_len, 1); batch_input.push_back(m); }
-    for(int k=0 ; k<batch_len ; k++) { Matrix<T> m(10, 1);        batch_output.push_back(m); }
+    std::vector<Matrix<T>> batch_input;  batch_input.reserve(settings.batch_len);
+    std::vector<Matrix<T>> batch_output; batch_output.reserve(settings.batch_len);
+    for(int k=0 ; k<settings.batch_len ; k++) { Matrix<T> m(image_len, 1); batch_input.push_back(m); }
+    for(int k=0 ; k<settings.batch_len ; k++) { Matrix<T> m(10, 1);        batch_output.push_back(m); }
     /* variables for progress bar */
-    unsigned long int nb_epoch_len = std::to_string(nb_epoch).length();
+    unsigned long int nb_epoch_len = std::to_string(settings.nb_epoch).length();
     unsigned long int this_epo_len = std::to_string(epoch+1).length();
     std::string       begin_spaces = "";
     if(display) {
         for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
-        std::cerr << "    epoch " << (epoch+1) << "/" << nb_epoch << ": " << begin_spaces << "[----------]     0 %" << std::flush;
+        std::cerr << "    epoch " << (epoch+1) << "/" << settings.nb_epoch << ": " << begin_spaces << "[----------]     0 %" << std::flush;
     }
-    while(image_counter<data_upper_lim) {
+    while(image_counter<settings.data_upper_lim) {
         /* create batch */
-        for(int k=0 ; k<batch_len ; k++, image_counter++) {
+        for(int k=0 ; k<settings.batch_len ; k++, image_counter++) {
             /* set cursor in file */
-            file_images.seekg(image_header_len + (nb_images_to_skip + shuffle.at(image_counter))*image_len, std::ios_base::beg);
-            file_labels.seekg(label_header_len + (nb_images_to_skip + shuffle.at(image_counter))*label_len, std::ios_base::beg);
+            file_images.seekg(image_header_len + (settings.nb_images_to_skip + shuffle.at(image_counter))*image_len, std::ios_base::beg);
+            file_labels.seekg(label_header_len + (settings.nb_images_to_skip + shuffle.at(image_counter))*label_len, std::ios_base::beg);
             /* read an image from the file */
             file_images.read((char*)image, image_len);
             for(int j=0 ; j<image_len ; j++) batch_input.at(k)(j, 0) = static_cast<double>(image[j])/256;
@@ -385,14 +413,14 @@ void DigitScanner<T>::train_thread(std::string path_data, const int nb_images, c
             batch_output.at(k)(label[0], 0) = 1;
         }
         /* SGD on the batch */
-        fnn->SGD_batch_update(batch_input, batch_output, nb_images, batch_len, eta, alpha);
+        fnn->SGD_batch_update(batch_input, batch_output, settings.nb_images, settings.batch_len, settings.eta, settings.alpha);
         /* draw progress bar for thread 1 */
         if(display && elapsed_time(begin_batch)>=0.25) {
-            double percentage = static_cast<int>(10000*image_counter/static_cast<double>(nb_batches_per_subsets*batch_len))/100.0;
+            double percentage = static_cast<int>(10000*image_counter/static_cast<double>(nb_batches_per_subsets*settings.batch_len))/100.0;
             std::string begin_spaces = "";
             for(int k=0 ; k<nb_epoch_len-this_epo_len ; k++) begin_spaces += " ";
-            std::cerr << "\r    epoch " << (epoch+1) << "/" << nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " %";
-            if(nb_threads>1) std::cout << " (thread 1/" << nb_threads << ")";
+            std::cerr << "\r    epoch " << (epoch+1) << "/" << settings.nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " %";
+            if(settings.nb_threads>1) std::cout << " (thread 1/" << settings.nb_threads << ")";
             std::cout << std::flush;
             begin_batch = std::chrono::high_resolution_clock::now();
         }
