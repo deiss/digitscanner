@@ -139,7 +139,6 @@ void DigitScanner<T>::draw(bool background) {
             }
         }
     }
-    
 }
 
 /*
