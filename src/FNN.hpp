@@ -296,6 +296,7 @@ typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(Matrix<T>& tra
         At.free();
     nabla_CW[nb_right_layers-1] = NCW;
     nabla_CB[nb_right_layers-1] = D;
+    activations[nb_right_layers].free();
     /* activations[0] = input, do not free */
     /* backward propagation */
     for(int i=nb_right_layers-2 ; i>=0 ; i--) {
