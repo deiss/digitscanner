@@ -362,7 +362,8 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
         for(int j=0 ; j<nb_threads ; j++) {
             threads.at(j).join();
         }
-        std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s                          " << std::endl;
+        std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s";
+        std::cerr << "                          " << std::endl;
     }
     std::cerr << "    training completed in " << elapsed_time(begin_training) << " s" << std::endl;
 }
@@ -478,7 +479,8 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     }
     int correct = 0;
     for(int c : correct_classification) correct += c;
-    std::cerr << "\r    testing completed in " << elapsed_time(begin_test) << " s                           " << std::endl;
+    std::cerr << "\r    testing completed in " << elapsed_time(begin_test) << " s";
+    std::cerr << "                           " << std::endl;
     std::cerr << "    " << correct << "/" << nb_images << " (" << 100*static_cast<double>(correct)/nb_images << " %) images correctly classified" << std::endl;
 }
 
