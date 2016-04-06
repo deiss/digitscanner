@@ -84,7 +84,7 @@ class FNN {
         const Matrix<T>        feedforward(Matrix<T>*);
         std::vector<Matrix<T>> feedforward_complete(Matrix<T>*);
         void                   random_init_values(FNNRightLayer<T>*);
-        void                   SGD_batch_update(std::vector<Matrix<T>>*, std::vector<Matrix<T>>*, const int, const int, const double, const double);
+        void                   SGD_batch_update(std::vector<Matrix<T>>, std::vector<Matrix<T>>, const int, const int, const double, const double);
         nabla_pair             backpropagation_cross_entropy(Matrix<T>&, Matrix<T>&);
     
     private:
@@ -386,7 +386,7 @@ This function is the actual SGD algorithm. It runs the backpropagation
 on the whole batch before updating the weights and biases.
 */
 template<typename T>
-void FNN<T>::SGD_batch_update(std::vector<Matrix<T>>* batch_input, std::vector<Matrix<T>>* batch_output, const int training_set_len, const int batch_len, const double eta, const double alpha) {
+void FNN<T>::SGD_batch_update(std::vector<Matrix<T>> batch_input, std::vector<Matrix<T>> batch_output, const int training_set_len, const int batch_len, const double eta, const double alpha) {
     /* create nabla matrices vectors */
     std::vector<Matrix<T>> nabla_CW;
     std::vector<Matrix<T>> nabla_CB;
@@ -396,7 +396,7 @@ void FNN<T>::SGD_batch_update(std::vector<Matrix<T>>* batch_input, std::vector<M
     }
     /* feedforward-backpropagation for each data in the batch and sum the nablas */
     for(int i=0 ; i<batch_len ; i++) {
-        nabla_pair delta_nabla = backpropagation_cross_entropy(batch_input->at(i), batch_output->at(i));
+        nabla_pair delta_nabla = backpropagation_cross_entropy(batch_input[i], batch_output[i]);
         for(int j=0 ; j<nb_right_layers ; j++) {
             nabla_CW[j] += delta_nabla.first[j];  delta_nabla.first[j].free();
             nabla_CB[j] += delta_nabla.second[j]; delta_nabla.second[j].free();
