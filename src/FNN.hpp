@@ -397,15 +397,12 @@ void FNN<T>::SGD_batch_update(std::vector<Matrix<T>> batch_input, std::vector<Ma
     }
     /* feedforward-backpropagation for each data in the batch and sum the nablas */
     for(int i=0 ; i<batch_len ; i++) {
-        
         nabla_pair delta_nabla = backpropagation_cross_entropy(batch_input[i], batch_output[i]);
-        
         for(int j=0 ; j<nb_right_layers ; j++) {
             nabla_CW[j] += delta_nabla.first[j];  delta_nabla.first[j].free();
             nabla_CB[j] += delta_nabla.second[j]; delta_nabla.second[j].free();
         }
     }
-    
     /* update the parameters */
     for(int i=0 ; i<nb_right_layers ; i++) {
         nabla_CW[i] *= eta/static_cast<double>(batch_len);
