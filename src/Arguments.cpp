@@ -72,7 +72,7 @@ void Arguments::print_help() {
     std::cout << "   --gui                                Creates a window that enables you to draw numbers. Commands:" << std::endl;
     std::cout << "                                           g: using the neural network, guess the number" << std::endl;
     std::cout << "                                           r: resets the drawing area" << std::endl;
-    std::cout << "   --threads <nb_threads>               Enables multithreading for the training. Default: 1." << std::endl;
+    std::cout << "   --threads <nb_threads>               Enables multithreading for training or testing. Default: 1." << std::endl;
 }
 
 /*

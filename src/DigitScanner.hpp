@@ -53,7 +53,7 @@ class DigitScanner {
         bool load(std::string);
         bool save(std::string);
         void train(std::string, const int, const int, const int, const int, const double, const double, const int);
-        void test(std::string, const int, const int);
+        void test(std::string, const int, const int, int);
     
         void draw(bool);
         void guess();
@@ -337,53 +337,137 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
 Tests a Neural Network across the MNIST dataset.
 */
 template<typename T>
-void DigitScanner<T>::test(std::string path_data, const int nb_images, const int nb_images_to_skip) {
+void DigitScanner<T>::test(std::string path_data, const int nb_images, const int nb_images_to_skip,  int nb_threads) {
     std::string    test_images = path_data + "t10k-images.idx3-ubyte";
     std::string    test_labels = path_data + "t10k-labels.idx1-ubyte";
-    std::ifstream  file_images(test_images, std::ifstream::in | std::ifstream::binary);
-    std::ifstream  file_labels(test_labels, std::ifstream::in | std::ifstream::binary);
     const    int   image_len        = 784;
     const    int   label_len        = 1;
     const    int   image_header_len = 16;
     const    int   label_header_len = 8;
-    unsigned char* image = new unsigned char[image_len];
-    unsigned char* label = new unsigned char[label_len];
     /* beginning */
     chrono_clock begin_test = std::chrono::high_resolution_clock::now();
     std::cerr << "testing on " << (nb_images-nb_images_to_skip) << " images:" << std::endl;
     std::cerr << "    testing [----------]     0 %" << std::flush;
     /* skip the first images */
-    file_images.seekg(image_header_len + nb_images_to_skip*image_len, std::ios_base::cur);
-    file_labels.seekg(label_header_len + nb_images_to_skip*label_len, std::ios_base::cur);
-    /* compute the results */
-    Matrix<T>    test_input(image_len, 1);
-    chrono_clock begin_sub_test         = std::chrono::high_resolution_clock::now();
-    int          correct_classification = 0;
-    for(int i=0 ; i<nb_images ; i++) {
-        /* create input matrix */
-        file_images.read((char*)image, image_len);
-        for(int j=0 ; j<image_len ; j++) test_input(j, 0) = static_cast<double>(image[j])/256;
-        /* read output label */
-        file_labels.read((char*)label, label_len);
-        /* compute output */
-        const Matrix<T> y = fnn->feedforward(&test_input);
-        int kmax = 0;
-        for(int j=0 ; j<10 ; j++) { if(y(j, 0)>y(kmax, 0)) kmax = j; }
-        if(kmax==label[0]) correct_classification++;
-        /* prints progress bar */
-        if(elapsed_time(begin_sub_test)>=0.25) {
-            double percentage = static_cast<int>(10000*i/static_cast<double>(nb_images-nb_images_to_skip))/100.0;
-            std::cerr << "\r    testing: " << create_progress_bar(percentage) << percentage << " %" << std::flush;
-            begin_sub_test = std::chrono::high_resolution_clock::now();
+    std::vector<std::thread> threads;
+    std::vector<int>         correct_classification(nb_threads, 0);
+    int                      nb_images_per_thread = nb_images/nb_threads;
+    for(int i=0 ; i<nb_threads ; i++) {
+        /* first thread shows progress */
+        if(i==0) {
+            threads.push_back(std::thread([=, &correct_classification]() mutable {
+                /* open the files */
+                std::ifstream  file_images(test_images, std::ifstream::in | std::ifstream::binary);
+                std::ifstream  file_labels(test_labels, std::ifstream::in | std::ifstream::binary);
+                unsigned char* image = new unsigned char[image_len];
+                unsigned char* label = new unsigned char[label_len];
+                /* set the file cursor */
+                file_images.seekg(image_header_len + nb_images_to_skip*image_len, std::ios_base::cur);
+                file_labels.seekg(label_header_len + nb_images_to_skip*label_len, std::ios_base::cur);
+                /* compute the results */
+                Matrix<T>    test_input(image_len, 1);
+                chrono_clock begin_sub_test = std::chrono::high_resolution_clock::now();
+                for(int j=0 ; j<nb_images_per_thread ; j++) {
+                    /* create input matrix */
+                    file_images.read((char*)image, image_len);
+                    for(int k=0 ; k<image_len ; k++) test_input(k, 0) = static_cast<double>(image[k])/256;
+                    /* read output label */
+                    file_labels.read((char*)label, label_len);
+                    /* compute output */
+                    const Matrix<T> y = fnn->feedforward(&test_input);
+                    int kmax = 0;
+                    for(int k=0 ; k<10 ; k++) { if(y(k, 0)>y(kmax, 0)) kmax = k; }
+                    if(kmax==label[0]) correct_classification.at(0)++;
+                    /* prints progress bar */
+                    if(elapsed_time(begin_sub_test)>=0.25) {
+                        double percentage = static_cast<int>(10000*j/static_cast<double>(nb_images_per_thread))/100.0;
+                        std::cerr << "\r    testing: " << create_progress_bar(percentage) << percentage << " %";
+                        if(nb_threads>1) std::cout << " (thread 1/" << nb_threads << ")";
+                        std::cout << std::flush;
+                        begin_sub_test = std::chrono::high_resolution_clock::now();
+                    }
+                }
+                test_input.free();
+                delete [] image;
+                delete [] label;
+                file_images.close();
+                file_labels.close();
+            }));
+        }
+        /* last thread tests maximum available pictures */
+        else if(i==nb_threads-1) {
+            int nb_images_available = nb_images - i*nb_images_per_thread;
+            threads.push_back(std::thread([=, &correct_classification](int thread_index) mutable {
+                /* open the files */
+                std::ifstream  file_images(test_images, std::ifstream::in | std::ifstream::binary);
+                std::ifstream  file_labels(test_labels, std::ifstream::in | std::ifstream::binary);
+                unsigned char* image = new unsigned char[image_len];
+                unsigned char* label = new unsigned char[label_len];
+                /* set the file cursor */
+                file_images.seekg(image_header_len + (nb_images_to_skip + i*nb_images_per_thread)*image_len, std::ios_base::cur);
+                file_labels.seekg(label_header_len + (nb_images_to_skip + i*nb_images_per_thread)*label_len, std::ios_base::cur);
+                /* compute the results */
+                Matrix<T>    test_input(image_len, 1);
+                for(int j=0 ; j<nb_images_available ; j++) {
+                    /* create input matrix */
+                    file_images.read((char*)image, image_len);
+                    for(int k=0 ; k<image_len ; k++) test_input(k, 0) = static_cast<double>(image[k])/256;
+                    /* read output label */
+                    file_labels.read((char*)label, label_len);
+                    /* compute output */
+                    const Matrix<T> y = fnn->feedforward(&test_input);
+                    int kmax = 0;
+                    for(int k=0 ; k<10 ; k++) { if(y(k, 0)>y(kmax, 0)) kmax = k; }
+                    if(kmax==label[0]) correct_classification.at(thread_index)++;
+                }
+                test_input.free();
+                delete [] image;
+                delete [] label;
+                file_images.close();
+                file_labels.close();
+            }, i));
+        }
+        /* middle threads */
+        else {
+            threads.push_back(std::thread([=, &correct_classification](int thread_index) mutable {
+                /* open the files */
+                std::ifstream  file_images(test_images, std::ifstream::in | std::ifstream::binary);
+                std::ifstream  file_labels(test_labels, std::ifstream::in | std::ifstream::binary);
+                unsigned char* image = new unsigned char[image_len];
+                unsigned char* label = new unsigned char[label_len];
+                /* set the file cursor */
+                file_images.seekg(image_header_len + (nb_images_to_skip + i*nb_images_per_thread)*image_len, std::ios_base::cur);
+                file_labels.seekg(label_header_len + (nb_images_to_skip + i*nb_images_per_thread)*label_len, std::ios_base::cur);
+                /* compute the results */
+                Matrix<T>    test_input(image_len, 1);
+                for(int j=0 ; j<nb_images_per_thread ; j++) {
+                    /* create input matrix */
+                    file_images.read((char*)image, image_len);
+                    for(int k=0 ; k<image_len ; k++) test_input(k, 0) = static_cast<double>(image[k])/256;
+                    /* read output label */
+                    file_labels.read((char*)label, label_len);
+                    /* compute output */
+                    const Matrix<T> y = fnn->feedforward(&test_input);
+                    int kmax = 0;
+                    for(int k=0 ; k<10 ; k++) { if(y(k, 0)>y(kmax, 0)) kmax = k; }
+                    if(kmax==label[0]) correct_classification.at(thread_index)++;
+                }
+                test_input.free();
+                delete [] image;
+                delete [] label;
+                file_images.close();
+                file_labels.close();
+            }, i));
         }
     }
-    std::cerr << "\r    testing completed in " << elapsed_time(begin_test) << " s          " << std::endl;
-    std::cerr << "    " << correct_classification << "/" << nb_images << " (" << 100*static_cast<double>(correct_classification)/nb_images << " %) images correctly classified" << std::endl;
-    test_input.free();
-    delete [] image;
-    delete [] label;
-    file_images.close();
-    file_labels.close();
+    /* join all threads */
+    for(int i=0 ; i<nb_threads ; i++) {
+        threads.at(i).join();
+    }
+    int correct = 0;
+    for(int c : correct_classification) correct += c;
+    std::cerr << "\r    testing completed in " << elapsed_time(begin_test) << " s                           " << std::endl;
+    std::cerr << "    " << correct << "/" << nb_images << " (" << 100*static_cast<double>(correct)/nb_images << " %) images correctly classified" << std::endl;
 }
 
 /*
@@ -470,7 +554,7 @@ void DigitScanner<T>::SGD(std::vector<Matrix<T>>* training_input, std::vector<Ma
         for(int j=0 ; j<nb_threads ; j++) {
             threads.at(j).join();
         }
-        std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s                     " << std::endl;
+        std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s                          " << std::endl;
     }
     std::cerr << "    training completed in " << elapsed_time(begin_training) << " s" << std::endl;
 }
