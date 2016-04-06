@@ -40,6 +40,17 @@ template<typename T>
 class DigitScanner {
 
     public:
+    
+        struct test_settings {
+            std::string path_data;
+            const int   nb_images;
+            const int   nb_images_to_skip;
+            const int   nb_threads;
+            const int   img_offset;
+            const int   img_upper_limit;
+            bool        display;
+            int*        correct_classifications;
+        };
 
         typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_clock;
     
@@ -55,7 +66,7 @@ class DigitScanner {
         void train(std::string, const int, const int, const int, const int, const double, const double, const int);
         void train_thread(std::string, const int, const int, const int, const int, const double, const double, const int, const int, const int, const int, std::map<int, int>, bool);
         void test(std::string, const int, const int, const int);
-        void test_thread(std::string, const int, const int, const int, const int, const int, bool, int*);
+        void test_thread(test_settings, bool, int*);
     
         void draw(bool);
         void guess();
@@ -408,18 +419,29 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     std::vector<int>         correct_classification(nb_threads, 0);
     int                      nb_images_per_thread = nb_images/nb_threads;
     for(int i=0 ; i<nb_threads ; i++) {
+        test_settings ts;
+        ts.path_data         = path_data;
+        ts.nb_images         = nb_images;
+        ts.nb_images_to_skip = nb_images_to_skip;
+        ts.nb_threads        = nb_threads;
         if(i==0) {
             /* first thread shows progress */
-            threads.push_back(std::thread(&DigitScanner<T>::test_thread, this, path_data, nb_images, nb_images_to_skip, nb_threads, nb_images_to_skip, nb_images_per_thread, true, &correct_classification.at(0)));
+            ts.img_offset      = nb_images_to_skip;
+            ts.img_upper_limit = nb_images_per_thread;
+            threads.push_back(std::thread(&DigitScanner<T>::test_thread, this, ts, true, &correct_classification.at(0)));
         }
         else if(i==nb_threads-1) {
             /* last thread tests maximum available pictures */
             int nb_images_available = nb_images - i*nb_images_per_thread;
-            threads.push_back(std::thread(&DigitScanner<T>::test_thread, this, path_data, nb_images, nb_images_to_skip, nb_threads, nb_images_to_skip + i*nb_images_per_thread, nb_images_available, false, &correct_classification.at(i)));
+            ts.img_offset      = nb_images_to_skip + i*nb_images_per_thread;
+            ts.img_upper_limit = nb_images_available;
+            threads.push_back(std::thread(&DigitScanner<T>::test_thread, this, ts, false, &correct_classification.at(i)));
         }
         else {
             /* middle threads */
-            threads.push_back(std::thread(&DigitScanner<T>::test_thread, this, path_data, nb_images, nb_images_to_skip, nb_threads, nb_images_to_skip + i*nb_images_per_thread, nb_images_per_thread, false, &correct_classification.at(i)));
+            ts.img_offset      = nb_images_to_skip + i*nb_images_per_thread;
+            ts.img_upper_limit = nb_images_per_thread;
+            threads.push_back(std::thread(&DigitScanner<T>::test_thread, this, ts, false, &correct_classification.at(i)));
         }
     }
     /* join all threads */
@@ -432,27 +454,30 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
     std::cerr << "    " << correct << "/" << nb_images << " (" << 100*static_cast<double>(correct)/nb_images << " %) images correctly classified" << std::endl;
 }
 
+/*
+Testing function callback.
+*/
 template<typename T>
-void DigitScanner<T>::test_thread(std::string path_data, const int nb_images, const int nb_images_to_skip, const int nb_threads, const int img_offset, const int img_upper_limit, bool display, int* correct_classifications) {
-    std::string    test_images = path_data + "t10k-images.idx3-ubyte";
-    std::string    test_labels = path_data + "t10k-labels.idx1-ubyte";
-    const    int   image_len            = 784;
-    const    int   label_len            = 1;
-    const    int   image_header_len     = 16;
-    const    int   label_header_len     = 8;
-    int            nb_images_per_thread = nb_images/nb_threads;
+void DigitScanner<T>::test_thread(test_settings settings, bool display, int* correct_classifications) {
+    std::string    test_images          = settings.path_data + "t10k-images.idx3-ubyte";
+    std::string    test_labels          = settings.path_data + "t10k-labels.idx1-ubyte";
+    const int      image_len            = 784;
+    const int      label_len            = 1;
+    const int      image_header_len     = 16;
+    const int      label_header_len     = 8;
+    int            nb_images_per_thread = settings.nb_images/settings.nb_threads;
     /* open the files */
     std::ifstream  file_images(test_images, std::ifstream::in | std::ifstream::binary);
     std::ifstream  file_labels(test_labels, std::ifstream::in | std::ifstream::binary);
     unsigned char* image = new unsigned char[image_len];
     unsigned char* label = new unsigned char[label_len];
     /* set the file cursor */
-    file_images.seekg(image_header_len + img_offset*image_len, std::ios_base::cur);
-    file_labels.seekg(label_header_len + img_offset*label_len, std::ios_base::cur);
+    file_images.seekg(image_header_len + settings.img_offset*image_len, std::ios_base::cur);
+    file_labels.seekg(label_header_len + settings.img_offset*label_len, std::ios_base::cur);
     /* compute the results */
     Matrix<T> test_input(image_len, 1);
     chrono_clock begin_sub_test = std::chrono::high_resolution_clock::now();
-    for(int j=0 ; j<img_upper_limit ; j++) {
+    for(int j=0 ; j<settings.img_upper_limit ; j++) {
         /* create input matrix */
         file_images.read((char*)image, image_len);
         for(int k=0 ; k<image_len ; k++) test_input(k, 0) = static_cast<double>(image[k])/256;
@@ -467,11 +492,11 @@ void DigitScanner<T>::test_thread(std::string path_data, const int nb_images, co
         if(display && elapsed_time(begin_sub_test)>=0.25) {
             double percentage = static_cast<int>(10000*j/static_cast<double>(nb_images_per_thread))/100.0;
             std::cerr << "\r    testing: " << create_progress_bar(percentage) << percentage << " %";
-            if(nb_threads>1) std::cout << " (thread 1/" << nb_threads << ")";
+            if(settings.nb_threads>1) std::cout << " (thread 1/" << settings.nb_threads << ")";
             std::cout << std::flush;
             begin_sub_test = std::chrono::high_resolution_clock::now();
         }
-     }
+    }
     test_input.free();
     delete [] image;
     delete [] label;
