@@ -367,8 +367,8 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
         /* shuffle the training set */
         std::map<int, int> shuffle;
         std::vector<int>   indexes;
-        for(int j=nb_images_to_skip ; j<nb_images ; j++)   { indexes.push_back(j); }
-        for(int j=0 ; j<nb_images-nb_images_to_skip ; j++) {
+        for(int j=nb_images_to_skip ; j<nb_images+nb_images_to_skip ; j++)   { indexes.push_back(j); }
+        for(int j=0 ; j<nb_images ; j++) {
             int index = rand() % indexes.size();
             shuffle[j] = indexes.at(index);
             indexes.erase(indexes.begin()+index);
