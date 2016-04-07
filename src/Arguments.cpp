@@ -30,6 +30,7 @@ Arguments::Arguments(int p_argc, char** p_argv) :
     fnnout(""),
     mnist(""),
     gui(false),
+    expand(false),
     threads(1),
     train_imgnb(0),
     train_imgskip(0),
@@ -107,6 +108,10 @@ int Arguments::parse_arguments() {
             else if(arg_value=="--fnnout") {
                 if(!parse_string_arg(std::string(argv[i]), &i, &fnnout, "You must specify the output neural network file.\n" + help_msg)) { return -1; }
             }
+            else if(arg_value=="--expand") {
+                expand = true;
+                arg_set.insert("expand");
+            }
             /* integers */
             else if(arg_value=="--threads") {
                 if(++i<argc) {
@@ -114,6 +119,7 @@ int Arguments::parse_arguments() {
                     try                            { threads = std::stoi(threads_str); }
                     catch(std::exception const& e) { std::cerr << "The number of threads to be used for training must be a positive integer." << std::endl; return -1; }
                     if(threads<1) { std::cerr << "The number of threads to be used for training must be a positive integer." << std::endl; return -1; }
+                    else          { arg_set.insert("threads"); }
                 }
                 else { std::cerr << "The number of threads to be used for training is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }            }
             /* commands */
@@ -121,15 +127,15 @@ int Arguments::parse_arguments() {
                 if(++i<argc) {
                     std::string train_imgnb_str(argv[i]);
                     try                            { train_imgnb = std::stoi(train_imgnb_str); }
-                    catch(std::exception const& e) { std::cerr << "The number of images to be used for training must be an integer between 0 and 60000." << std::endl; return -1; }
-                    if(train_imgnb<0 || train_imgnb>60000) { std::cerr << "The number of images to be used for training must be an integer between 0 and 60000." << std::endl; return -1; }
+                    catch(std::exception const& e) { std::cerr << "The number of images to be used for training must be a positive integer." << std::endl; return -1; }
+                    if(train_imgnb<0) { std::cerr << "The number of images to be used for training must be a positive integer." << std::endl; return -1; }
                 }
                 else { std::cerr << "The number of images to be used for training is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
                 if(++i<argc) {
                     std::string train_imgskip_str(argv[i]);
                     try                            { train_imgskip = std::stoi(train_imgskip_str); }
-                    catch(std::exception const& e) { std::cerr << "The number of images to be skipped must be an integer between 0 and 60000-<imgnb>." << std::endl; return -1; }
-                    if(train_imgskip<0 || train_imgskip>60000-train_imgnb) { std::cerr << "The number of images to be skipped must be an integer between 0 and 60000-<imgnb>." << std::endl; return -1; }
+                    catch(std::exception const& e) { std::cerr << "The number of images to be skipped must be a positive integer." << std::endl; return -1; }
+                    if(train_imgskip<0) { std::cerr << "The number of images to be skipped must be a positive integer." << std::endl; return -1; }
                 }
                 else { std::cerr << "The number of images to be skipped is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
                 if(++i<argc) {
@@ -258,8 +264,8 @@ bool Arguments::check_long_args(std::string help_msg) {
         std::cerr << help_msg << std::endl;
         return false;
     }
-    else if(!arg_set.count("fnnin") && !arg_set.count("layers")) {
-        std::cerr << "You need to either load a neural network from a file using --fnnin or create a new one using --layers." << std::endl;
+    else if(!arg_set.count("expand") && !arg_set.count("fnnin") && !arg_set.count("layers")) {
+        std::cerr << "You need to either load a neural network from a file using --fnnin or create a new one using --layers. Or you can decide to expand the dataset with the --expand parameter." << std::endl;
         std::cerr << help_msg << std::endl;
         return false;
     }
@@ -288,7 +294,7 @@ bool Arguments::check_long_args(std::string help_msg) {
         std::cerr << help_msg << std::endl;
         return false;
     }
-    else if(!arg_set.count("test") && !arg_set.count("train") && !arg_set.count("gui")) {
+    else if(!arg_set.count("expand") && !arg_set.count("test") && !arg_set.count("train") && !arg_set.count("gui")) {
         std::cerr << "Think green! You cannot just create an empty neural network or load an existing one if you do not use it. You need to either train it, test it, or play with it." << std::endl;
         std::cerr << help_msg << std::endl;
         return false;

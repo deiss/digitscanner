@@ -61,6 +61,9 @@ int main(int argc, char **argv) {
         w->launch();
     }
     
+    /* expand */
+    if(args.is_set("expand")) { dgs.expand_dataset(args.mnist); }
+    
     return 0;
     
 }

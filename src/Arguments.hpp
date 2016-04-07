@@ -40,6 +40,7 @@ class Arguments {
         std::vector<int> layers;            /* list of number of nodes in each layer */
         std::string      mnist;             /* path to the mnist data_set folder */
         bool             gui;               /* whether the user wants to use the gui */
+        bool             expand;            /* if the user wants to create an expanded dataset */
         int              threads;           /* number of threads to be used for training */
         int              train_imgnb;       /* number of images to use for training in train mode */
         int              train_imgskip;     /* number of images to skip in train mode */

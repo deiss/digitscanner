@@ -74,6 +74,7 @@ class DigitScanner {
         void init();
         void set_layers(std::vector<int>);
     
+        void expand_dataset(std::string);
         bool load(std::string);
         bool save(std::string);
         void train(std::string, const int, const int, const int, const int, const double, const double, const int);
@@ -300,6 +301,54 @@ bool DigitScanner<T>::save(std::string path) {
 }
 
 /*
+Modifies the dataset to create a bigger one.
+*/
+template<typename T>
+void DigitScanner<T>::expand_dataset(std::string path_data) {
+    std::string            train_images           = path_data + "train-images.idx3-ubyte";
+    std::string            train_labels           = path_data + "train-labels.idx1-ubyte";
+    const    int           image_len              = 784;
+    const    int           label_len              = 1;
+    const    int           image_header_len       = 16;
+    const    int           label_header_len       = 8;
+    unsigned char*         image                  = new unsigned char[image_len];
+    unsigned char*         label                  = new unsigned char[label_len];
+    std::ifstream          file_images_in(train_images, std::ifstream::binary | std::ifstream::binary);
+    std::ifstream          file_labels_in(train_labels, std::ifstream::binary);
+    std::ofstream          file_images_out(train_images, std::ofstream::binary | std::ofstream::app);
+    std::ofstream          file_labels_out(train_labels, std::ofstream::binary | std::ofstream::app);
+    file_images_in.seekg(image_header_len + 0*image_len, std::ios_base::beg);
+    file_labels_in.seekg(label_header_len + 0*label_len, std::ios_base::beg);
+    Matrix<T> input(image_len, 1);
+    Matrix<T> expanded(image_len, 1);
+    for(int i=0 ; i<60000 ; i++) {
+        /* read an image from the file */
+        file_images_in.read((char*)image, image_len);
+        for(int j=0 ; j<image_len ; j++) input(j, 0) = static_cast<double>(image[j])/255;
+        /* read the label from the data set and create the expected output matrix */
+        file_labels_in.read((char*)label, label_len);
+        expanded.fill(0);
+        if(1){
+            double ratio = 0.9; // >1 : zoom
+            for(int j=0 ; j<image_len ; j++) {
+                int x_ = j%28; int x  = (x_-14)/ratio + 14;
+                int y_ = j/28; int y  = (y_-14)/ratio + 14;
+                file_images_out << (unsigned char)(input(y*28 + x, 0)*255);
+            }
+            file_labels_out << (unsigned char)label[0];
+        }
+    }
+    input.free();
+    expanded.free();
+    delete [] image;
+    delete [] label;
+    file_images_in.close();
+    file_images_out.close();
+    file_labels_in.close();
+    file_labels_out.close();
+}
+
+/*
 Trains a Neural Network using the Stochastic Gradient Descent algorithm.
 The whole dataset is shuffled and sliced in groups of ten pictures. For
 every batch, the gradient is computed and the matrices are updated using
@@ -369,7 +418,8 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
 }
 
 /*
-Training function callback.
+Training function callback. One thread creates batches of pictures,
+runs the backpropagation algorithm on them and correct the W and B matrices.
 */
 template<typename T>
 void DigitScanner<T>::train_thread(train_settings settings, const int epoch, std::map<int, int> shuffle, bool display) {
@@ -407,7 +457,7 @@ void DigitScanner<T>::train_thread(train_settings settings, const int epoch, std
             file_labels.seekg(label_header_len + (settings.nb_images_to_skip + shuffle.at(image_counter))*label_len, std::ios_base::beg);
             /* read an image from the file */
             file_images.read((char*)image, image_len);
-            for(int j=0 ; j<image_len ; j++) batch_input.at(k)(j, 0) = static_cast<double>(image[j])/256;
+            for(int j=0 ; j<image_len ; j++) batch_input.at(k)(j, 0) = static_cast<double>(image[j])/255;
             /* read the label from the data set and create the expected output matrix */
             file_labels.read((char*)label, label_len);
             batch_output.at(k).fill(0);
@@ -485,7 +535,8 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
 }
 
 /*
-Testing function callback.
+Testing thread function. One thread loads pictures, tries to guess
+the digits that they represent, and compares its guesses to the labels.
 */
 template<typename T>
 void DigitScanner<T>::test_thread(test_settings settings, bool display, int* correct_classifications) {
@@ -496,11 +547,10 @@ void DigitScanner<T>::test_thread(test_settings settings, bool display, int* cor
     const int      image_header_len     = 16;
     const int      label_header_len     = 8;
     int            nb_images_per_thread = settings.nb_images/settings.nb_threads;
-    /* open the files */
+    unsigned char* image                = new unsigned char[image_len];
+    unsigned char* label                = new unsigned char[label_len];
     std::ifstream  file_images(test_images, std::ifstream::in | std::ifstream::binary);
     std::ifstream  file_labels(test_labels, std::ifstream::in | std::ifstream::binary);
-    unsigned char* image = new unsigned char[image_len];
-    unsigned char* label = new unsigned char[label_len];
     /* set the file cursor */
     file_images.seekg(image_header_len + settings.img_offset*image_len, std::ios_base::cur);
     file_labels.seekg(label_header_len + settings.img_offset*label_len, std::ios_base::cur);
@@ -510,7 +560,7 @@ void DigitScanner<T>::test_thread(test_settings settings, bool display, int* cor
     for(int j=0 ; j<settings.img_upper_limit ; j++) {
         /* create input matrix */
         file_images.read((char*)image, image_len);
-        for(int k=0 ; k<image_len ; k++) test_input(k, 0) = static_cast<double>(image[k])/256;
+        for(int k=0 ; k<image_len ; k++) test_input(k, 0) = static_cast<double>(image[k])/255;
         /* read output label */
         file_labels.read((char*)label, label_len);
         /* compute output */
