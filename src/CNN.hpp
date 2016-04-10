@@ -35,7 +35,76 @@ class CNN {
     
     private:
     
+        CNNInput<T>*                input;
+        CNNConvolutionalLayer<T>**  convolutional_layers;
+        CNNMaxPoolingLayer<T>**     max_pooling_layers;
+        CNNFullyConnectedLayer<T>** fully_connected_layers;
     
+};
+
+template<typename T>
+class CNNLayer {
+
+    public:
+    
+        CNNLayer(int nb_nodes) :
+            nb_nodes(nb_nodes) {}
+virtual ~CNNLayer() {}
+    
+};
+
+template<typename T>
+class CNNConvolutionalLayer: public CNNLayer {
+
+    public:
+    
+        CNNConvolutionalLayer();
+virtual ~CNNConvolutionalLayer();
+    
+    private:
+    
+        
+
+};
+
+template<typename T>
+class CNNMaxPoolingLayer: public CNNLayer {
+
+    public:
+    
+        CNNMaxPoolingLayer();
+virtual ~CNNMaxPoolingLayer();
+    
+    private:
+    
+    
+
+};
+
+template<typename T>
+class CNNFullyConnectedLayer: public CNNLayer {
+
+    public:
+    
+        CNNFullyConnectedLayer(int p_nb_nodes, CNNLayer<T>* previous_layer) :
+            nb_nodes(p_nb_nodes),
+            previous_layer(previous_layer),
+            W(nb_nodes, previous_layer->get_nb_nodes()),
+            B(nb_nodes, 1) {
+        }
+virtual ~CNNFullyConnectedLayer() {}
+        
+        int          get_nb_nodes()       { return nb_nodes; }
+        CNNLayer<T>* get_previous_layer() { return previous_layer; }
+        Matrix<T>*   get_biases()         { return &B; }
+        Matrix<T>*   get_weights()        { return &W; }
+
+    private:
+    
+        int          nb_nodes;
+        CNNLayer<T>* previous_layer;
+        Matrix<T>    W;
+        Matrix<T>    B;
 
 };
 

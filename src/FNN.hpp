@@ -42,7 +42,9 @@ while the other layers and the output layer are of type FNNRightLayer.
             ------------     --------------------------
         
 An FNNLeftLayer just has a number of nodes, while a FNNRightLayer has weight
-and bias matrices.
+and bias matrices. The main purpose of this scheme is to be able to pass a 
+pointer to the previous layer when creating a new one, might it be an input
+layer or a fully connected layer.
 */
 
 #ifndef FNN_hpp
