@@ -216,9 +216,9 @@ bool DigitScanner<T>::load(std::string path) {
         fnn = new FNN<T>(layers);
         /* weights and biases */
         for(int i=0 ; i<nb_layers-1 ; i++) {
-            FNNRightLayer<T>* current = fnn->getRightLayer(i);
-            Matrix<T>         W = current->getWeights();
-            Matrix<T>         B = current->getBiases();
+            FNNFullyConnectedLayer<T>* current = fnn->get_fully_connected_layer(i);
+            Matrix<T>                  W       = current->get_weights();
+            Matrix<T>                  B       = current->get_biases();
             /* W - n2 rows and n1 columns if the second layer has n2 nodes */
             /* and the first one has n1 nodes. */
             for(int j=0 ; j<W.get_I() ; j++) {
@@ -268,15 +268,15 @@ bool DigitScanner<T>::save(std::string path) {
     }
     if(file) {
         /* number of layers */
-        file << (fnn->getNbRightLayers()+1) << std::endl;
+        file << (fnn->get_nb_fully_connected_layers()+1) << std::endl;
         /* number of nodes in each */
-        for(int i=0 ; i<fnn->getNbRightLayers()+1 ; i++) file << fnn->getLayers()[i] << " ";
+        for(int i=0 ; i<fnn->get_nb_fully_connected_layers()+1 ; i++) file << fnn->get_layers()[i] << " ";
         file << std::endl;
         /* weights and biases */
-        for(int i=0 ; i<fnn->getNbRightLayers() ; i++) {
-            FNNRightLayer<T>* current = fnn->getRightLayer(i);
-            Matrix<T>         W       = current->getWeights();
-            Matrix<T>         B       = current->getBiases();
+        for(int i=0 ; i<fnn->get_nb_fully_connected_layers() ; i++) {
+            FNNFullyConnectedLayer<T>* current = fnn->get_fully_connected_layer(i);
+            Matrix<T>                  W       = current->get_weights();
+            Matrix<T>                  B       = current->get_biases();
             /* W */
             for(int j=0 ; j<W.get_I() ; j++) {
                 for(int k=0 ; k<W.get_J() ; k++) {
@@ -471,7 +471,7 @@ void DigitScanner<T>::train_thread(train_settings settings, const int epoch, std
                 batch_output.at(k)(label[0], 0) = 1;
             }
             /* SGD on the batch */
-            fnn->SGD_batch_update(batch_input, batch_output, settings.nb_images, settings.batch_len, settings.eta, settings.alpha);
+            fnn->SGD_batch(batch_input, batch_output, settings.nb_images, settings.batch_len, settings.eta, settings.alpha);
             /* draw progress bar for thread 1 */
             if(display && elapsed_time(begin_batch)>=0.25) {
                 double percentage = static_cast<int>(10000*image_counter/static_cast<double>(nb_batches_per_subsets*settings.batch_len))/100.0;

@@ -37,9 +37,9 @@ while the other layers and the output layer are of type FNNRightLayer.
                        /     \
                       /       \
                      /         \
-        ----------------     -----------------
-        | FNNLeftLayer |     | FNNRightLayer |
-        ----------------     -----------------
+            ------------     --------------------------
+            | FNNInput |     | FNNFullyConnectedLayer |
+            ------------     --------------------------
         
 An FNNLeftLayer just has a number of nodes, while a FNNRightLayer has weight
 and bias matrices.
@@ -60,8 +60,8 @@ and bias matrices.
 
 #include "Matrix.hpp"
 
-template<typename T> class FNNLeftLayer;
-template<typename T> class FNNRightLayer;
+template<typename T> class FNNInput;
+template<typename T> class FNNFullyConnectedLayer;
 
 template<typename T>
 class FNN {
@@ -74,27 +74,27 @@ class FNN {
         FNN(std::vector<int>);
         ~FNN();
     
-        int               getNbRightLayers()   const { return nb_right_layers; }
-        std::vector<int>  getLayers()          const { return layers; }
-        FNNRightLayer<T>* getRightLayer(int i) const { return right_layers[i]; }
+        int                        get_nb_fully_connected_layers()  const { return nb_fully_connected_layers; }
+        std::vector<int>           get_layers()                     const { return layers; }
+        FNNFullyConnectedLayer<T>* get_fully_connected_layer(int i) const { return fully_connected_layers[i]; }
     
         void train();
         void use();
     
         const Matrix<T>        feedforward(Matrix<T>*);
         std::vector<Matrix<T>> feedforward_complete(Matrix<T>*);
-        void                   random_init_values(FNNRightLayer<T>*);
-        void                   SGD_batch_update(std::vector<Matrix<T>>, std::vector<Matrix<T>>, const int, const int, const double, const double);
-        nabla_pair             backpropagation_cross_entropy(Matrix<T>&, Matrix<T>&);
+        void                   random_init_values(FNNFullyConnectedLayer<T>*);
+        void                   SGD_batch(std::vector<Matrix<T>>, std::vector<Matrix<T>>, const int, const int, const double, const double);
     
     private:
     
-        double elapsed_time(chrono_clock);
+        double     elapsed_time(chrono_clock);
+        nabla_pair backpropagation_cross_entropy(Matrix<T>&, Matrix<T>&);
     
-        std::vector<int>   layers;
-        int                nb_right_layers;
-        FNNLeftLayer<T>*   input;
-        FNNRightLayer<T>** right_layers;
+        std::vector<int>            layers;
+        int                         nb_fully_connected_layers;
+        FNNInput<T>*                input;
+        FNNFullyConnectedLayer<T>** fully_connected_layers;
     
 };
 
@@ -103,10 +103,10 @@ class FNNLayer {
 
     public:
     
-        FNNLayer(int nb_nodes)
-            : nb_nodes(nb_nodes) {}
+        FNNLayer(int nb_nodes) :
+            nb_nodes(nb_nodes) {}
 virtual ~FNNLayer() {}
-        int getNbNodes() { return nb_nodes; }
+        int get_nb_nodes() { return nb_nodes; }
     
     protected:
     
@@ -115,32 +115,31 @@ virtual ~FNNLayer() {}
 };
 
 template<typename T>
-class FNNLeftLayer: public FNNLayer<T> {
+class FNNInput: public FNNLayer<T> {
 
     public:
     
-        FNNLeftLayer(int nb_nodes) : FNNLayer<T>(nb_nodes) {}
-virtual ~FNNLeftLayer() {}
+        FNNInput(int nb_nodes) : FNNLayer<T>(nb_nodes) {}
+virtual ~FNNInput() {}
 
 };
 
 template<typename T>
-class FNNRightLayer: public FNNLayer<T> {
+class FNNFullyConnectedLayer: public FNNLayer<T> {
 
     public:
     
-        FNNRightLayer(int nb_nodes, FNNLayer<T>* previous_layer) :
+        FNNFullyConnectedLayer(int nb_nodes, FNNLayer<T>* previous_layer) :
             FNNLayer<T>(nb_nodes),
             previous_layer(previous_layer),
-            W(nb_nodes, previous_layer->getNbNodes()),
+            W(nb_nodes, previous_layer->get_nb_nodes()),
             B(nb_nodes, 1) {
         }
-virtual ~FNNRightLayer() {
-        }
+virtual ~FNNFullyConnectedLayer() {}
     
-        FNNLayer<T>* getPreviousLayer() { return previous_layer; }
-        Matrix<T>*   getBiases()        { return &B; }
-        Matrix<T>*   getWeights()       { return &W; }
+        FNNLayer<T>* get_previous_layer() { return previous_layer; }
+        Matrix<T>*   get_biases()         { return &B; }
+        Matrix<T>*   get_weights()        { return &W; }
     
     private:
     
@@ -159,14 +158,14 @@ p_layer vector. The layers are linked to each other.
 template<typename T>
 FNN<T>::FNN(std::vector<int> p_layers) :
     layers(p_layers),
-    nb_right_layers(static_cast<int>(p_layers.size())-1),
-    input(new FNNLeftLayer<T>(p_layers[0])),
-    right_layers(new FNNRightLayer<T>*[nb_right_layers]) {
+    nb_fully_connected_layers(static_cast<int>(p_layers.size())-1),
+    input(new FNNInput<T>(p_layers[0])),
+    fully_connected_layers(new FNNFullyConnectedLayer<T>*[nb_fully_connected_layers]) {
     FNNLayer<T>* previous = input;
-    for(int i=0 ; i<nb_right_layers ; i++) {
-        FNNRightLayer<T>* l = new FNNRightLayer<T>(layers[i+1], previous);
-        right_layers[i]     = l;
-        previous            = l;
+    for(int i=0 ; i<nb_fully_connected_layers ; i++) {
+        FNNFullyConnectedLayer<T>* l = new FNNFullyConnectedLayer<T>(layers[i+1], previous);
+        fully_connected_layers[i]    = l;
+        previous                     = l;
         random_init_values(l);
     }
 }
@@ -177,8 +176,8 @@ Deletes the input, hidden and output layers.
 template<typename T>
 FNN<T>::~FNN() {
     delete input;
-    for(int i=0 ; i<nb_right_layers ; i++) delete right_layers[i];
-    delete [] right_layers;
+    for(int i=0 ; i<nb_fully_connected_layers ; i++) delete fully_connected_layers[i];
+    delete [] fully_connected_layers;
 }
 
 /*
@@ -285,22 +284,22 @@ typename FNN<T>::nabla_pair FNN<T>::backpropagation_cross_entropy(Matrix<T>& tra
     /* feedforward */
     std::vector<Matrix<T>> activations = feedforward_complete(&training_input);
     /* backpropagation */
-    std::vector<Matrix<T>> nabla_CW; nabla_CW.resize(nb_right_layers);
-    std::vector<Matrix<T>> nabla_CB; nabla_CB.resize(nb_right_layers);
-    Matrix<T> D(activations[nb_right_layers], true);
-    Matrix<T> At(activations[nb_right_layers-1], true);
+    std::vector<Matrix<T>> nabla_CW; nabla_CW.resize(nb_fully_connected_layers);
+    std::vector<Matrix<T>> nabla_CB; nabla_CB.resize(nb_fully_connected_layers);
+    Matrix<T> D(activations[nb_fully_connected_layers], true);
+    Matrix<T> At(activations[nb_fully_connected_layers-1], true);
         D -= training_output;
         At.self_transpose();
     Matrix<T> NCW(D, true);
         NCW *= At;
         At.free();
-    nabla_CW[nb_right_layers-1] = NCW;
-    nabla_CB[nb_right_layers-1] = D;
-    activations[nb_right_layers].free();
+    nabla_CW[nb_fully_connected_layers-1] = NCW;
+    nabla_CB[nb_fully_connected_layers-1] = D;
+    activations[nb_fully_connected_layers].free();
     /* activations[0] = input, do not free */
     /* backward propagation */
-    for(int i=nb_right_layers-2 ; i>=0 ; i--) {
-        Matrix<T> Wt(right_layers[i+1]->getWeights(), true);
+    for(int i=nb_fully_connected_layers-2 ; i>=0 ; i--) {
+        Matrix<T> Wt(fully_connected_layers[i+1]->get_weights(), true);
             Wt.self_transpose();
             D = Wt*D;
             Wt.free();
@@ -333,16 +332,16 @@ template<typename T>
 const Matrix<T> FNN<T>::feedforward(Matrix<T>* X) {
     std::vector<Matrix<T>> activations;
     activations.push_back(*X);
-    for(int i=0 ; i<nb_right_layers ; i++) {
-        FNNRightLayer<T>* layer = right_layers[i];
-        Matrix<T> a(layer->getWeights(), true);
+    for(int i=0 ; i<nb_fully_connected_layers ; i++) {
+        FNNFullyConnectedLayer<T>* layer = fully_connected_layers[i];
+        Matrix<T> a(layer->get_weights(), true);
             a *= activations[i];
-            a += layer->getBiases();
+            a += layer->get_biases();
             a.sigmoid();
             activations.push_back(a);
             if(i>0) activations[i].free();
     }
-    return activations[nb_right_layers];
+    return activations[nb_fully_connected_layers];
 }
 
 /*
@@ -354,11 +353,11 @@ template<typename T>
 std::vector<Matrix<T>> FNN<T>::feedforward_complete(Matrix<T>* X) {
     std::vector<Matrix<T>> activations;
     activations.push_back(*X);
-    for(int i=0 ; i<nb_right_layers ; i++) {
-        FNNRightLayer<T>* layer = right_layers[i];
-        Matrix<T> a(layer->getWeights(), true);
+    for(int i=0 ; i<nb_fully_connected_layers ; i++) {
+        FNNFullyConnectedLayer<T>* layer = fully_connected_layers[i];
+        Matrix<T> a(layer->get_weights(), true);
             a *= activations[i];
-            a += layer->getBiases();
+            a += layer->get_biases();
             a.sigmoid();
             activations.push_back(a);
     }
@@ -369,12 +368,12 @@ std::vector<Matrix<T>> FNN<T>::feedforward_complete(Matrix<T>* X) {
 Initializes the network's weights and biases with a Gaussian generator.
 */
 template<typename T>
-void FNN<T>::random_init_values(FNNRightLayer<T>* l) {
-    Matrix<T> W = l->getWeights();
-    Matrix<T> B = l->getBiases();
+void FNN<T>::random_init_values(FNNFullyConnectedLayer<T>* l) {
+    Matrix<T> W = l->get_weights();
+    Matrix<T> B = l->get_biases();
     std::default_random_engine       generator;
     std::normal_distribution<double> gauss_biases(0, 1);
-    std::normal_distribution<double> gauss_weights(0, 1.0/sqrt(l->getPreviousLayer()->getNbNodes()));
+    std::normal_distribution<double> gauss_weights(0, 1.0/sqrt(l->get_previous_layer()->get_nb_nodes()));
     for(int i = 0 ; i<W.get_I() ; i++) {
         for(int j = 0 ; j<W.get_J() ; j++) W(i, j) = gauss_weights(generator);
         B(i, 0) = gauss_biases(generator);
@@ -387,29 +386,29 @@ This function is the actual SGD algorithm. It runs the backpropagation
 on the whole batch before updating the weights and biases.
 */
 template<typename T>
-void FNN<T>::SGD_batch_update(std::vector<Matrix<T>> batch_input, std::vector<Matrix<T>> batch_output, const int training_set_len, const int batch_len, const double eta, const double alpha) {
+void FNN<T>::SGD_batch(std::vector<Matrix<T>> batch_input, std::vector<Matrix<T>> batch_output, const int training_set_len, const int batch_len, const double eta, const double alpha) {
     /* create nabla matrices vectors */
     std::vector<Matrix<T>> nabla_CW;
     std::vector<Matrix<T>> nabla_CB;
-    for(int i=0 ; i<nb_right_layers ; i++) {
+    for(int i=0 ; i<nb_fully_connected_layers ; i++) {
         nabla_CW.emplace_back(layers[i+1], layers[i]); nabla_CW.back().fill(0);
         nabla_CB.emplace_back(layers[i+1], 1);         nabla_CB.back().fill(0);
     }
     /* feedforward-backpropagation for each data in the batch and sum the nablas */
     for(int i=0 ; i<batch_len ; i++) {
         nabla_pair delta_nabla = backpropagation_cross_entropy(batch_input[i], batch_output[i]);
-        for(int j=0 ; j<nb_right_layers ; j++) {
+        for(int j=0 ; j<nb_fully_connected_layers ; j++) {
             nabla_CW[j] += delta_nabla.first[j];  delta_nabla.first[j].free();
             nabla_CB[j] += delta_nabla.second[j]; delta_nabla.second[j].free();
         }
     }
     /* update the parameters */
-    for(int i=0 ; i<nb_right_layers ; i++) {
+    for(int i=0 ; i<nb_fully_connected_layers ; i++) {
         nabla_CW[i] *= eta/static_cast<double>(batch_len);
         nabla_CB[i] *= eta/static_cast<double>(batch_len);
-        right_layers[i]->getWeights()->operator*=((1-(alpha*eta)/static_cast<double>(training_set_len)));
-        right_layers[i]->getWeights()->operator-=(&nabla_CW[i]);
-        right_layers[i]->getBiases()->operator-=(&nabla_CB[i]);
+        fully_connected_layers[i]->get_weights()->operator*=((1-(alpha*eta)/static_cast<double>(training_set_len)));
+        fully_connected_layers[i]->get_weights()->operator-=(&nabla_CW[i]);
+        fully_connected_layers[i]->get_biases()->operator-=(&nabla_CB[i]);
         nabla_CW[i].free();
         nabla_CB[i].free();
     }
