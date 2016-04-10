@@ -42,27 +42,25 @@ class DigitScanner {
     public:
     
         struct train_settings {
-            std::string path_data;
-            int         nb_images;
-            int         nb_images_to_skip;
-            int         nb_epoch;
-            int         batch_len;
-            double      eta;
-            double      alpha;
-            int         nb_threads;
-            int         data_counter_init;
-            int         data_upper_lim;
+            std::string path_data;           /* path to the MNISt folder */
+            int         nb_images;           /* number of images to train on */
+            int         nb_images_to_skip;   /* number of images to skip in the dataset */
+            int         nb_epoch;            /* number of epochs of training */
+            int         batch_len;           /* batch size */
+            double      eta;                 /* learning factor */
+            double      alpha;               /* weight decay factor */
+            int         nb_threads;          /* number of threads to be launched */
+            int         data_counter_init;   /* where to start the training in the dataset - used to split work in mutiple threads */
+            int         data_upper_lim;      /* where to finish in the dataset - used to split work in multiple threads */
         };
     
         struct test_settings {
-            std::string path_data;
-            int         nb_images;
-            int         nb_images_to_skip;
-            int         nb_threads;
-            int         img_offset;
-            int         img_upper_limit;
-            bool        display;
-            int*        correct_classifications;
+            std::string path_data;           /* path to the MNIST folder */
+            int         nb_images;           /* number of images to test on */
+            int         nb_images_to_skip;   /* number of images to skip in the dataset */
+            int         nb_threads;          /* number of threads to be used */
+            int         img_offset;          /* where to start the training in the dataset - used to split work in mutiple threads */
+            int         img_upper_limit;     /* where to finish in the dataset - used to split work in multiple threads */
         };
 
         typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_clock;
