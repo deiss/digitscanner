@@ -80,9 +80,6 @@ class FNN {
         std::vector<int>           get_layers()                     const { return layers; }
         FNNFullyConnectedLayer<T>* get_fully_connected_layer(int i) const { return fully_connected_layers[i]; }
     
-        void train();
-        void use();
-    
         const Matrix<T>        feedforward(Matrix<T>*);
         std::vector<Matrix<T>> feedforward_complete(Matrix<T>*);
         void                   random_init_values(FNNFullyConnectedLayer<T>*);
@@ -94,8 +91,8 @@ class FNN {
         nabla_pair backpropagation_cross_entropy(Matrix<T>&, Matrix<T>&);
     
         std::vector<int>            layers;
-        int                         nb_fully_connected_layers;
         FNNInput<T>*                input;
+        int                         nb_fully_connected_layers;
         FNNFullyConnectedLayer<T>** fully_connected_layers;
     
 };
@@ -121,7 +118,8 @@ class FNNInput: public FNNLayer<T> {
 
     public:
     
-        FNNInput(int nb_nodes) : FNNLayer<T>(nb_nodes) {}
+        FNNInput(int nb_nodes) :
+            FNNLayer<T>(nb_nodes) {}
 virtual ~FNNInput() {}
 
 };
@@ -135,8 +133,7 @@ class FNNFullyConnectedLayer: public FNNLayer<T> {
             FNNLayer<T>(nb_nodes),
             previous_layer(previous_layer),
             W(nb_nodes, previous_layer->get_nb_nodes()),
-            B(nb_nodes, 1) {
-        }
+            B(nb_nodes, 1) {}
 virtual ~FNNFullyConnectedLayer() {}
     
         FNNLayer<T>* get_previous_layer() { return previous_layer; }
@@ -160,8 +157,8 @@ p_layer vector. The layers are linked to each other.
 template<typename T>
 FNN<T>::FNN(std::vector<int> p_layers) :
     layers(p_layers),
+    input(new FNNInput<T>(p_layers[0])),s
     nb_fully_connected_layers(static_cast<int>(p_layers.size())-1),
-    input(new FNNInput<T>(p_layers[0])),
     fully_connected_layers(new FNNFullyConnectedLayer<T>*[nb_fully_connected_layers]) {
     FNNLayer<T>* previous = input;
     for(int i=0 ; i<nb_fully_connected_layers ; i++) {
