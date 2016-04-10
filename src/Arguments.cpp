@@ -74,6 +74,7 @@ void Arguments::print_help() {
     std::cout << "                                           g: using the neural network, guess the number" << std::endl;
     std::cout << "                                           r: resets the drawing area" << std::endl;
     std::cout << "   --threads <nb_threads>               Enables multithreading for training or testing. Default: 1." << std::endl;
+    std::cout << "   --expand                             Appends scaled pictures to the existing dataset (warning: this modifies the dataset)." << std::endl;
 }
 
 /*
@@ -100,7 +101,7 @@ int Arguments::parse_arguments() {
             /* string */
             else if(arg_value=="--mnist") {
                 if(!parse_string_arg(std::string(argv[i]), &i, &mnist, "You must specify the mnist dataset folder path.\n" + help_msg)) { return -1; }
-                if(mnist.at(mnist.length()-1)!='/') mnist.push_back('/');
+                if(mnist.length()>0 && mnist.at(mnist.length()-1)!='/') mnist.push_back('/');
             }
             else if(arg_value=="--fnnin") {
                 if(!parse_string_arg(std::string(argv[i]), &i, &fnnin, "You must specify the input neural network file.\n" + help_msg)) { return -1; }
@@ -261,6 +262,11 @@ bool Arguments::check_long_args(std::string help_msg) {
     }
     else if(!arg_set.count("mnist") && arg_set.count("test")) {
         std::cerr << "You cannot test a neural network without specifying the location of the mnist dataset. You can do so by using the --mnist parameter." << std::endl;
+        std::cerr << help_msg << std::endl;
+        return false;
+    }
+    else if(!arg_set.count("mnist") && arg_set.count("expand")) {
+        std::cerr << "You cannot expand the mnist dataset without specifying its location. Do so by using the --mnist parameter." << std::endl;
         std::cerr << help_msg << std::endl;
         return false;
     }

@@ -42,16 +42,16 @@ class DigitScanner {
     public:
     
         struct train_settings {
-            std::string  path_data;
-            int          nb_images;
-            int          nb_images_to_skip;
-            int          nb_epoch;
-            int          batch_len;
-            double       eta;
-            double       alpha;
-            int          nb_threads;
-            int          data_counter_init;
-            int          data_upper_lim;
+            std::string path_data;
+            int         nb_images;
+            int         nb_images_to_skip;
+            int         nb_epoch;
+            int         batch_len;
+            double      eta;
+            double      alpha;
+            int         nb_threads;
+            int         data_counter_init;
+            int         data_upper_lim;
         };
     
         struct test_settings {
@@ -301,51 +301,57 @@ bool DigitScanner<T>::save(std::string path) {
 }
 
 /*
-Modifies the dataset to create a bigger one.
+Appends modified data to the dataset.
 */
 template<typename T>
 void DigitScanner<T>::expand_dataset(std::string path_data) {
-    std::string            train_images           = path_data + "train-images.idx3-ubyte";
-    std::string            train_labels           = path_data + "train-labels.idx1-ubyte";
-    const    int           image_len              = 784;
-    const    int           label_len              = 1;
-    const    int           image_header_len       = 16;
-    const    int           label_header_len       = 8;
-    unsigned char*         image                  = new unsigned char[image_len];
-    unsigned char*         label                  = new unsigned char[label_len];
-    std::ifstream          file_images_in(train_images, std::ifstream::binary | std::ifstream::binary);
-    std::ifstream          file_labels_in(train_labels, std::ifstream::binary);
-    std::ofstream          file_images_out(train_images, std::ofstream::binary | std::ofstream::app);
-    std::ofstream          file_labels_out(train_labels, std::ofstream::binary | std::ofstream::app);
-    file_images_in.seekg(image_header_len + 0*image_len, std::ios_base::beg);
-    file_labels_in.seekg(label_header_len + 0*label_len, std::ios_base::beg);
-    Matrix<T> input(image_len, 1);
-    Matrix<T> expanded(image_len, 1);
-    for(int i=0 ; i<60000 ; i++) {
-        /* read an image from the file */
-        file_images_in.read((char*)image, image_len);
-        for(int j=0 ; j<image_len ; j++) input(j, 0) = static_cast<double>(image[j])/255;
-        /* read the label from the data set and create the expected output matrix */
-        file_labels_in.read((char*)label, label_len);
-        expanded.fill(0);
-        if(1){
-            double ratio = 0.9; // >1 : zoom
-            for(int j=0 ; j<image_len ; j++) {
-                int x_ = j%28; int x  = (x_-14)/ratio + 14;
-                int y_ = j/28; int y  = (y_-14)/ratio + 14;
-                file_images_out << (unsigned char)(input(y*28 + x, 0)*255);
+    std::string   train_images     = path_data + "train-images.idx3-ubyte";
+    std::string   train_labels     = path_data + "train-labels.idx1-ubyte";
+    const int     image_len        = 784;
+    const int     label_len        = 1;
+    const int     image_header_len = 16;
+    const int     label_header_len = 8;
+    std::ifstream file_images_in(train_images,  std::ifstream::binary);
+    std::ifstream file_labels_in(train_labels,  std::ifstream::binary);
+    std::ofstream file_images_out(train_images, std::ofstream::binary | std::ofstream::app);
+    std::ofstream file_labels_out(train_labels, std::ofstream::binary | std::ofstream::app);
+    if(file_images_in && file_labels_in && file_images_out && file_labels_out) {
+std::cerr << "hi there" << path_data << std::endl;
+        unsigned char* image = new unsigned char[image_len];
+        unsigned char* label = new unsigned char[label_len];
+        Matrix<T>      input(image_len, 1);
+        Matrix<T>      expanded(image_len, 1);
+        file_images_in.seekg(image_header_len + 0*image_len, std::ios_base::beg);
+        file_labels_in.seekg(label_header_len + 0*label_len, std::ios_base::beg);
+        for(int i=0 ; i<60000 ; i++) {
+            /* read an image from the file */
+            file_images_in.read((char*)image, image_len);
+            for(int j=0 ; j<image_len ; j++) input(j, 0) = static_cast<double>(image[j])/255;
+            /* read the label from the data set and create the expected output matrix */
+            file_labels_in.read((char*)label, label_len);
+            expanded.fill(0);
+            if(true) { // scaling
+                double ratio = 0.9; // >1 : zoom
+                for(int j=0 ; j<image_len ; j++) {
+                    int x_ = j%28; int x  = (x_-14)/ratio + 14;
+                    int y_ = j/28; int y  = (y_-14)/ratio + 14;
+                    file_images_out << (unsigned char)(input(y*28 + x, 0)*255);
+                }
+                file_labels_out << (unsigned char)label[0];
             }
-            file_labels_out << (unsigned char)label[0];
         }
+        input.free();
+        expanded.free();
+        delete [] image;
+        delete [] label;
+        file_images_in.close();
+        file_images_out.close();
+        file_labels_in.close();
+        file_labels_out.close();
     }
-    input.free();
-    expanded.free();
-    delete [] image;
-    delete [] label;
-    file_images_in.close();
-    file_images_out.close();
-    file_labels_in.close();
-    file_labels_out.close();
+    else {
+        std::cerr << "couldn't open dataset in folder \"" << path_data << "\"" << std::endl;
+    }
 }
 
 /*
@@ -423,65 +429,70 @@ runs the backpropagation algorithm on them and correct the W and B matrices.
 */
 template<typename T>
 void DigitScanner<T>::train_thread(train_settings settings, const int epoch, std::map<int, int> shuffle, bool display) {
-    std::string            train_images           = settings.path_data + "train-images.idx3-ubyte";
-    std::string            train_labels           = settings.path_data + "train-labels.idx1-ubyte";
-    const    int           image_len              = 784;
-    const    int           label_len              = 1;
-    const    int           image_header_len       = 16;
-    const    int           label_header_len       = 8;
-    unsigned char*         image                  = new unsigned char[image_len];
-    unsigned char*         label                  = new unsigned char[label_len];
-    int                    image_counter          = settings.data_counter_init;
-    int                    nb_batches             = settings.nb_images/settings.batch_len;
-    int                    nb_batches_per_subsets = nb_batches/settings.nb_threads;
-    chrono_clock           begin_batch            = std::chrono::high_resolution_clock::now();
-    std::ifstream          file_images(train_images, std::ifstream::in | std::ifstream::binary);
-    std::ifstream          file_labels(train_labels, std::ifstream::in | std::ifstream::binary);
-    std::vector<Matrix<T>> batch_input;  batch_input.reserve(settings.batch_len);
-    std::vector<Matrix<T>> batch_output; batch_output.reserve(settings.batch_len);
-    for(int k=0 ; k<settings.batch_len ; k++) { Matrix<T> m(image_len, 1); batch_input.push_back(m); }
-    for(int k=0 ; k<settings.batch_len ; k++) { Matrix<T> m(10, 1);        batch_output.push_back(m); }
-    /* variables for progress bar */
-    unsigned long int nb_epoch_len = std::to_string(settings.nb_epoch).length();
-    unsigned long int this_epo_len = std::to_string(epoch+1).length();
-    std::string       begin_spaces = "";
-    if(display) {
-        for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
-        std::cerr << "    epoch " << (epoch+1) << "/" << settings.nb_epoch << ": " << begin_spaces << "[----------]     0 %" << std::flush;
-    }
-    while(image_counter<settings.data_upper_lim) {
-        /* create batch */
-        for(int k=0 ; k<settings.batch_len ; k++, image_counter++) {
-            /* set cursor in file */
-            file_images.seekg(image_header_len + (settings.nb_images_to_skip + shuffle.at(image_counter))*image_len, std::ios_base::beg);
-            file_labels.seekg(label_header_len + (settings.nb_images_to_skip + shuffle.at(image_counter))*label_len, std::ios_base::beg);
-            /* read an image from the file */
-            file_images.read((char*)image, image_len);
-            for(int j=0 ; j<image_len ; j++) batch_input.at(k)(j, 0) = static_cast<double>(image[j])/255;
-            /* read the label from the data set and create the expected output matrix */
-            file_labels.read((char*)label, label_len);
-            batch_output.at(k).fill(0);
-            batch_output.at(k)(label[0], 0) = 1;
+    std::string   train_images           = settings.path_data + "train-images.idx3-ubyte";
+    std::string   train_labels           = settings.path_data + "train-labels.idx1-ubyte";
+    const int     image_len              = 784;
+    const int     label_len              = 1;
+    const int     image_header_len       = 16;
+    const int     label_header_len       = 8;
+    int           image_counter          = settings.data_counter_init;
+    int           nb_batches             = settings.nb_images/settings.batch_len;
+    int           nb_batches_per_subsets = nb_batches/settings.nb_threads;
+    chrono_clock  begin_batch            = std::chrono::high_resolution_clock::now();
+    std::ifstream file_images(train_images, std::ifstream::in | std::ifstream::binary);
+    std::ifstream file_labels(train_labels, std::ifstream::in | std::ifstream::binary);
+    if(file_images && file_labels) {
+        unsigned char*         image = new unsigned char[image_len];
+        unsigned char*         label = new unsigned char[label_len];
+        std::vector<Matrix<T>> batch_input;  batch_input.reserve(settings.batch_len);
+        std::vector<Matrix<T>> batch_output; batch_output.reserve(settings.batch_len);
+        for(int k=0 ; k<settings.batch_len ; k++) { Matrix<T> m(image_len, 1); batch_input.push_back(m); }
+        for(int k=0 ; k<settings.batch_len ; k++) { Matrix<T> m(10, 1);        batch_output.push_back(m); }
+        /* variables for progress bar */
+        unsigned long int nb_epoch_len = std::to_string(settings.nb_epoch).length();
+        unsigned long int this_epo_len = std::to_string(epoch+1).length();
+        std::string       begin_spaces = "";
+        if(display) {
+            for(int j=0 ; j<nb_epoch_len-this_epo_len ; j++) begin_spaces += " ";
+            std::cerr << "    epoch " << (epoch+1) << "/" << settings.nb_epoch << ": " << begin_spaces << "[----------]     0 %" << std::flush;
         }
-        /* SGD on the batch */
-        fnn->SGD_batch_update(batch_input, batch_output, settings.nb_images, settings.batch_len, settings.eta, settings.alpha);
-        /* draw progress bar for thread 1 */
-        if(display && elapsed_time(begin_batch)>=0.25) {
-            double percentage = static_cast<int>(10000*image_counter/static_cast<double>(nb_batches_per_subsets*settings.batch_len))/100.0;
-            std::string begin_spaces = "";
-            for(int k=0 ; k<nb_epoch_len-this_epo_len ; k++) begin_spaces += " ";
-            std::cerr << "\r    epoch " << (epoch+1) << "/" << settings.nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " %";
-            if(settings.nb_threads>1) std::cout << " (thread 1/" << settings.nb_threads << ")";
-            std::cout << std::flush;
-            begin_batch = std::chrono::high_resolution_clock::now();
+        while(image_counter<settings.data_upper_lim) {
+            /* create batch */
+            for(int k=0 ; k<settings.batch_len ; k++, image_counter++) {
+                /* set cursor in file */
+                file_images.seekg(image_header_len + (settings.nb_images_to_skip + shuffle.at(image_counter))*image_len, std::ios_base::beg);
+                file_labels.seekg(label_header_len + (settings.nb_images_to_skip + shuffle.at(image_counter))*label_len, std::ios_base::beg);
+                /* read an image from the file */
+                file_images.read((char*)image, image_len);
+                for(int j=0 ; j<image_len ; j++) batch_input.at(k)(j, 0) = static_cast<double>(image[j])/255;
+                /* read the label from the data set and create the expected output matrix */
+                file_labels.read((char*)label, label_len);
+                batch_output.at(k).fill(0);
+                batch_output.at(k)(label[0], 0) = 1;
+            }
+            /* SGD on the batch */
+            fnn->SGD_batch_update(batch_input, batch_output, settings.nb_images, settings.batch_len, settings.eta, settings.alpha);
+            /* draw progress bar for thread 1 */
+            if(display && elapsed_time(begin_batch)>=0.25) {
+                double percentage = static_cast<int>(10000*image_counter/static_cast<double>(nb_batches_per_subsets*settings.batch_len))/100.0;
+                std::string begin_spaces = "";
+                for(int k=0 ; k<nb_epoch_len-this_epo_len ; k++) begin_spaces += " ";
+                std::cerr << "\r    epoch " << (epoch+1) << "/" << settings.nb_epoch << ": " << begin_spaces << create_progress_bar(percentage) << percentage << " %";
+                if(settings.nb_threads>1) std::cout << " (thread 1/" << settings.nb_threads << ")";
+                std::cout << std::flush;
+                begin_batch = std::chrono::high_resolution_clock::now();
+            }
         }
+        for(Matrix<T> m : batch_input)  m.free();
+        for(Matrix<T> m : batch_output) m.free();
+        delete [] image;
+        delete [] label;
+        file_images.close();
+        file_labels.close();
     }
-    for(Matrix<T> m : batch_input)  m.free();
-    for(Matrix<T> m : batch_output) m.free();
-    delete [] image;
-    delete [] label;
-    file_images.close();
-    file_labels.close();
+    else {
+        if(display) std::cerr << "couldn't open training dataset in folder \"" << settings.path_data << "\"" << std::endl;
+    }
 }
 
 /*
@@ -540,48 +551,53 @@ the digits that they represent, and compares its guesses to the labels.
 */
 template<typename T>
 void DigitScanner<T>::test_thread(test_settings settings, bool display, int* correct_classifications) {
-    std::string    test_images          = settings.path_data + "t10k-images.idx3-ubyte";
-    std::string    test_labels          = settings.path_data + "t10k-labels.idx1-ubyte";
-    const int      image_len            = 784;
-    const int      label_len            = 1;
-    const int      image_header_len     = 16;
-    const int      label_header_len     = 8;
-    int            nb_images_per_thread = settings.nb_images/settings.nb_threads;
-    unsigned char* image                = new unsigned char[image_len];
-    unsigned char* label                = new unsigned char[label_len];
-    std::ifstream  file_images(test_images, std::ifstream::in | std::ifstream::binary);
-    std::ifstream  file_labels(test_labels, std::ifstream::in | std::ifstream::binary);
-    /* set the file cursor */
-    file_images.seekg(image_header_len + settings.img_offset*image_len, std::ios_base::cur);
-    file_labels.seekg(label_header_len + settings.img_offset*label_len, std::ios_base::cur);
-    /* compute the results */
-    Matrix<T> test_input(image_len, 1);
-    chrono_clock begin_sub_test = std::chrono::high_resolution_clock::now();
-    for(int j=0 ; j<settings.img_upper_limit ; j++) {
-        /* create input matrix */
-        file_images.read((char*)image, image_len);
-        for(int k=0 ; k<image_len ; k++) test_input(k, 0) = static_cast<double>(image[k])/255;
-        /* read output label */
-        file_labels.read((char*)label, label_len);
-        /* compute output */
-        const Matrix<T> y = fnn->feedforward(&test_input);
-        int kmax = 0;
-        for(int k=0 ; k<10 ; k++) { if(y(k, 0)>y(kmax, 0)) kmax = k; }
-        if(kmax==label[0]) (*correct_classifications)++;
-        /* prints progress bar */
-        if(display && elapsed_time(begin_sub_test)>=0.25) {
-            double percentage = static_cast<int>(10000*j/static_cast<double>(nb_images_per_thread))/100.0;
-            std::cerr << "\r    testing: " << create_progress_bar(percentage) << percentage << " %";
-            if(settings.nb_threads>1) std::cout << " (thread 1/" << settings.nb_threads << ")";
-            std::cout << std::flush;
-            begin_sub_test = std::chrono::high_resolution_clock::now();
+    std::string   test_images          = settings.path_data + "t10k-images.idx3-ubyte";
+    std::string   test_labels          = settings.path_data + "t10k-labels.idx1-ubyte";
+    const int     image_len            = 784;
+    const int     label_len            = 1;
+    const int     image_header_len     = 16;
+    const int     label_header_len     = 8;
+    int           nb_images_per_thread = settings.nb_images/settings.nb_threads;
+    std::ifstream file_images(test_images, std::ifstream::in | std::ifstream::binary);
+    std::ifstream file_labels(test_labels, std::ifstream::in | std::ifstream::binary);
+    if(file_images && file_labels) {
+        unsigned char* image = new unsigned char[image_len];
+        unsigned char* label = new unsigned char[label_len];
+        /* set the file cursor */
+        file_images.seekg(image_header_len + settings.img_offset*image_len, std::ios_base::cur);
+        file_labels.seekg(label_header_len + settings.img_offset*label_len, std::ios_base::cur);
+        /* compute the results */
+        Matrix<T>    test_input(image_len, 1);
+        chrono_clock begin_sub_test = std::chrono::high_resolution_clock::now();
+        for(int j=0 ; j<settings.img_upper_limit ; j++) {
+            /* create input matrix */
+            file_images.read((char*)image, image_len);
+            for(int k=0 ; k<image_len ; k++) test_input(k, 0) = static_cast<double>(image[k])/255;
+            /* read output label */
+            file_labels.read((char*)label, label_len);
+            /* compute output */
+            const Matrix<T> y = fnn->feedforward(&test_input);
+            int kmax = 0;
+            for(int k=0 ; k<10 ; k++) { if(y(k, 0)>y(kmax, 0)) kmax = k; }
+            if(kmax==label[0]) (*correct_classifications)++;
+            /* prints progress bar */
+            if(display && elapsed_time(begin_sub_test)>=0.25) {
+                double percentage = static_cast<int>(10000*j/static_cast<double>(nb_images_per_thread))/100.0;
+                std::cerr << "\r    testing: " << create_progress_bar(percentage) << percentage << " %";
+                if(settings.nb_threads>1) std::cout << " (thread 1/" << settings.nb_threads << ")";
+                std::cout << std::flush;
+                begin_sub_test = std::chrono::high_resolution_clock::now();
+            }
         }
+        test_input.free();
+        delete [] image;
+        delete [] label;
+        file_images.close();
+        file_labels.close();
     }
-    test_input.free();
-    delete [] image;
-    delete [] label;
-    file_images.close();
-    file_labels.close();
+    else {
+        if(display) std::cerr << "couldn't open testing dataset in folder \"" << settings.path_data << "\"" << std::endl;
+    }
 }
 
 /*
