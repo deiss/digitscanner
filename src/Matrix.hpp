@@ -398,7 +398,7 @@ Matrix<T>::~Matrix() {
 Returns the sigmoid function of a number.
 */
 template<typename T>
-T Matrix<T>::sigmoid(T x) const {
+T Matrix<T>::sigmoid(T x) {
     return 1/(1+exp(-x));
 }
 
