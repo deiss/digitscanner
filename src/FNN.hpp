@@ -62,7 +62,7 @@ be an input layer or a fully connected layer.
 
 #include "Matrix.hpp"
 
-template<typename T> class FNNInput;
+template<typename T> class FNNInputLayer;
 template<typename T> class FNNFullyConnectedLayer;
 
 template<typename T>
@@ -91,7 +91,7 @@ class FNN {
         nabla_pair backpropagation_cross_entropy(Matrix<T>&, Matrix<T>&);
     
         std::vector<int>            layers;
-        FNNInput<T>*                input;
+        FNNInputLayer<T>*           input;
         int                         nb_fully_connected_layers;
         FNNFullyConnectedLayer<T>** fully_connected_layers;
     
@@ -157,7 +157,7 @@ p_layer vector. The layers are linked to each other.
 template<typename T>
 FNN<T>::FNN(std::vector<int> p_layers) :
     layers(p_layers),
-    input(new FNNInput<T>(p_layers[0])),
+    input(new FNNInputLayer<T>(p_layers[0])),
     nb_fully_connected_layers(static_cast<int>(p_layers.size())-1),
     fully_connected_layers(new FNNFullyConnectedLayer<T>*[nb_fully_connected_layers]) {
     FNNLayer<T>* previous = input;
