@@ -27,8 +27,8 @@ This class is a template to allow the use of multiple types for the data
 stored in the neural network (basically allows float, double, long double).
 
 A neural network is composed of multiple layers. These layers are defined
-with the abstract class FNNLayer. The input layer is of type FNNLeftLayer, 
-while the other layers and the output layer are of type FNNRightLayer.
+with the abstract class FNNLayer. The input layer is of type FNNInputLayer,
+while the other layers and the output layer are of type FNNFullyConnectedLayer.
 
                      ------------
                      | FNNLayer |
@@ -37,14 +37,14 @@ while the other layers and the output layer are of type FNNRightLayer.
                        /     \
                       /       \
                      /         \
-            ------------     --------------------------
-            | FNNInput |     | FNNFullyConnectedLayer |
-            ------------     --------------------------
+       -----------------     --------------------------
+       | FNNInputLayer |     | FNNFullyConnectedLayer |
+       -----------------     --------------------------
         
-An FNNLeftLayer just has a number of nodes, while a FNNRightLayer has weight
-and bias matrices. The main purpose of this scheme is to be able to pass a 
-pointer to the previous layer when creating a new one, might it be an input
-layer or a fully connected layer.
+An FNNInputLayer just has a number of nodes, while a FNNFullyConnectedLayer
+has weight and bias matrices. The main purpose of this scheme is to be able
+to pass a pointer to the previous layer when creating a new one, might it
+be an input layer or a fully connected layer.
 */
 
 #ifndef FNN_hpp
@@ -114,13 +114,13 @@ virtual ~FNNLayer() {}
 };
 
 template<typename T>
-class FNNInput: public FNNLayer<T> {
+class FNNInputLayer: public FNNLayer<T> {
 
     public:
     
-        FNNInput(int nb_nodes) :
+        FNNInputLayer(int nb_nodes) :
             FNNLayer<T>(nb_nodes) {}
-virtual ~FNNInput() {}
+virtual ~FNNInputLayer() {}
 
 };
 
@@ -129,9 +129,9 @@ class FNNFullyConnectedLayer: public FNNLayer<T> {
 
     public:
     
-        FNNFullyConnectedLayer(int nb_nodes, FNNLayer<T>* previous_layer) :
+        FNNFullyConnectedLayer(int nb_nodes, FNNLayer<T>* p_previous_layer) :
             FNNLayer<T>(nb_nodes),
-            previous_layer(previous_layer),
+            previous_layer(p_previous_layer),
             W(nb_nodes, previous_layer->get_nb_nodes()),
             B(nb_nodes, 1) {}
 virtual ~FNNFullyConnectedLayer() {}
@@ -157,7 +157,7 @@ p_layer vector. The layers are linked to each other.
 template<typename T>
 FNN<T>::FNN(std::vector<int> p_layers) :
     layers(p_layers),
-    input(new FNNInput<T>(p_layers[0])),s
+    input(new FNNInput<T>(p_layers[0])),
     nb_fully_connected_layers(static_cast<int>(p_layers.size())-1),
     fully_connected_layers(new FNNFullyConnectedLayer<T>*[nb_fully_connected_layers]) {
     FNNLayer<T>* previous = input;
