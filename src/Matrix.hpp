@@ -147,7 +147,8 @@ class Matrix {
         void    fill(T);
         void    identity();
     
- inline T       sigmoid(T) const;
+ static
+ inline T       sigmoid(T);
  
         void    free();
         void    print() const;
