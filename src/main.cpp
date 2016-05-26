@@ -32,7 +32,7 @@ const bool check_errors(Parameters* const);
 int main(int argc, char **argv) {
 
     /* args parser */
-    Parameters::config p_c {40, 90, 3, 1, 20, 5, 3, 2, Parameters::lang_us};
+    Parameters::config p_c {40, 90, 3, 1, 13, 5, 3, 2, Parameters::lang_us};
     Parameters p(argc, argv, p_c);
     build_menu(&p);
     try {
@@ -100,22 +100,29 @@ int main(int argc, char **argv) {
 }
 
 void build_menu(Parameters* const p) {
-    p->set_program_description("DigitScanner Copyright (C) 2016 Olivier Deiss - olivier.deiss@gmail.com\n\nThis program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under certain conditions. Type 'digitscanner --license' for details.\n\nDigitScanner uses neural networks to identify handwritten characters from the MNIST dataset.\n\nGithub: https://github.com/CSWest/DigitScanner.git");
+    p->set_program_description("DigitScanner uses neural networks to identify handwritten characters from the MNIST dataset.\n\nGithub: https://github.com/CSWest/DigitScanner.git\n\nDigitScanner Copyright (C) 2016 Olivier Deiss - olivier.deiss@gmail.com\n\nThis program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under certain conditions. Type 'digitscanner --license' for details.");
     
     p->set_usage("digitscanner [parameters]");
 
-    p->define_param("help", "Displays this help.");
-    p->define_param("license", "Displays the GPL license.");
-    p->define_num_str_param<std::string>("fnnin", {"path"}, {""}, "Loads a neural network from a file. If not specified, a new neural network is created.");
-    p->define_num_str_param<std::string>("fnnout", {"path"}, {""}, "Stores the neural network in a file, at exit. This option is useful when training the neural network. If not specified, the neural network is lost.");
-    p->define_num_str_param<int>("hlayers", {"hl1", "hl2"}, {0, 0}, "Creates a neural network with one or two hidden layers and the corresponding number of nodes in each layer. In this command, you only configure the hidden layers. Type 0 for the second hidden layer if you only need one hidden layer. In addition to the specified hidden layers, the first layer (input layer) has 784 nodes, according to the number of pixels in mnist pictures, and the final layer (activation layer) has 10 nodes for the 10 possible digits.");
-    p->define_num_str_param<std::string>("mnist", {"path"}, {""}, "Path to the mnist dataset folder.");
-    p->define_num_str_param<int>("train", {"imgnb", "imgskip", "epochs", "batch_len"}, {0, 0, 0, 0}, "Trains the neural network with the mnist training set. You can set the number of images to be used for training with <imgnb> (max 60000), the number of images to be skipped at the beggining of the training set with <imgskip>, the number of epochs of training with <epochs>, and the size of the batches with <batch_len>.");
-    p->define_num_str_param<double>("eta", {"value"}, {0.5}, "Learning rate. For handwritten number recognition, you can use a value between 0.1 and 1.", true);
-    p->define_num_str_param<double>("alpha", {"value"}, {0.1}, "Weight decay factor.", true);
-    p->define_num_str_param<int>("test", {"imgnb", "imgskip"}, {0, 0}, "Tests the neural network on the mnist testing set. You can set the number of images to be used for training with <imgnb> (max 10000) and the number of images to be skipped at the beggining of the training set with <imgskip>");
-    p->define_param("gui", "Creates a window that enables you to draw numbers. Use 'g' to guess a number and 'r' to reset the drawing area.");
-    p->define_num_str_param<int>("threads", {"nb_threads"}, {1}, "Enables multithreading for training or testing.");
+    p->insert_subsection("GENERAL");
+    p->define_param                        ("help", "Displays this help.");
+    p->define_param                        ("license", "Displays the GPL license.");
+    
+    p->insert_subsection("NEURAL NETWORK MANAGEMENT");
+    p->define_num_str_param<int>           ("hlayers", {"hl1", "hl2"}, {0, 0}, "Creates a neural network with one or two hidden layers and the corresponding number of nodes in each layer. In this command, you only configure the hidden layers. Type '0 0' if you don't want any input layer. Type 'X 0' if you only need one hidden layer. In addition to the specified hidden layers, the first layer (input layer) has 784 nodes for the 784 pixels in MNIST pictures, and the final layer (activation layer) has 10 nodes for the 10 possible digits.");
+    p->define_num_str_param<std::string>   ("fnnin", {"path"}, {""}, "Loads a neural network from a file. If not specified, a new neural network is created.");
+    p->define_num_str_param<std::string>   ("fnnout", {"path"}, {""}, "Stores the neural network in a file at exit. This option is useful when training the neural network. If not specified, the neural network is lost.");
+    
+    p->insert_subsection("ACTIONS");
+    p->define_num_str_param<int>           ("train", {"imgnb", "imgskip", "epochs", "batch_len"}, {0, 0, 0, 0}, "Trains the neural network with the mnist training set. You can set the number of images to be used for training with <imgnb> (max 60000), the number of images to be skipped at the begining of the training set with <imgskip>, the number of epochs of training with <epochs>, and the size of the batches with <batch_len>.");
+    p->define_num_str_param<int>           ("test", {"imgnb", "imgskip"}, {0, 0}, "Tests the neural network on the mnist testing set. You can set the number of images to be used for training with <imgnb> (max 10000) and the number of images to be skipped at the beggining of the training set with <imgskip>.");
+    p->define_param                        ("gui", "Creates a window that enables you to draw numbers. Use 'g' to guess a number and 'r' to reset the drawing area.");
+    
+    p->insert_subsection("LEARNING/TESTING PARAMETERS");
+    p->define_num_str_param<double>        ("eta", {"value"}, {0.5}, "Learning rate. A good value for handwritten number recognition stands between 0.1 and 1.", true);
+    p->define_num_str_param<double>        ("alpha", {"value"}, {0.1}, "Weight decay factor.", true);
+    p->define_num_str_param<std::string>   ("mnist", {"path"}, {""}, "Path to the MNIST dataset folder.");
+    p->define_num_str_param<int>           ("threads", {"nb_threads"}, {1}, "Enables multithreading for training or testing.");
 }
 
 const bool check_errors(Parameters* const p) {
