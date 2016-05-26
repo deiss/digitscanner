@@ -43,11 +43,11 @@ Note that the files in the mnist folder must have the following names:
     
 You can also create a new neural network, with 784 neurons in input, a hidden layer of 50 neurons and an output layer of 10 neurons, and train it twice over the whole dataset with batches of 10 pictures and a learning factor of 0.5. Do not forget to save this neural network with the `--fnnout` parameter. The neural network available in *fnn/fnn_50.txt* has been created with the following command:
 
-    bin/digitscanner --layers 50 0 --train 60000 0 2 10 --alpha 0 --fnnout fnn_50.txt --mnist mnist_data
+    bin/digitscanner --hlayers 50 0 --train 60000 0 2 10 --alpha 0 --fnnout fnn_50.txt --mnist mnist_data
     
 Before testing it, you can also try to see if adding another hidden layer will improve the results. This may take a long time, so you can enable multithreading with the `--threads <nb>` parameter. The number of threads depends on the number of cores of your CPU. You can also specify a weight decay factor to reduce overfitting. The value depends on the length of the training set, here a value of 5 gives good results. The value should usually stand between 1/5000 and 1/10000 of the total size of the training set. The neural network available in *fnn/fnn_100_50.txt* has been created with the following command:
 
-    bin/digitscanner --layers 100 50 --train 60000 0 2 10 --alpha 5 --fnnout fnn_100_50.txt --mnist mnist_data --threads 4
+    bin/digitscanner --hlayers 100 50 --train 60000 0 2 10 --alpha 5 --fnnout fnn_100_50.txt --mnist mnist_data --threads 4
     
 Then you can load the previously created neural networks and test them:
 
