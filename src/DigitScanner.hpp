@@ -72,7 +72,6 @@ class DigitScanner {
         void init();
         void set_layers(std::vector<int>);
     
-        void expand_dataset(std::string);
         bool load(std::string);
         bool save(std::string);
         void train(std::string, const int, const int, const int, const int, const double, const double, const int);
@@ -295,64 +294,6 @@ bool DigitScanner<T>::save(std::string path) {
     else {
         std::cerr << "couldn't create file \"" << path << "\"" << std::endl;
         return false;
-    }
-}
-
-/*
-Appends modified data to the dataset.
-*/
-template<typename T>
-void DigitScanner<T>::expand_dataset(std::string path_data) {
-    std::string   train_images     = path_data + "train-images.idx3-ubyte";
-    std::string   train_labels     = path_data + "train-labels.idx1-ubyte";
-    const int     image_len        = 784;
-    const int     label_len        = 1;
-    const int     image_header_len = 16;
-    const int     label_header_len = 8;
-    std::ifstream file_images_in(train_images,  std::ifstream::binary);
-    std::ifstream file_labels_in(train_labels,  std::ifstream::binary);
-    if(file_images_in && file_labels_in) {
-        std::ofstream file_images_out(train_images, std::ofstream::binary | std::ofstream::app);
-        std::ofstream file_labels_out(train_labels, std::ofstream::binary | std::ofstream::app);
-        if(file_images_out && file_labels_out) {
-            unsigned char* image = new unsigned char[image_len];
-            unsigned char* label = new unsigned char[label_len];
-            Matrix<T>      input(image_len, 1);
-            Matrix<T>      expanded(image_len, 1);
-            file_images_in.seekg(image_header_len + 0*image_len, std::ios_base::beg);
-            file_labels_in.seekg(label_header_len + 0*label_len, std::ios_base::beg);
-            for(int i=0 ; i<60000 ; i++) {
-                /* read an image from the file */
-                file_images_in.read((char*)image, image_len);
-                for(int j=0 ; j<image_len ; j++) input(j, 0) = static_cast<double>(image[j])/255;
-                /* read the label from the data set and create the expected output matrix */
-                file_labels_in.read((char*)label, label_len);
-                expanded.fill(0);
-                if(true) { // scaling
-                    double ratio = 0.9; // >1 : zoom
-                    for(int j=0 ; j<image_len ; j++) {
-                        int x_ = j%28; int x  = (x_-14)/ratio + 14;
-                        int y_ = j/28; int y  = (y_-14)/ratio + 14;
-                        file_images_out << (unsigned char)(input(y*28 + x, 0)*255);
-                    }
-                    file_labels_out << (unsigned char)label[0];
-                }
-            }
-            input.free();
-            expanded.free();
-            delete [] image;
-            delete [] label;
-            file_images_out.close();
-            file_labels_out.close();
-        }
-        else {
-            std::cerr << "couldn't append to dataset in folder \"" << path_data << "\"" << std::endl;
-        }
-        file_labels_in.close();
-        file_images_in.close();
-    }
-    else {
-        std::cerr << "couldn't open dataset in folder \"" << path_data << "\"" << std::endl;
     }
 }
 

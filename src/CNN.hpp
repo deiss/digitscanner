@@ -98,8 +98,11 @@ class CNNLayer {
 
     public:
     
-        CNNLayer(int nb_nodes) :
-            nb_nodes(nb_nodes) {}
+        CNNLayer(int p_I, int p_J, int p_nb_features, int p_nb_units) :
+            I(p_I),
+            J(p_J),
+            nb_features(p_nb_features),
+            nb_units(p_nb_units) {}
 virtual ~CNNLayer() {}
 
         int get_I()           { return I; }
@@ -111,6 +114,7 @@ virtual ~CNNLayer() {}
         int I;
         int J;
         int nb_features;
+        int nb_units;
     
 };
 
@@ -119,10 +123,8 @@ class CNNInputLayer: public CNNLayer<T> {
 
     public:
     
-        CNNInput(int p_nb_nodes, int p_I, int p_J) :
-            nb_features(1),
-            I(p_I),
-            J(p_J) {}
+        CNNInput(int p_I, p_J, int p_nb_units) :
+            CNNLayer(p_I, p_J, 1, p_nb_units) {}
 virtual ~CNNInput() {}
 
 };
@@ -132,7 +134,10 @@ class CNNMidLayer: public CNNLayer<T> {
 
     public:
     
-        CNNMidLayer();
+        CNNMidLayer(int p_I, p_J, int p_nb_features) :
+            CNNLayer(p_I, p_J, p_nb_features, p_I*p_J*p_nb_features) {
+            activations.reserve(nb_features);
+        }
 virtual ~CNNMidLayer() {}
 
 virtual void compute_activations(CNNMidLayer*) = 0;
@@ -150,21 +155,18 @@ class CNNConvolutionalLayer: public CNNMidLayer<T> {
     public:
     
         CNNConvolutionalLayer(int p_nb_features, int p_receptive_field_size, int p_stride_length, CNNLayer<T>* p_previous_layer) :
-            nb_features(p_nb_features),
+            CNNMidLayer(1 + (previous_layer->I - receptive_field_size)/stride_length, 1 + (previous_layer->J - receptive_field_size)/stride_length, p_nb_features),
             receptive_field_size(p_receptive_field_size),
             stride_length(p_stride_length),
-            previous_layer(p_previous_layer),
-            I(1 + (previous_layer->I - receptive_field_size)/stride_length),
-            J(1 + (previous_layer->J - receptive_field_size)/stride_length) {
-            activations.reserve(nb_features);
+            previous_layer(p_previous_layer) {
             W.resize(nb_features); for(int i=0 ; i<nb_features ; i++) W[i].reserve(previous_layer->nb_features);
             B.resize(nb_features); for(int i=0 ; i<nb_features ; i++) B[i].reserve(previous_layer->nb_features);
         }
 virtual ~CNNConvolutionalLayer() {}
     
-        CNNLayer<T>* get_previous_layer() { return previous_layer; }
-        T            get_bias()           { return B; }
-        Matrix<T>*   get_weights()        { return &W; }
+      //  CNNLayer<T>* get_previous_layer() { return previous_layer; }
+      //  T            get_bias()           { return B; }
+      //  Matrix<T>*   get_weights()        { return &W; }
     
 virtual void         compute_activations(CNNMidLayer*);
         void         compute_activations_from_input(Matrix<T>);
@@ -174,7 +176,6 @@ virtual void         compute_activations(CNNMidLayer*);
         int                                 receptive_field_size;
         int                                 stride_length;
         CNNLayer<T>*                        previous_layer;
-        std::vector<Matrix<T>>              activations;            /* [this feature map][previous input][i, j] */
         std::vector<std::vector<Matrix<T>>> W;                      /* [this feature map][previous input][i, j] */
         std::vector<std::vector<T>>         B;                      /* [this feature map][previous input] */
 
@@ -186,13 +187,11 @@ class CNNPoolingLayer: public CNNMidLayer<T> {
     public:
     
         CNNPoolingLayer(int p_region_size, int p_stride_length, CNNLayer<T>* p_previous_layer) :
-            nb_features(p_previous_layer->nb_features),
+            CNNMidLayer(1 + (previous_layer->I - region_size)/stride_length, 1 + (previous_layer->J - region_size)/stride_length, p_previous_layer->nb_features),
             region_size(p_region_size),
             stride_length(p_stride_length),
-            previous_layer(p_previous_layer),
-            I(1 + (previous_layer->I - receptive_field_size)/stride_length)
-            J(1 + (previous_layer->J - receptive_field_size)/stride_length) {}
-virtual ~CNNPoolingLayer() {}
+            previous_layer(p_previous_layer) {}
+        virtual ~CNNPoolingLayer() {}
 
 virtual void compute_activations(CNNMidLayer*);
     
@@ -209,8 +208,8 @@ class CNNFullyConnectedLayer: public CNNLayer<T> {
 
     public:
     
-        CNNFullyConnectedLayer(int p_nb_nodes, CNNLayer<T>* p_previous_layer) :
-            nb_nodes(p_nb_nodes),
+        CNNFullyConnectedLayer(int p_nb_units, CNNLayer<T>* p_previous_layer) :
+            CNNLayer(0, 0, 1, p_nb_units),
             previous_layer(p_previous_layer),
             W(nb_nodes, previous_layer->get_nb_nodes()),
             B(nb_nodes, 1) {}
@@ -223,7 +222,6 @@ virtual ~CNNFullyConnectedLayer() {}
 
     private:
     
-        int          nb_nodes;
         CNNLayer<T>* previous_layer;
         Matrix<T>    W;
         Matrix<T>    B;

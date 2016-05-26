@@ -44,7 +44,7 @@ $(BIN_DIR)/$(EXEC): $(OBJ)
 	$(CC) -o $@ $^ $(LD_FLAGS)
 
 # objects
-$(BUILD_DIR)/main.o: main.cpp DigitScanner.hpp Window.hpp Arguments.hpp FNN.hpp Matrix.hpp
+$(BUILD_DIR)/main.o: main.cpp DigitScanner.hpp Window.hpp Parameters.hpp FNN.hpp Matrix.hpp
 	$(CC) $(INCLUDE) $(CC_FLAGS) -o $@ -c $<
 
 $(BUILD_DIR)/Exception.o: Exception.cpp
@@ -53,7 +53,7 @@ $(BUILD_DIR)/Exception.o: Exception.cpp
 $(BUILD_DIR)/Window.o: Window.cpp Window.hpp GLUT.hpp
 	$(CC) $(INCLUDE) $(CC_FLAGS) -o $@ -c $<
 
-$(BUILD_DIR)/Arguments.o: Arguments.cpp Arguments.hpp
+$(BUILD_DIR)/Parameters.o: Parameters.cpp Parameters.hpp
 	$(CC) $(INCLUDE) $(CC_FLAGS) -o $@ -c $<
 
 clean:

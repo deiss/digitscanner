@@ -1,317 +1,575 @@
 /*
-DigitScanner - Copyright (C) 2016 - Olivier Deiss - olivier.deiss@gmail.com
+    
+************************************************************************************************
+ 
+LICENSE
 
-DigitScanner is a C++ tool to create, train and test feedforward neural
-networks (fnn) for handwritten number recognition. The project uses the
-MNIST dataset to train and test the neural networks. It is also possible
-to draw numbers in a window and ask the tool to guess the number you drew.
+    Ce programme est distribué sous la license GPL.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+************************************************************************************************
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+PROJET
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    Ce programme fait partie du projet long 2A sur la BCI réalisé en 2015-2016 par
+    Dufresne Thibault, Jouhaud Paul, Finel Bruno et Deiss Olivier, ayant pour but
+    de parvenir à contrôler une chaise roulante grâce à l'analyse des ondes cérébrales
+    issues des intentions de mouvement de la main.
+    
+************************************************************************************************
+         
+PROGRAMME
+    
+    Ce programme permet de réaliser des acquisitions de données depuis un serveur,
+    de les traiter, et de les classifier. Le serveur peut s'agir du serveur de la
+    BCI ou bien du programme BCI_serveur. Il est possible d'enregistrer les données
+    reçues et la classification réalisée dans des fichiers (voir aide). Le programme
+    indique sur la sortie les mouvements réalisés afin que ceux-ci puissent être
+    utilisés comme arguments d'un autre programme.
+
+************************************************************************************************
+
+FICHIER
+
+    La description des fonctions contenues dans ce fichier se trouve dans le fichier Parameters.hpp.
+
+************************************************************************************************
+
 */
 
-#include "Arguments.hpp"
+#include "Parameters.hpp"
 
-/*
-Initializes variables.
-*/
-Arguments::Arguments(int p_argc, char** p_argv) :
-    fnnin(""),
-    fnnout(""),
-    mnist(""),
-    gui(false),
-    expand(false),
-    threads(1),
-    train_imgnb(0),
-    train_imgskip(0),
-    train_epochs(0),
-    train_batch_len(0),
-    train_eta(0),
-    train_alpha(0),
-    test_imgnb(0),
-    test_imgskip(0),
+Parameters::Parameters(const int p_argc, char const* const* const p_argv, config p_c):
     argc(p_argc),
-    argv(p_argv) {
+    argv(p_argv),
+
+    min_terminal_width(p_c.min_terminal_width),
+    max_terminal_width(p_c.max_terminal_width),
+    terminal_width(get_terminal_width()<=max_terminal_width ? (get_terminal_width()>=min_terminal_width ? get_terminal_width() : min_terminal_width) : max_terminal_width),
+    param_to_desc_len(p_c.param_to_desc_len),
+    desc_indent_len(p_c.desc_indent_len),
+    params_indent_len(p_c.params_indent_len),
+    choice_indent_len(p_c.choice_indent_len),
+    choice_desc_indent_len(p_c.choice_desc_indent_len),
+    right_margin_len(p_c.right_margin_len),
+    desc_indent(""),
+    choice_indent(""),
+    params_indent(""),
+
+    lang(p_c.lang),
+    description_is_set(false) {
+    for(int i=0 ; i<params_indent_len ; i++)      params_indent += " ";
+    for(int i=0 ; i<choice_indent_len ; i++)      choice_indent += " ";
+    for(int i=0 ; i<desc_indent_len ; i++)        desc_indent += " ";
+    for(int i=0 ; i<choice_desc_indent_len ; i++) choice_desc_indent += " ";
 }
 
-/*
-Prints help.
-*/
-void Arguments::print_help() {
-    std::cout << "DigitScanner Copyright (C) 2016 Olivier Deiss - olivier.deiss@gmail.com" << std::endl;
-    std::cout << "This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under certain conditions. Type 'digitscanner --license' for details." << std::endl;
-    std::cout << "USE: digitscanner [options]" << std::endl;
-    std::cout << std::endl;
-    std::cout << "OPTIONS:" << std::endl;
-    std::cout << "   --help                               Displays this help." << std::endl;
-    std::cout << "   --license                            Displays the GPL license." << std::endl;
-    std::cout << "   --fnnin <fnn_file_path>              Loads a neural network from a file. If not specified, a new neural network is created." << std::endl;
-    std::cout << "   --fnnout <fnn_file_path>             Stores the neural network in a file, at exit. This option is useful when training the neural network. If not specified, the neural network is lost." << std::endl;
-    std::cout << "   --layers <nb_layers> <1> <2> [...]   Creates a neural network with given number of layers and nodes in each layer. The number of nodes of the first layer has to be set to 784 according to the number of pixels in mnist pictures, and the number of nodes of the right most layer has to be set to 10, for the 10 possible digits." << std::endl;
-    std::cout << "   --mnist <path>                       Path to the mnist dataset folder." << std::endl;
-    std::cout << "   --train <imgnb> <imgskip> <epochs>" << std::endl;
-    std::cout << "           <batch_len> <eta> <alpha>    Trains the neural network with the mnist training set." << std::endl;
-    std::cout << "                                           imgnb:     number of images of the training set to be used for training. Max: 60000." << std::endl;
-    std::cout << "                                           imgskip:   skips the first images of the training set." << std::endl;
-    std::cout << "                                           epochs:    number of epochs in the learning process." << std::endl;
-    std::cout << "                                           batch_len: number of images in a batch." << std::endl;
-    std::cout << "                                           eta:       learning factor. For handwritten number recognition, you can use a value between 0.1 and 1." << std::endl;
-    std::cout << "                                           alpha:     weight decay factor." << std::endl;
-    std::cout << "   --test <imgnb> <imgskip>             Tests the neural network on the mnist testing set." << std::endl;
-    std::cout << "                                           imgnb:   number of images of the testing set to be used for training. Max: 10000." << std::endl;
-    std::cout << "                                           imgskip: skips the first images of the training set." << std::endl;
-    std::cout << "   --gui                                Creates a window that enables you to draw numbers. Commands:" << std::endl;
-    std::cout << "                                           g: using the neural network, guess the number" << std::endl;
-    std::cout << "                                           r: resets the drawing area" << std::endl;
-    std::cout << "   --threads <nb_threads>               Enables multithreading for training or testing. Default: 1." << std::endl;
-    std::cout << "   --expand                             Appends scaled pictures to the existing dataset (warning: this modifies the dataset)." << std::endl;
+Parameters::Parameters(const int p_argc, char const* const* const p_argv, config p_c, const int p_terminal_width):
+    argc(p_argc),
+    argv(p_argv),
+
+    min_terminal_width(p_c.min_terminal_width),
+    max_terminal_width(p_c.max_terminal_width),
+    terminal_width(p_terminal_width<=max_terminal_width ? p_terminal_width : max_terminal_width),
+    param_to_desc_len(p_c.param_to_desc_len),
+    desc_indent_len(p_c.desc_indent_len),
+    params_indent_len(p_c.params_indent_len),
+    choice_indent_len(p_c.choice_indent_len),
+    choice_desc_indent_len(p_c.choice_desc_indent_len),
+    right_margin_len(p_c.right_margin_len),
+    desc_indent(""),
+    choice_indent(""),
+    params_indent(""),
+
+    lang(p_c.lang),
+    description_is_set(false) {
+    for(int i=0 ; i<params_indent_len ; i++) params_indent += " ";
+    for(int i=0 ; i<choice_indent_len ; i++) choice_indent += " ";
+    for(int i=0 ; i<desc_indent_len ; i++)   desc_indent += " ";
 }
 
-/*
-Parses the command line arguments.
-*/
-int Arguments::parse_arguments() {
-    std::string help_msg = "You can use --help to get more help.";
-    if(argc==1) {
-        std::cerr << "Bad use: you need to tell DigitScanner what to do. You can create or load a neural network, then test it or even play with it." << std::endl;
-        std::cerr << help_msg << std::endl;
-        return -1;
+Parameters::~Parameters() {
+    for(std::pair<std::string, ParamHolder*> p: params) delete p.second;
+}
+
+/*** static functions ***/
+
+const int Parameters::get_terminal_width() {
+    #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+        /* linux, mac */
+        struct winsize w;
+        ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+        return w.ws_col;
+    #elif PLATFORM == PLATFORM_WINDOWS
+        /* windows */
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+        return csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    #endif
+}
+
+const std::string Parameters::bold(const std::string& str) {
+    #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+        return "\e[1m" + str + "\e[0m";
+    #else
+        return str;
+    #endif
+}
+
+const std::string Parameters::underline(const std::string& str) {
+    #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+        return "\e[4m" + str + "\e[0m";
+    #else
+        return str;
+    #endif
+}
+
+/*** setters ***/
+
+void Parameters::set_program_description(const std::string &p_description) {
+    description        = p_description + " ";
+    description_is_set = true;
+}
+
+void Parameters::set_usage(const std::string &p_usage) {
+    usage        = p_usage;
+    usage_is_set = true;
+}
+
+/*** build help menu ***/
+
+void Parameters::insert_subsection(const std::string& subsection_title) {
+    subsections.push_back(subsection_title);
+    subs_indexes.push_back(params.size());
+}
+
+void Parameters::define_param(const std::string& param_name, const std::string& param_desc) {
+    /* check if already exist */
+    if(params.count("--" + param_name)) {
+        throw DuplicateParameterException(param_name, "Parameters::define_param", lang);
     }
-    else {
-        for(int i=1 ; i<argc ; i++) {
-            std::string arg_value(argv[i]);
-            /* license */
-            if(arg_value=="--license") {
-                return -4;
+    /* get type name */
+    const std::string type_name = typeid(bool).name();
+    /* create param */
+    Param<bool>* const p = new Param<bool>("--" + param_name, param_desc);
+    /* store param */
+    order.insert(std::make_pair(params.size(), "--" + param_name));
+    params.insert(std::make_pair("--" + param_name, p));
+}
+
+void Parameters::define_choice_param(const std::string& param_name, const std::string& value_name, const std::string& default_choice, vec_choices p_choices, const std::string& param_desc, const bool display_default_value) {
+    /* check if already exist */
+    if(params.count("--" + param_name)) {
+        throw DuplicateParameterException(param_name, "Parameters::define_param", lang);
+    }
+    /* get type name */
+    const std::string type_name = typeid(std::string).name();
+    /* append space in descriptions */
+    for(std::pair<std::string, std::string>& p:p_choices) p.second += " ";
+    /* create param */
+    Param<std::string>* const p = new Param<std::string>("--" + param_name, param_desc, {value_name}, {default_choice}, display_default_value);
+    /* store param */
+    order.insert(std::make_pair(params.size(), "--" + param_name));
+    params.insert(std::make_pair("--" + param_name, p));
+    choices.insert(std::make_pair("--" + param_name, p_choices));
+    choices_params.insert("--" + param_name);
+}
+
+/*** display help menu ***/
+
+void Parameters::print_help(const bool p_print_usage, const bool p_print_description) const {
+    if(description_is_set && p_print_description) { print_description(); }
+    if(usage_is_set       && p_print_usage)       { print_usage(); }
+    print_parameters();
+}
+
+void Parameters::print_description() const {
+    std::cout << std::endl;
+    if(lang==lang_fr) std::cout << bold("DESCRIPTION :") << std::endl;
+    else              std::cout << bold("DESCRIPTION:") << std::endl;
+    /* print description */
+    std::string line       = "";
+    std::string word       = "";
+    bool        first_word = true;
+    for(std::size_t j=0 ; j<description.length() ; j++) {
+        char c = description.at(j);
+        if(c!=' ' && c!= '\n' && params_indent_len+static_cast<int>(word.length())<terminal_width-right_margin_len) {
+            word += c;
+        }
+        else {
+            if(params_indent_len+static_cast<int>(line.length())+static_cast<int>(word.length())+1<=terminal_width-right_margin_len) {
+                if(c!='\n') {
+                    if(first_word) { line = word; first_word = false; }
+                    else           { line += " " + word; }
+                    word = "";
+                }
+                else {
+                    if(first_word) { line = word; first_word = false; }
+                    else           { line += " " + word; }
+                    std::cout << params_indent << line << std::endl;
+                    first_word = true;
+                    line       = "";
+                    word       = "";
+                }
             }
-            /* help */
-            else if(arg_value=="--help") {
-                return -2;
+            else {
+                /* line would be too long, print it */
+                if(params_indent_len+static_cast<int>(word.length())<terminal_width-right_margin_len) {
+                    /* prints line and take a new line */
+                    std::cout << params_indent << line << std::endl;
+                    line = word;
+                    word = "";
+                }
+                else {
+                    /* no need to take another line, the word will be split anyways */
+                    int line_len;
+                    if(line!="") { std::cout << params_indent << line << " "; line_len = static_cast<int>(line.length()) + 1; }
+                    else         { line_len = 0; }
+                    std::cout << word.substr(0, static_cast<std::size_t>(terminal_width-right_margin_len-(params_indent_len+line_len))) << std::endl;
+                    word = word.substr(static_cast<std::size_t>(terminal_width-right_margin_len-(params_indent_len+line_len)));
+                    word.push_back(c);
+                    line       = "";
+                    first_word = true;
+                }
             }
-            /* string */
-            else if(arg_value=="--mnist") {
-                if(!parse_string_arg(std::string(argv[i]), &i, &mnist, "You must specify the mnist dataset folder path.\n" + help_msg)) { return -1; }
-                if(mnist.length()>0 && mnist.at(mnist.length()-1)!='/') mnist.push_back('/');
+        }
+    }
+    /* print last line */
+    std::cout << params_indent << line << std::endl;
+}
+
+void Parameters::print_usage() const {
+    std::cout << std::endl;
+    if(lang==lang_fr) std::cout << bold("UTILISATION :") << std::endl;
+    else              std::cout << bold("USAGE:") << std::endl;
+    std::cout << params_indent << usage << std::endl;
+}
+
+void Parameters::print_parameters() const {
+    std::cout << std::endl;
+    for(std::size_t i=0 ; i<params.size() ; i++) {
+        /* print subsection if needed */
+        for(std::size_t j=0 ; j<subs_indexes.size() ; j++) {
+            if(subs_indexes[j]==i) {
+                if(lang==lang_fr) std::cout << bold(subsections[j] + " :") << std::endl;
+                else              std::cout << bold(subsections[j] + ":") << std::endl;
             }
-            else if(arg_value=="--fnnin") {
-                if(!parse_string_arg(std::string(argv[i]), &i, &fnnin, "You must specify the input neural network file.\n" + help_msg)) { return -1; }
+        }
+        
+        /* retrieve param */
+        ParamHolder* p = params.at(order.at(i));
+        /* build use string */
+        std::string use = params_indent + bold(p->name);
+        for(std::string value_name: p->values_names) use += " <" + underline(value_name) + ">";
+        
+        /* print param and values to take */
+        bool desc_on_new_line = false;
+        int  len_adjust       = 0;
+        #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+            len_adjust = 8 + p->nb_values*8;
+        #endif
+        if(static_cast<int>(use.length())-len_adjust+param_to_desc_len>desc_indent_len) {
+            /* print param list now if too long */
+            std::cout << use << std::endl;
+            desc_on_new_line = true;
+        }
+        else {
+            /* print list and spaces if it fits */
+            /* minus one because one space will be added by first description line */
+            std::string spaces = "";
+            for(int j=0 ; j<desc_indent_len-static_cast<int>(use.length())+len_adjust ; j++) spaces += " ";
+            std::cout << use << spaces;
+        }
+        
+        /* print description */
+        std::string line       = "";
+        std::string word       = "";
+        bool        first_l    = true;
+        bool        first_word = true;
+        for(std::size_t j=0 ; j<p->description.length() ; j++) {
+            char c = p->description.at(j);
+            if(c!=' ' && desc_indent_len+static_cast<int>(word.length())<terminal_width-right_margin_len) {
+                word += c;
             }
-            else if(arg_value=="--fnnout") {
-                if(!parse_string_arg(std::string(argv[i]), &i, &fnnout, "You must specify the output neural network file.\n" + help_msg)) { return -1; }
-            }
-            else if(arg_value=="--expand") {
-                expand = true;
-                arg_set.insert("expand");
-            }
-            /* integers */
-            else if(arg_value=="--threads") {
-                if(++i<argc) {
-                    std::string threads_str(argv[i]);
-                    try                            { threads = std::stoi(threads_str); }
-                    catch(std::exception const& e) { std::cerr << "The number of threads to be used for training must be a positive integer." << std::endl; return -1; }
-                    if(threads<1) { std::cerr << "The number of threads to be used for training must be a positive integer." << std::endl; return -1; }
-                    else          { arg_set.insert("threads"); }
+            else {
+                if(desc_indent_len+static_cast<int>(line.length()+word.length())+1<=terminal_width-right_margin_len) {
+                    if(first_word) { line = word; first_word = false; }
+                    else           { line += " " + word; }
+                    word = "";
                 }
-                else { std::cerr << "The number of threads to be used for training is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }            }
-            /* commands */
-            else if(arg_value=="--train") {
-                if(++i<argc) {
-                    std::string train_imgnb_str(argv[i]);
-                    try                            { train_imgnb = std::stoi(train_imgnb_str); }
-                    catch(std::exception const& e) { std::cerr << "The number of images to be used for training must be a positive integer." << std::endl; return -1; }
-                    if(train_imgnb<0) { std::cerr << "The number of images to be used for training must be a positive integer." << std::endl; return -1; }
-                }
-                else { std::cerr << "The number of images to be used for training is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
-                if(++i<argc) {
-                    std::string train_imgskip_str(argv[i]);
-                    try                            { train_imgskip = std::stoi(train_imgskip_str); }
-                    catch(std::exception const& e) { std::cerr << "The number of images to be skipped must be a positive integer." << std::endl; return -1; }
-                    if(train_imgskip<0) { std::cerr << "The number of images to be skipped must be a positive integer." << std::endl; return -1; }
-                }
-                else { std::cerr << "The number of images to be skipped is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
-                if(++i<argc) {
-                    std::string train_epochs_str(argv[i]);
-                    try                            { train_epochs = std::stoi(train_epochs_str); }
-                    catch(std::exception const& e) { std::cerr << "The number of epochs must be a positive integer." << std::endl; return -1; }
-                    if(train_epochs<=0)            { std::cerr << "The number of epochs is too low." << std::endl; return -1; }
-                }
-                else { std::cerr << "The number of epochs is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
-                if(++i<argc) {
-                    std::string train_batch_len_str(argv[i]);
-                    try                            { train_batch_len = std::stoi(train_batch_len_str); }
-                    catch(std::exception const& e) { std::cerr << "The length of batches must be a positive integer." << std::endl; return -1; }
-                    if(train_batch_len<=0)         { std::cerr << "The length of batches is too low." << std::endl; return -1; }
-                }
-                else { std::cerr << "The length of batches is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
-                if(++i<argc) {
-                    std::string train_eta_str(argv[i]);
-                    try                            { train_eta = std::stod(train_eta_str); }
-                    catch(std::exception const& e) { std::cerr << "Eta must be a positive float." << std::endl; return -1; }
-                    if(train_eta<=0)               { std::cerr << "Eta is too low." << std::endl; return -1; }
-                }
-                else { std::cerr << "Eta is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
-                if(++i<argc) {
-                    std::string train_alpha_str(argv[i]);
-                    try                            { train_alpha = std::stod(train_alpha_str); }
-                    catch(std::exception const& e) { std::cerr << "Alpha must be a positive float." << std::endl; return -1; }
-                    if(train_alpha<0)              { std::cerr << "Alpha must be a positive float." << std::endl; return -1; }
-                    else                           { arg_set.insert("train"); }
-                }
-                else { std::cerr << "Alpha is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
-            }
-            else if(arg_value=="--test") {
-                if(++i<argc) {
-                    std::string test_imgnb_str(argv[i]);
-                    try                            { test_imgnb = std::stoi(test_imgnb_str); }
-                    catch(std::exception const& e) { std::cerr << "The number of images to be used for testing must be an integer between 0 and 10000." << std::endl; return -1; }
-                    if(test_imgnb<0 || test_imgnb>10000) { std::cerr << "The number of images to be used for testing must be an integer between 0 and 10000." << std::endl; return -1; }
-                }
-                else { std::cerr << "The number of images to be used for testing is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
-                if(++i<argc) {
-                    std::string test_imgskip_str(argv[i]);
-                    try                            { test_imgskip = std::stoi(test_imgskip_str); }
-                    catch(std::exception const& e) { std::cerr << "The number of images to be skipped must be an integer between 0 and 10000-<imgnb>." << std::endl; return -1; }
-                    if(test_imgskip<0 || test_imgskip>10000-test_imgnb) { std::cerr << "The number of images to be skipped must be an integer between 0 and 10000-<imgnb>." << std::endl; return -1; }
-                    else { arg_set.insert("test"); }
-                }
-                else { std::cerr << "The number of images to be skipped is not specified." << std::endl; std::cerr << help_msg << std::endl; return -1; }
-            }
-            else if(arg_value=="--layers") {
-                if(++i<argc) {
-                    std::string nb_layers_str(argv[i]);
-                    int         nb_layers;
-                    try                            { nb_layers = std::stoi(nb_layers_str); }
-                    catch(std::exception const& e) { std::cerr << "The number of layers must be a positive integer." << std::endl; return -1; }
-                    if(nb_layers<0 || nb_layers>10000) { std::cerr << "The number of layers must be a positive integer." << std::endl; return -1; }
+                else {
+                    /* line would be too long, print it */
+                    if(!first_l || desc_on_new_line) std::cout << desc_indent;
+                    if(first_l)                      first_l = false;
+                    if(desc_indent_len+static_cast<int>(word.length())<terminal_width-right_margin_len) {
+                        /* prints line and take a new line */
+                        std::cout << line << std::endl;
+                        line = word;
+                        word = "";
+                    }
                     else {
-                        layers.reserve(nb_layers);
-                        for(int j=0 ; j<nb_layers ; j++) {
-                            if(++i<argc) {
-                                std::string nb_nodes_str(argv[i]);
-                                int         nb_nodes;
-                                try                            { nb_nodes = std::stoi(nb_nodes_str); }
-                                catch(std::exception const& e) { std::cerr << "The number of nodes must be a strictly positive integer." << std::endl; return -1; }
-                                if(nb_nodes<1) { std::cerr << "The number of nodes must be a strictly positive integer." << std::endl; return -1; }
-                                else { layers.push_back(nb_nodes); }
+                        /* no need to take another line, the word will be split anyways */
+                        int line_len;
+                        if(line!="") { std::cout << line << " "; line_len = static_cast<int>(line.length() + 1); }
+                        else         { line_len = 0; }
+                        int ind = terminal_width-(right_margin_len+desc_indent_len+line_len);
+                        if(ind<0) ind=0;
+                        std::cout << word.substr(0, static_cast<std::size_t>(ind)) << std::endl;
+                        word = word.substr(static_cast<std::size_t>(ind));
+                        word.push_back(c);
+                        line       = "";
+                        first_word = true;
+                    }
+                }
+            }
+        }
+        /* print last line */
+        if(!first_l || desc_on_new_line) std::cout << desc_indent;
+        std::cout << line << std::endl;
+        
+        /* print choices */
+        if(choices_params.count(p->name)) {
+            for(const std::pair<std::string, std::string>& pc: choices.at(p->name)) {
+                /* print choice and new line */
+                if(lang==lang_fr) std::cout << desc_indent << choice_indent << "\"" << bold(pc.first) << "\" :" << std::endl;
+                else              std::cout << desc_indent << choice_indent << "\"" << bold(pc.first) << "\":" << std::endl;
+                /* print choice description */
+                /* print description */
+                std::string spaces      = desc_indent + choice_indent + choice_desc_indent;
+                line       = "";
+                word       = "";
+                first_word = true;
+                for(std::size_t j=0 ; j<pc.second.length() ; j++) {
+                    char c = pc.second.at(j);
+                    if(c!=' ' && desc_indent_len+choice_indent_len+choice_desc_indent_len+static_cast<int>(word.length())<terminal_width-right_margin_len) {
+                        word += c;
+                    }
+                    else {
+                        if(desc_indent_len+choice_indent_len+choice_desc_indent_len+static_cast<int>(line.length()+word.length())+1<=terminal_width-right_margin_len) {
+                            if(first_word) { line = word; first_word = false; }
+                            else           { line += " " + word; }
+                            word = "";
+                        }
+                        else {
+                            /* line would be too long, print it */
+                            std::cout << spaces;
+                            if(desc_indent_len+choice_indent_len+choice_desc_indent_len+static_cast<int>(word.length())<terminal_width-right_margin_len) {
+                                /* prints line and take a new line */
+                                std::cout << line << std::endl;
+                                line = word;
+                                word = "";
                             }
                             else {
-                                std::cerr << "The number of nodes for the " << j << "th layer is not specified." << std::endl;
-                                return -1;
+                                /* no need to take another line, the word will be split anyways */
+                                int line_len;
+                                if(line!="") { std::cout << line << " "; line_len = static_cast<int>(line.length()) + 1; }
+                                else         { line_len = 0; }
+                                int ind = terminal_width-(right_margin_len+desc_indent_len+choice_indent_len+choice_desc_indent_len+line_len);
+                                if(ind<0) ind=0;
+                                std::cout << word.substr(0, static_cast<std::size_t>(ind)) << std::endl;
+                                word = word.substr(static_cast<std::size_t>(ind));
+                                word.push_back(c);
+                                line       = "";
+                                first_word = true;
                             }
                         }
-                        arg_set.insert("layers");
+                    }
+                }
+                /* print last line */
+                std::cout << spaces << line << std::endl;
+            }
+        }
+        
+        /* print default value */
+        if(p->display_default_value) {
+            if(p->type_name==typeid(short int).name())                   pr_def<short int>(p);
+            else if(p->type_name==typeid(unsigned short int).name())     pr_def<unsigned short int>(p);
+            else if(p->type_name==typeid(int).name())                    pr_def<int>(p);
+            else if(p->type_name==typeid(unsigned int).name())           pr_def<unsigned int>(p);
+            else if(p->type_name==typeid(long int).name())               pr_def<long int>(p);
+            else if(p->type_name==typeid(unsigned long int).name())      pr_def<unsigned long int>(p);
+            else if(p->type_name==typeid(long long int).name())          pr_def<long long int>(p);
+            else if(p->type_name==typeid(unsigned long long int).name()) pr_def<unsigned long long int>(p);
+            else if(p->type_name==typeid(float).name())                  pr_def<float>(p);
+            else if(p->type_name==typeid(double).name())                 pr_def<double>(p);
+            else if(p->type_name==typeid(long double).name())            pr_def<long double>(p);
+            else if(p->type_name==typeid(std::string).name())            pr_def<std::string>(p, true);
+        }
+        
+        /* skip line */
+        std::cout << std::endl;
+    }
+}
+
+/*** use parameters ***/
+
+void Parameters::parse_params() {
+    for(int i=1 ; i<argc ; i++) {
+        /* get arg name */
+        const std::string line_param(argv[i]);
+        if(params.count(line_param)) {
+            /* retrieve param */
+            ParamHolder* const p = params[line_param];
+            /* read param values */
+            for(std::size_t j=0 ; j<static_cast<std::size_t>(p->nb_values) ; j++) {
+                if(++i<argc) {
+                    std::string arg_value(argv[i]);
+                    if(p->type_name==typeid(short int).name()) {
+                        Param<short int>* const p_reint = dynamic_cast<Param<short int>* const>(p);
+                        int                     tmp_val = 0;
+                        try { tmp_val = std::stoi(arg_value); }
+                        catch(const std::invalid_argument& e) { throw IntegerExpectedException(line_param, arg_value, "Parameters::parse_params", lang); }
+                        catch(const std::out_of_range& e)     { throw ValueOutOfRangeException<short int>(line_param, arg_value, "Parameters::parse_params", lang); }
+                        /* arg_value is a valid unsigned long int, but is it a valid unsigned int */
+                        short int min = std::numeric_limits<short int>::min();
+                        short int max = std::numeric_limits<short int>::max();
+                        if(tmp_val<static_cast<int>(min) || tmp_val>static_cast<int>(max)) { throw ValueOutOfRangeException<short int>(line_param, arg_value, "Parameters::parse_params", lang); }
+                        else { p_reint->values[j] = static_cast<short int>(tmp_val); }
+                    }
+                    else if(p->type_name==typeid(unsigned short int).name()) {
+                        Param<unsigned short int>* const p_reint = dynamic_cast<Param<unsigned short int>* const>(p);
+                        unsigned long int                tmp_val = 0;
+                        try { tmp_val = std::stoul(arg_value); }
+                        catch(const std::invalid_argument& e) { throw IntegerExpectedException(line_param, arg_value, "Parameters::parse_params", lang); }
+                        catch(const std::out_of_range& e)     { throw ValueOutOfRangeException<unsigned short int>(line_param, arg_value, "Parameters::parse_params", lang); }
+                        /* arg_value is a valid unsigned long int, but is it a valid unsigned int */
+                        unsigned short int min = std::numeric_limits<unsigned short int>::min();
+                        unsigned short int max = std::numeric_limits<unsigned short int>::max();
+                        if(tmp_val<static_cast<unsigned long int>(min) || tmp_val>static_cast<unsigned long int>(max)) { throw ValueOutOfRangeException<unsigned short int>(line_param, arg_value, "Parameters::parse_params", lang); }
+                        else { p_reint->values[j] = static_cast<unsigned short int>(tmp_val); }
+                    }
+                    else if(p->type_name==typeid(int).name()) {
+                        Param<int>* const p_reint = dynamic_cast<Param<int>* const>(p);
+                        try { p_reint->values[j] = std::stoi(arg_value); }
+                        catch(const std::invalid_argument& e) { throw IntegerExpectedException(line_param, arg_value, "Parameters::parse_params", lang); }
+                        catch(const std::out_of_range& e)     { throw ValueOutOfRangeException<int>(line_param, arg_value, "Parameters::parse_params", lang); }
+                    }
+                    else if(p->type_name==typeid(unsigned int).name()) {
+                        Param<unsigned int>* const p_reint = dynamic_cast<Param<unsigned int>* const>(p);
+                        unsigned long int          tmp_val = 0;
+                        try { tmp_val = std::stoul(arg_value); }
+                        catch(const std::invalid_argument& e) { throw IntegerExpectedException(line_param, arg_value, "Parameters::parse_params", lang); }
+                        catch(const std::out_of_range& e)     { throw ValueOutOfRangeException<unsigned int>(line_param, arg_value, "Parameters::parse_params", lang); }
+                        /* arg_value is a valid unsigned long int, but is it a valid unsigned int */
+                        unsigned int min = std::numeric_limits<unsigned int>::min();
+                        unsigned int max = std::numeric_limits<unsigned int>::max();
+                        if(tmp_val<static_cast<unsigned long int>(min) || tmp_val>static_cast<unsigned long int>(max)) { throw ValueOutOfRangeException<unsigned int>(line_param, arg_value, "Parameters::parse_params", lang); }
+                        else { p_reint->values[j] = static_cast<unsigned int>(tmp_val); }
+                    }
+                    else if(p->type_name==typeid(long int).name()) {
+                        Param<long int>* const p_reint = dynamic_cast<Param<long int>* const>(p);
+                        try { p_reint->values[j] = std::stol(arg_value); }
+                        catch(const std::invalid_argument& e) { throw IntegerExpectedException(line_param, arg_value, "Parameters::parse_params", lang); }
+                        catch(const std::out_of_range& e)     { throw ValueOutOfRangeException<long int>(line_param, arg_value, "Parameters::parse_params", lang); }
+                    }
+                    else if(p->type_name==typeid(unsigned long int).name()) {
+                        Param<unsigned long int>* const p_reint = dynamic_cast<Param<unsigned long int>* const>(p);
+                        try { p_reint->values[j] = std::stoul(arg_value); }
+                        catch(const std::invalid_argument& e) { throw IntegerExpectedException(line_param, arg_value, "Parameters::parse_params", lang); }
+                        catch(const std::out_of_range& e)     { throw ValueOutOfRangeException<unsigned long int>(line_param, arg_value, "Parameters::parse_params", lang); }
+                    }
+                    else if(p->type_name==typeid(long long int).name()) {
+                        Param<long long int>* const p_reint = dynamic_cast<Param<long long int>* const>(p);
+                        try { p_reint->values[j] = std::stoll(arg_value); }
+                        catch(const std::invalid_argument& e) { throw IntegerExpectedException(line_param, arg_value, "Parameters::parse_params", lang); }
+                        catch(const std::out_of_range& e)     { throw ValueOutOfRangeException<long long int>(line_param, arg_value, "Parameters::parse_params", lang); }
+                    }
+                    else if(p->type_name==typeid(unsigned long long int).name()) {
+                        Param<unsigned long long int>* const p_reint = dynamic_cast<Param<unsigned long long int>* const>(p);
+                        try { p_reint->values[j] = std::stoull(arg_value); }
+                        catch(const std::invalid_argument& e) { throw IntegerExpectedException(line_param, arg_value, "Parameters::parse_params", lang); }
+                        catch(const std::out_of_range& e)     { throw ValueOutOfRangeException<unsigned long long int>(line_param, arg_value, "Parameters::parse_params", lang); }
+                    }
+                    else if(p->type_name==typeid(float).name()) {
+                        Param<float>* const p_reint = dynamic_cast<Param<float>* const>(p);
+                        try { p_reint->values[j] = std::stof(arg_value); }
+                        catch(const std::invalid_argument& e) { throw DecimalExpectedException(line_param, arg_value, "Parameters::parse_params", lang); }
+                        catch(const std::out_of_range& e)     { throw ValueOutOfRangeException<float>(line_param, arg_value, "Parameters::parse_params", lang); }
+                    }
+                    else if(p->type_name==typeid(double).name()) {
+                        Param<double>* const p_reint = dynamic_cast<Param<double>* const>(p);
+                        try { p_reint->values[j] = std::stod(arg_value); }
+                        catch(const std::invalid_argument& e) { throw DecimalExpectedException(line_param, arg_value, "Parameters::parse_params", lang); }
+                        catch(const std::out_of_range& e)     { throw ValueOutOfRangeException<double>(line_param, arg_value, "Parameters::parse_params", lang); }
+                    }
+                    else if(p->type_name==typeid(long double).name()) {
+                        Param<long double>* const p_reint = dynamic_cast<Param<long double>* const>(p);
+                        try { p_reint->values[j] = std::stold(arg_value); }
+                        catch(const std::invalid_argument& e) { throw DecimalExpectedException(line_param, arg_value, "Parameters::parse_params", lang); }
+                        catch(const std::out_of_range& e)     { throw ValueOutOfRangeException<long double>(line_param, arg_value, "Parameters::parse_params", lang); }
+                    }
+                    else if(p->type_name==typeid(std::string).name()) {
+                        Param<std::string>* const p_reint = dynamic_cast<Param<std::string>* const>(p);
+                        p_reint->values[j] = arg_value;
+                        /* check if available value for multiple choice */
+                        if(choices_params.count(p->name)) {
+                            bool ok = false;
+                            for(const std::pair<std::string, std::string> choice: choices.at(p->name)) {
+                                if(choice.first==arg_value) {
+                                    ok = true;
+                                    break;
+                                }
+                            }
+                            if(!ok) {
+                                throw UnknownChoiceException(p->name, arg_value, "Parameters::parse_params", lang);
+                            }
+                        }
                     }
                 }
                 else {
-                    std::cerr << "The number of layers is not specified." << std::endl;
-                    std::cerr << help_msg << std::endl;
-                    return -1;
+                    throw NotEnoughValuesException(p->name, p->nb_values, static_cast<int>(j), "Parameters::parse_params", lang);
                 }
             }
-            /* options */
-            else if(arg_value=="--time") {
-                arg_set.insert("time");
-            }
-            else if(arg_value=="--gui") {
-                arg_set.insert("gui");
-            }
-            else {
-                std::cerr << "Unknown \"" << arg_value << "\" parameter." << std::endl;
-                std::cerr << help_msg << std::endl; return -1;
-            }
+            /* arg is defined */
+            p->is_defined = true;
         }
-        /* errors */
-        if(!check_long_args(help_msg)) return -1;
+        else {
+            throw UnknownParameterException(line_param, "Parameters::parse_params", lang);
+        }
     }
-    return 0;
 }
 
-/*
-Parses a string argument and detects errors like a missing value.
-*/
-bool Arguments::parse_string_arg(std::string arg_value, int* i, std::string* arg_container, std::string error_msg) {
-    if(++*i<argc) {
-        *arg_container = std::string(argv[*i]);
-        arg_set.insert(arg_value.substr(2, arg_value.size()-2));
-        return true;
+const bool Parameters::is_spec(const std::string& param_name) const {
+    if(params.count("--" + param_name)) {
+        ParamHolder* const p = params.at("--" + param_name);
+        return p->is_defined;
     }
     else {
-        std::cerr << error_msg << std::endl;
-        return false;
+        throw UndefinedParameterException(param_name, "Parameters::is_spec", lang);
     }
 }
 
-/*
-Check incompatibility or misuse of options.
-*/
-bool Arguments::check_long_args(std::string help_msg) {
-    if(!arg_set.count("mnist") && arg_set.count("train")) {
-        std::cerr << "You cannot train a neural network without specifying the location of the mnist dataset. You can do so by using the --mnist parameter." << std::endl;
-        std::cerr << help_msg << std::endl;
-        return false;
+const std::string Parameters::str_val(const std::string& param_name, const int value_number) const {
+    if(params.count("--" + param_name)) {
+        Parameters::ParamHolder* const p = params.at("--" + param_name);
+        if(value_number>p->nb_values) {
+            throw UndefinedValueException(param_name, p->nb_values, value_number, "Parameters::str_val", lang);
+        }
+        else {
+            /* reinterpret with the good type */
+            Param<std::string>* const p_reint = dynamic_cast<Param<std::string>* const>(p);
+            /* return value */
+            return p_reint->values[static_cast<std::size_t>(value_number-1)];
+        }
     }
-    else if(!arg_set.count("mnist") && arg_set.count("test")) {
-        std::cerr << "You cannot test a neural network without specifying the location of the mnist dataset. You can do so by using the --mnist parameter." << std::endl;
-        std::cerr << help_msg << std::endl;
-        return false;
+    else {
+        throw UndefinedParameterException(param_name, "Parameters::is_def", lang);
     }
-    else if(!arg_set.count("mnist") && arg_set.count("expand")) {
-        std::cerr << "You cannot expand the mnist dataset without specifying its location. Do so by using the --mnist parameter." << std::endl;
-        std::cerr << help_msg << std::endl;
-        return false;
-    }
-    else if(!arg_set.count("expand") && !arg_set.count("fnnin") && !arg_set.count("layers")) {
-        std::cerr << "You need to either load a neural network from a file using --fnnin or create a new one using --layers. Or you can decide to expand the dataset with the --expand parameter." << std::endl;
-        std::cerr << help_msg << std::endl;
-        return false;
-    }
-    else if(arg_set.count("layers") && arg_set.count("fnnin")) {
-        std::cerr << "You can only either load a neural network from a file or create a new one using --layers. Not both." << std::endl;
-        std::cerr << help_msg << std::endl;
-        return false;
-    }
-    else if(arg_set.count("test") && !arg_set.count("fnnin") && !arg_set.count("layers")) {
-        std::cerr << "You cannot test a neural network without loading an existing neural network or creating a new one." << std::endl;
-        std::cerr << help_msg << std::endl;
-        return false;
-    }
-    else if(arg_set.count("test") && arg_set.count("train")) {
-        std::cerr << "You can either train or test a neural network." << std::endl;
-        std::cerr << help_msg << std::endl;
-        return false;
-    }
-    else if(arg_set.count("layers") && layers.at(0)!=784) {
-        std::cerr << "The number of nodes of the first layer has to be set to 784 according to the number of pixels in mnist pictures." << std::endl;
-        std::cerr << help_msg << std::endl;
-        return false;
-    }
-    else if(arg_set.count("layers") && layers.at(layers.size()-1)!=10) {
-        std::cerr << "The number of nodes of the right most layer has to be set to 10, for the 10 possible digits." << std::endl;
-        std::cerr << help_msg << std::endl;
-        return false;
-    }
-    else if(!arg_set.count("expand") && !arg_set.count("test") && !arg_set.count("train") && !arg_set.count("gui")) {
-        std::cerr << "Think green! You cannot just create an empty neural network or load an existing one if you do not use it. You need to either train it, test it, or play with it." << std::endl;
-        std::cerr << help_msg << std::endl;
-        return false;
-    }
-    return true;
 }
 
-/*
-Prints the GPL license.
-*/
-void Arguments::print_license() {
+const std::string Parameters::cho_val(const std::string& param_name) const {
+    if(params.count("--" + param_name)) {
+        Parameters::ParamHolder* const p = params.at("--" + param_name);
+        /* reinterpret with the good type */
+        Param<std::string>* const p_reint = dynamic_cast<Param<std::string>* const>(p);
+        /* return value */
+        return p_reint->values[0];
+    }
+    else {
+        throw UndefinedParameterException(param_name, "Parameters::is_def", lang);
+    }
+}
+
+void Parameters::print_license() {
     std::cout << ""\
 
     "                      GNU GENERAL PUBLIC LICENSE\n"\
