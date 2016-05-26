@@ -75,9 +75,9 @@ class DigitScanner {
         bool load(std::string);
         bool save(std::string);
         void train(std::string, const int, const int, const int, const int, const double, const double, const int);
-        void train_thread(train_settings, const int, std::map<int, int>, bool);
+        void train_thread(train_settings, const int, std::map<int, int>, bool, bool*);
         void test(std::string, const int, const int, const int);
-        void test_thread(test_settings, bool, int*);
+        void test_thread(test_settings, bool, int*, bool*);
     
         void draw(bool);
         void guess();
@@ -307,6 +307,7 @@ run more than once.
 */
 template<typename T>
 void DigitScanner<T>::train(std::string path_data, const int nb_images, const int nb_images_to_skip, const int nb_epoch, const int batch_len, const double eta, const double alpha, const int nb_threads) {
+    bool display_stats = true;
     /* begining */
     chrono_clock begin_training, begin_epoch;
     begin_training = std::chrono::high_resolution_clock::now();
@@ -340,30 +341,32 @@ void DigitScanner<T>::train(std::string path_data, const int nb_images, const in
                 /* first thread shows progress */
                 ts.data_counter_init = 0;
                 ts.data_upper_lim    = nb_batches_per_subsets*batch_len;
-                threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, ts, i, shuffle, true));
+                threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, ts, i, shuffle, true, &display_stats));
             }
             else if(j==nb_threads-1) {
                 /* last thread computes maximum batches available */
                 int nb_batches_available = nb_batches - j*nb_batches_per_subsets;
                 ts.data_counter_init     = j*nb_batches_per_subsets*batch_len;
                 ts.data_upper_lim        = (j*nb_batches_per_subsets + nb_batches_available)*batch_len;
-                threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, ts, i, shuffle, false));
+                threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, ts, i, shuffle, false, nullptr));
             }
             else {
                 /* middle threads compute nb_batches_per_subset batches */
                 ts.data_counter_init = j*nb_batches_per_subsets*batch_len;
                 ts.data_upper_lim    = (j+1)*nb_batches_per_subsets*batch_len;
-                threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, ts, i, shuffle, false));
+                threads.push_back(std::thread(&DigitScanner<T>::train_thread, this, ts, i, shuffle, false, nullptr));
             }
         }
         /* join all threads */
         for(int j=0 ; j<nb_threads ; j++) {
             threads.at(j).join();
         }
-        std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s";
-        std::cerr << "                          " << std::endl;
+        if(display_stats) {
+            std::cerr << "\r    epoch " << (i+1) << "/" << nb_epoch << ": completed in " << elapsed_time(begin_epoch) << " s";
+            std::cerr << "                          " << std::endl;
+        }
     }
-    std::cerr << "    training completed in " << elapsed_time(begin_training) << " s" << std::endl;
+    if(display_stats) std::cerr << "    training completed in " << elapsed_time(begin_training) << " s" << std::endl;
 }
 
 /*
@@ -371,7 +374,7 @@ Training function callback. One thread creates batches of pictures,
 runs the backpropagation algorithm on them and correct the W and B matrices.
 */
 template<typename T>
-void DigitScanner<T>::train_thread(train_settings settings, const int epoch, std::map<int, int> shuffle, bool display) {
+void DigitScanner<T>::train_thread(train_settings settings, const int epoch, std::map<int, int> shuffle, bool display, bool* display_stats) {
     std::string   train_images           = settings.path_data + "train-images.idx3-ubyte";
     std::string   train_labels           = settings.path_data + "train-labels.idx1-ubyte";
     const int     image_len              = 784;
@@ -434,7 +437,8 @@ void DigitScanner<T>::train_thread(train_settings settings, const int epoch, std
         file_labels.close();
     }
     else {
-        if(display) std::cerr << "couldn't open training dataset in folder \"" << settings.path_data << "\"" << std::endl;
+        std::cerr << "couldn't open training dataset in folder \"" << settings.path_data << "\"" << std::endl;
+        if(display_stats!=nullptr) *display_stats = false;
     }
 }
 
@@ -443,6 +447,7 @@ Tests a Neural Network across the MNIST dataset.
 */
 template<typename T>
 void DigitScanner<T>::test(std::string path_data, const int nb_images, const int nb_images_to_skip, const int nb_threads) {
+    bool display_stats = true;
     /* beginning */
     chrono_clock begin_test = std::chrono::high_resolution_clock::now();
     std::cerr << "testing on " << (nb_images-nb_images_to_skip) << " images:" << std::endl;
@@ -461,31 +466,33 @@ void DigitScanner<T>::test(std::string path_data, const int nb_images, const int
             /* first thread shows progress */
             ts.img_offset      = nb_images_to_skip;
             ts.img_upper_limit = nb_images_per_thread;
-            threads.push_back(std::thread(&DigitScanner<T>::test_thread, this, ts, true, &correct_classification.at(0)));
+            threads.push_back(std::thread(&DigitScanner<T>::test_thread, this, ts, true, &correct_classification.at(0), &display_stats));
         }
         else if(i==nb_threads-1) {
             /* last thread tests maximum available pictures */
             int nb_images_available = nb_images - i*nb_images_per_thread;
             ts.img_offset      = nb_images_to_skip + i*nb_images_per_thread;
             ts.img_upper_limit = nb_images_available;
-            threads.push_back(std::thread(&DigitScanner<T>::test_thread, this, ts, false, &correct_classification.at(i)));
+            threads.push_back(std::thread(&DigitScanner<T>::test_thread, this, ts, false, &correct_classification.at(i), nullptr));
         }
         else {
             /* middle threads */
             ts.img_offset      = nb_images_to_skip + i*nb_images_per_thread;
             ts.img_upper_limit = nb_images_per_thread;
-            threads.push_back(std::thread(&DigitScanner<T>::test_thread, this, ts, false, &correct_classification.at(i)));
+            threads.push_back(std::thread(&DigitScanner<T>::test_thread, this, ts, false, &correct_classification.at(i), nullptr));
         }
     }
     /* join all threads */
     for(int i=0 ; i<nb_threads ; i++) {
         threads.at(i).join();
     }
-    int correct = 0;
-    for(int c : correct_classification) correct += c;
-    std::cerr << "\r    testing completed in " << elapsed_time(begin_test) << " s";
-    std::cerr << "                           " << std::endl;
-    std::cerr << "    " << correct << "/" << nb_images << " (" << 100*static_cast<double>(correct)/nb_images << " %) images correctly classified" << std::endl;
+    if(display_stats) {
+        int correct = 0;
+        for(int c : correct_classification) correct += c;
+        std::cerr << "\r    testing completed in " << elapsed_time(begin_test) << " s";
+        std::cerr << "                           " << std::endl;
+        std::cerr << "    " << correct << "/" << nb_images << " (" << 100*static_cast<double>(correct)/nb_images << " %) images correctly classified" << std::endl;
+    }
 }
 
 /*
@@ -493,7 +500,7 @@ Testing thread function. One thread loads pictures, tries to guess
 the digits that they represent, and compares its guesses to the labels.
 */
 template<typename T>
-void DigitScanner<T>::test_thread(test_settings settings, bool display, int* correct_classifications) {
+void DigitScanner<T>::test_thread(test_settings settings, bool display, int* correct_classifications, bool* display_stats) {
     std::string   test_images          = settings.path_data + "t10k-images.idx3-ubyte";
     std::string   test_labels          = settings.path_data + "t10k-labels.idx1-ubyte";
     const int     image_len            = 784;
@@ -540,6 +547,7 @@ void DigitScanner<T>::test_thread(test_settings settings, bool display, int* cor
     }
     else {
         if(display) std::cerr << "couldn't open testing dataset in folder \"" << settings.path_data << "\"" << std::endl;
+        if(display_stats!=nullptr) *display_stats = false;
     }
 }
 
