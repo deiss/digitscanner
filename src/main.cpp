@@ -80,8 +80,8 @@ int main(int argc, char **argv) {
     else if(p.is_spec("fnnin")) { if(!dgs.load(p.str_val("fnnin"))) return 0; }
     
     /* actions */
-    if(p.is_spec("train")) { dgs.train(p.str_val("mnist"), p.num_val<int>("train", 1), p.num_val<int>("train", 2), p.num_val<int>("train", 3), p.num_val<int>("train", 4), p.num_val<double>("eta"), p.num_val<double>("alpha"), p.num_val<int>("threads")); }
-    if(p.is_spec("test"))  { dgs.test(p.str_val("mnist"), p.num_val<int>("test", 1), p.num_val<int>("test", 2), p.num_val<int>("threads")); }
+    if(p.is_spec("train")) { dgs.train(mnist_folder, p.num_val<int>("train", 1), p.num_val<int>("train", 2), p.num_val<int>("train", 3), p.num_val<int>("train", 4), p.num_val<double>("eta"), p.num_val<double>("alpha"), p.num_val<int>("threads")); }
+    if(p.is_spec("test"))  { dgs.test(mnist_folder, p.num_val<int>("test", 1), p.num_val<int>("test", 2), p.num_val<int>("threads")); }
 
     /* save */
     if(p.is_spec("fnnout")) { dgs.save(p.str_val("fnnout")); }
