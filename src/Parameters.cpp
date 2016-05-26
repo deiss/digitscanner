@@ -1,39 +1,23 @@
 /*
-    
-************************************************************************************************
- 
-LICENSE
+DigitScanner - Copyright (C) 2016 - Olivier Deiss - olivier.deiss@gmail.com
 
-    Ce programme est distribué sous la license GPL.
+DigitScanner is a C++ tool to create, train and test feedforward neural
+networks (fnn) for handwritten number recognition. The project uses the
+MNIST dataset to train and test the neural networks. It is also possible
+to draw numbers in a window and ask the tool to guess the number you drew.
 
-************************************************************************************************
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-PROJET
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-    Ce programme fait partie du projet long 2A sur la BCI réalisé en 2015-2016 par
-    Dufresne Thibault, Jouhaud Paul, Finel Bruno et Deiss Olivier, ayant pour but
-    de parvenir à contrôler une chaise roulante grâce à l'analyse des ondes cérébrales
-    issues des intentions de mouvement de la main.
-    
-************************************************************************************************
-         
-PROGRAMME
-    
-    Ce programme permet de réaliser des acquisitions de données depuis un serveur,
-    de les traiter, et de les classifier. Le serveur peut s'agir du serveur de la
-    BCI ou bien du programme BCI_serveur. Il est possible d'enregistrer les données
-    reçues et la classification réalisée dans des fichiers (voir aide). Le programme
-    indique sur la sortie les mouvements réalisés afin que ceux-ci puissent être
-    utilisés comme arguments d'un autre programme.
-
-************************************************************************************************
-
-FICHIER
-
-    La description des fonctions contenues dans ce fichier se trouve dans le fichier Parameters.hpp.
-
-************************************************************************************************
-
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "Parameters.hpp"

@@ -4,46 +4,43 @@
  
 LICENSE
 
-    Ce programme est distribué sous la license GPL.
-
-************************************************************************************************
-
-PROJET
-
-    Ce programme fait partie du projet long 2A sur la BCI réalisé en 2015-2016 par
-    Dufresne Thibault, Jouhaud Paul, Finel Bruno et Deiss Olivier, ayant pour but
-    de parvenir à contrôler une chaise roulante grâce à l'analyse des ondes cérébrales
-    issues des intentions de mouvement de la main.
+    DigitScanner - Copyright (C) 2016 - Olivier Deiss - olivier.deiss@gmail.com
     
+    DigitScanner is a C++ tool to create, train and test feedforward neural
+    networks (fnn) for handwritten number recognition. The project uses the
+    MNIST dataset to train and test the neural networks. It is also possible
+    to draw numbers in a window and ask the tool to guess the number you drew.
+ 
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+ 
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+ 
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
 ************************************************************************************************
-         
-PROGRAMME
+
+FILE
+
+    The classes defined in this file can be used for parameters parsing and display, while
+    making sure the help menu looks nice on terminals.
+
+    This file defines classes Parameters, ParamHolder and Param. Param is a template function
+    that inherits from ParamHolder. Parameters owns a std::vector of ParamHolder, and has access
+    to the derived object Param through dynamic_cast.
     
-    Ce programme permet de réaliser des acquisitions de données depuis un serveur,
-    de les traiter, et de les classifier. Le serveur peut s'agir du serveur de la
-    BCI ou bien du programme BCI_serveur. Il est possible d'enregistrer les données
-    reçues et la classification réalisée dans des fichiers (voir aide). Le programme
-    indique sur la sortie les mouvements réalisés afin que ceux-ci puissent être
-    utilisés comme arguments d'un autre programme.
-
-************************************************************************************************
-
-FICHIER
-
-
-    Note : cette classe provient d'un projet personnel.
- 
-
-    Cette classe définit des fonctions qui permettent d'analyser les arguments passés en ligne de 
-    commande par l'utilisateur. Elle permet également de générer un menu d'aide très facilement.
-
-    Dans ce fichier se trouvent trois classes : Parameters, ParamHolder et Param. ParamHolder et
-    Param sont des classes privées incluses dans la classe Parameters. Param hérite de ParamHolder.
-
-    ParamHodler contient toutes les informations d'un paramètre, sauf sa valeur (dont le type est
-    variable) qui se trouve dans la classe template Param.
- 
- 
+    To store parameters of multiple types, the std::string version of types is available with
+    typeid(T).name(). This type is stored in ParamHolder. When arguments are parsed, each type is
+    tried, and the right function is called for the right type (among stoi, stod, stold, and
+    nothing for std::string parameters).
+    
+    
                           ---------------                 ----------------
                           | ParamHolder |---------------<>|  Parameters  |
                           ---------------                 ----------------
@@ -54,19 +51,49 @@ FICHIER
                          |     Param  --+---------
                          ----------------
  
-    fonctions membres publiques :
+                         
+    ParamHolder and Param are private nested classes inside class Parameters. Also, Parameters
+    defines the following exception classes:
+        - ValueOutOfRangeException: thrown if the value given is not in the range of the built-in
+                                    type
+        - NotEnoughValuesException: when cmd line doesn't have as many args as required
+        - DecimalExpectedException: when a decimal value is expected but not given
+        - IntegerExpectedException: when an integer value is expected but not given
+        - UndefinedValueException: when trying to access n-th value of a parameter that doesn't
+                                   exist
+        - UnsupportedParameterTypeException: when the developer tries to create a parameter of
+                                             unsupported type
+        - DuplicateParameterException: when the developer tries to create a parameter with an
+                                       existing name
+        - UnknownParameterException: when there is an unknown parameter in the command line
+        - UndefinedParameterException: when the developer tries to retrieve value for a parameter
+                                       that doesn't exist
+        - DynamicCastFailedException: when a dynamic_cast returns a null pointer. This happens in
+                                      a call to num_val with wrong template type for instance
     
-        void                  insert_subsection(const std::string&) :              ajoute une sous section dans le menu d'aide
-        void                  print_help(const bool=true, const bool=true) const : affiche le menu d'aide
-        void                  set_program_description(const std::string&) :        ajoute une description au menu d'aide
-        void                  set_usage(const std::string&) :                      ajoute une 'UTILISATION' au menu d'aide
  
-        template<typename T>
-        const T                num_val(const std::string&, const int=1) const : retourne la nième valeur pour le paramètre (premier = 1)
-        const std::string     str_val(const std::string&, const int=1) const :  retourne la nième valeur pour le paramètre (premier = 1)
-        const std::string     cho_val(const std::string&)              const :  retourne la valeur pour le paramètre multi-choix
-        const bool            is_spec(const std::string&)              const :  dit si le paramètre est présent dans la ligne de commande
-        void                  parse_params();                                   analyse la ligne de commande
+    How to build the menu:
+        
+        First you can specify a description of your program, and how to use it with functions
+        set_program_description and set_usage.
+ 
+        To build the menu, use the functions:
+            - define_param :        to define a parameter with no value
+            - define_num_str_param: to define a numeric or std::string parameter
+            - define_choice_param:  to define a multiple choice parameter
+ 
+        You can add structure by adding subsections with function insert_subsection.
+        When the menu is ready, you can print it with print_help().
+        
+ 
+    How to use the parameters:
+ 
+        First, call parse_params to analyse the command line arguments. Then,
+        use the functions:
+            - is_spec : to know if a simple parameter is specified
+            - num_val : to get a numeric value
+            - str_val : to get a std::string value
+            - cho_val : to get a multiple choice value
  
 ************************************************************************************************
 
