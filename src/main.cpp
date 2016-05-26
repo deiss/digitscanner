@@ -152,8 +152,8 @@ const bool check_errors(Parameters* const p) {
     else if(p->is_spec("test") && (p->num_val<int>("test", 1)+p->num_val<int>("test", 2)>10000))
         std::cerr << "If you skip " << p->num_val<int>("test", 2) << " images, you can only test on " << (60000-p->num_val<int>("test", 2)) << " or less images." << std::endl;
     else if(p->num_val<double>("eta")<=0)
-        std::cerr << "The learning rate cannot be negative." << std::endl;
-    else if(p->num_val<double>("alpha")<=0)
+        std::cerr << "The learning rate cannot be zero or negative." << std::endl;
+    else if(p->num_val<double>("alpha")<0)
         std::cerr << "The weght decay cannot be negative." << std::endl;
     
     else
