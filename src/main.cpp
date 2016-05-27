@@ -110,12 +110,12 @@ void build_menu(Parameters* const p) {
     
     p->insert_subsection("NEURAL NETWORK MANAGEMENT");
     p->define_num_str_param<int>           ("hlayers", {"hl1", "hl2"}, {0, 0}, "Creates a neural network with one or two hidden layers and the corresponding number of nodes in each layer. In this command, you only configure the hidden layers. Type '0 0' if you don't want any input layer. Type 'X 0' if you only need one hidden layer. In addition to the specified hidden layers, the first layer (input layer) has 784 nodes for the 784 pixels in MNIST pictures, and the final layer (activation layer) has 10 nodes for the 10 possible digits.");
-    p->define_num_str_param<std::string>   ("fnnin", {"path"}, {""}, "Loads a neural network from a file. If not specified, a new neural network is created.");
-    p->define_num_str_param<std::string>   ("fnnout", {"path"}, {""}, "Stores the neural network in a file at exit. This option is useful when training the neural network. If not specified, the neural network is lost.");
+    p->define_num_str_param<std::string>   ("fnnin", {"path"}, {""}, "Loads a neural network from a file. If not specified, you must create a new neural network with parameter $p(hlayers).");
+    p->define_num_str_param<std::string>   ("fnnout", {"path"}, {""}, "Stores the neural network in a file at exit. This option is useful when training the neural network. If not specified, the neural network is lost - unless it was loaded with parameter $p(fnnin).");
     
     p->insert_subsection("ACTIONS");
-    p->define_num_str_param<int>           ("train", {"imgnb", "imgskip", "epochs", "batch_len"}, {0, 0, 0, 0}, "Trains the neural network with the mnist training set. You can set the number of images to be used for training with <imgnb> (max 60000), the number of images to be skipped at the begining of the training set with <imgskip>, the number of epochs of training with <epochs>, and the size of the batches with <batch_len>.");
-    p->define_num_str_param<int>           ("test", {"imgnb", "imgskip"}, {0, 0}, "Tests the neural network on the mnist testing set. You can set the number of images to be used for training with <imgnb> (max 10000) and the number of images to be skipped at the beggining of the training set with <imgskip>.");
+    p->define_num_str_param<int>           ("train", {"imgnb", "imgskip", "epochs", "batch_len"}, {0, 0, 0, 0}, "Trains the neural network with the mnist training set. You can set the number of images to be used for training with $_1 (max 60000), the number of images to be skipped at the begining of the training set with $_2, the number of epochs of training with $_3, and the size of the batches with $_4.");
+    p->define_num_str_param<int>           ("test", {"imgnb", "imgskip"}, {0, 0}, "Tests the neural network on the mnist testing set. You can set the number of images to be used for training with $_1 (max 10000) and the number of images to be skipped at the beggining of the training set with $_2.");
     p->define_param                        ("gui", "Creates a window that enables you to draw numbers. Use 'g' to guess a number and 'r' to reset the drawing area.");
     
     p->insert_subsection("LEARNING/TESTING PARAMETERS");

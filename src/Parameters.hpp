@@ -164,18 +164,18 @@ class Parameters {
     
         /* use of parameters */
         template<typename T>
-        const T                   num_val(const std::string&, const int=1) const;          // return n-th value for parameter. nb starts at 1
-        const std::string         str_val(const std::string&, const int=1) const;          // return n-th value for parameter. nb starts at 1
-        const std::string         cho_val(const std::string&)              const;          // returns choice value
-        const bool                is_spec(const std::string&)              const;          // tells if parameters is defined
+        const T                   num_val(const std::string&, const int=1)     const;      // return n-th value for parameter. nb starts at 1
+        const std::string         str_val(const std::string&, const int=1)     const;      // return n-th value for parameter. nb starts at 1
+        const std::string         cho_val(const std::string&)                  const;      // returns choice value
+        const bool                is_spec(const std::string&)                  const;      // tells if parameters is defined
         void                      parse_params();                                          // reads cmd line and store args
     
         /* help menu */
         void                      insert_subsection(const std::string&);                   // prints subsection when printing help menu
         void                      print_help(const bool=true, const bool=true) const;      // print help menu
+        void                      print_license()                              const;      // prints GNU license
         void                      set_program_description(const std::string&);             // sets program description
         void                      set_usage(const std::string&);                           // sets usage
-        void                      print_license();                                         // prints GPL license
     
         template<typename T>  // in the order: add a parameter with values, with choices, with no values
         void define_num_str_param(const std::string&, const std::vector<std::string>&, const std::vector<T>&, const std::string&, const bool=false);
@@ -200,6 +200,8 @@ class Parameters {
         void                      print_description()                          const;      // print program description
         void                      print_usage()                                const;      // print usage
         void                      print_parameters()                           const;      // print list of parameters
+        void                      print_text(const std::string&, const bool, const int,
+                                       const std::string&, ParamHolder* const) const;      // printing method
     
         /* cmd line */
         const int                 argc;                                                    // command line args number
@@ -209,16 +211,16 @@ class Parameters {
         const int                 min_terminal_width;                                      // max width of the terminal
         const int                 max_terminal_width;                                      // max width of the terminal
         const int                 terminal_width;                                          // the width of the terminal
+        const int                 params_indent_len;                                       // nb of characters from the left to print param+values
         const int                 param_to_desc_len;                                       // nb of spaces between longest param list and descripton
         const int                 desc_indent_len;                                         // nb of characters form the left to print desccription
-        const int                 params_indent_len;                                       // nb of characters from the left to print param+values
         const int                 choice_indent_len;                                       // indentation for choices
         const int                 choice_desc_indent_len;                                  // indentation for choices descriptions
         const int                 right_margin_len;                                        // nb of chars from the right of the terminal
+        std::string               params_indent;                                           // string of 'params_indent_len' spaces
         std::string               desc_indent;                                             // spaces for indentation of big description
         std::string               choice_indent;                                           // indentation for choices descriptions
-        std::string               params_indent;                                           // string of 'params_indent_len' spaces
-        std::string               choice_desc_indent;                                           // string of 'params_indent_len' spaces
+        std::string               choice_desc_indent;                                      // string of 'params_indent_len' spaces
     
         /* internal vars */
         const LANG                lang;                                                    // language to print the menu in
@@ -335,12 +337,24 @@ class Parameters {
                 const std::string description;
         };
 
+        class DynamicCastFailedException: public std::exception {
+            public:
+                DynamicCastFailedException(const std::string& p_param_name, const std::string& p_function, LANG p_lang) throw():
+                    description(p_lang==lang_fr
+                        ? "dans " + p_function + " : le dynamic_cast sur le paramètre \"" + p_param_name + "\" a échoué, vérifiez que l'argument de template correspond bien au type du paramètre"
+                        : "in function " + p_function + ": dynamic_cast on parameter \"" + p_param_name + "\" failed, check that template argument matches the parameter's type") {}
+                virtual ~DynamicCastFailedException() throw() {}
+                virtual const char* what()            const throw() { return description.c_str(); }
+            private:
+                const std::string description;
+        };
+
         class UndefinedValueException: public std::exception {
             public:
                 UndefinedValueException(std::string const& p_param_name, const int nb_values, const int req_value, const std::string& p_function, LANG p_lang) throw():
                     description(p_lang==lang_fr
-                        ? "dans " + p_function + " : paramètre \"" + p_param_name + "\" : " + std::to_string(nb_values) + " valeurs, tentative d'accès à " + std::to_string(req_value)
-                        : "in function " + p_function + ": parameter \"" + p_param_name + "\": " + std::to_string(nb_values) + " values, tried to access " + std::to_string(req_value)) {}
+                        ? "dans " + p_function + " : le paramètre \"" + p_param_name + "\" a " + std::to_string(nb_values) + " valeurs, tentative d'accès à " + std::to_string(req_value)
+                        : "in function " + p_function + ": parameter \"" + p_param_name + "\" has " + std::to_string(nb_values) + " values, tried to access " + std::to_string(req_value)) {}
                 virtual ~UndefinedValueException() throw() {}
                 virtual const char* what()    const throw() { return description.c_str(); }
             private:
@@ -445,6 +459,9 @@ void Parameters::pr_def(ParamHolder* const p, const bool add_quotes) const {
     }
     else {
         const Param<T>* const p_reint = dynamic_cast<Param<T>* const>(p);
+        if(p_reint==0) {
+            throw DynamicCastFailedException(p->name, "Parameters::pr_def", lang);
+        }
         if(lang==lang_fr) std::cout << desc_indent << bold("Défaut :");
         else              std::cout << desc_indent << bold("Default:");
         for(int j=0 ; j<p->nb_values ; j++) {
@@ -474,6 +491,9 @@ const T Parameters::num_val(const std::string& param_name, const int value_numbe
             else {
                 /* reinterpret with the good type */
                 Param<T>* const p_reint = dynamic_cast<Param<T>* const>(p);
+                if(p_reint==0) {
+                    throw DynamicCastFailedException(param_name, "Parameters::num_val", lang);
+                }
                 /* return value */
                 return p_reint->values[static_cast<std::size_t>(value_number-1)];
             }
