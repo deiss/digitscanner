@@ -100,62 +100,61 @@ class Matrix {
 
     public:
     
+        static inline const T sigmoid(const T);
+    
         Matrix();
-        Matrix(int, int);
-        Matrix(const Matrix&, bool=false);
-        Matrix(const Matrix*, bool=false);
+        Matrix(const int, const int);
+        Matrix(const Matrix&, const bool=false);
+        Matrix(const Matrix* const, const bool=false);
         ~Matrix();
     
-        void    set_dimensions(int, int);
+        void    set_dimensions(const int, const int);
     
         Matrix& operator=(const Matrix& B);
     
-        bool    operator==(const Matrix& B) const;
-        bool    operator==(const Matrix* B) const;
+        const bool operator==(const Matrix& B) const;
+        const bool operator==(const Matrix* const B) const;
     
-        int     get_I() const { if(transpose) return J; else return I; }
-        int     get_J() const { if(transpose) return I; else return J; }
+        const int get_I() const { if(transpose) return J; else return I; }
+        const int get_J() const { if(transpose) return I; else return J; }
     
-        T       operator()(int, int)  const;
-        T&      operator()(int, int);
+        T       operator()(const int, const int)  const;
+        T&      operator()(const int, const int);
     
-        void    operator*=(T);
-        Matrix  operator*(T)   const;
+        void    operator*=(const T);
+        Matrix  operator*(const T)   const;
     
         void    operator*=(const Matrix&);
-        void    operator*=(const Matrix*);
-        Matrix  operator*(const Matrix&)   const;
-        Matrix  operator*(const Matrix*)   const;
+        void    operator*=(const Matrix* const);
+        Matrix  operator*(const Matrix&)         const;
+        Matrix  operator*(const Matrix* const)   const;
     
         void    operator+=(const Matrix&);
-        void    operator+=(const Matrix*);
-        Matrix  operator+(const Matrix&)   const;
-        Matrix  operator+(const Matrix*)   const;
+        void    operator+=(const Matrix* const);
+        Matrix  operator+(const Matrix&)         const;
+        Matrix  operator+(const Matrix* const)   const;
     
         void    operator-=(const Matrix&);
-        void    operator-=(const Matrix*);
-        Matrix  operator-(const Matrix&)   const;
-        Matrix  operator-(const Matrix*)   const;
+        void    operator-=(const Matrix* const);
+        Matrix  operator-(const Matrix&)         const;
+        Matrix  operator-(const Matrix* const)   const;
     
-        void    element_wise_product(const Matrix*);
+        void    element_wise_product(const Matrix* const);
         void    element_wise_product(const Matrix&);
         void    sigmoid();
     
         void    self_transpose();
         Matrix  create_transpose() const;
     
-        void    fill(T);
+        void    fill(const T);
         void    identity();
-    
- static
- inline T       sigmoid(T);
  
         void    free();
         void    print() const;
     
     private:
     
-        void copy_matrix(const Matrix<T>*);
+        void copy_matrix(const Matrix<T>* const);
         void create_matrix();
 
         int  I;           /* number of rows */
@@ -176,40 +175,41 @@ class Matrix {
 
             public:
 
-                Exception(std::string const& p_description, std::string const& p_function, std::string const& p_infos) throw() :
+                Exception(std::string const& p_description, std::string const& p_infos) throw() :
                     description(p_description),
-                    function(p_function),
                     infos(p_infos) {
                 }
         virtual ~Exception() throw() {}
             
-         static std::string create_infos_one_matrix(const Matrix<T>* A) {
-                    std::stringstream s_A;   s_A   << (void*)A;         std::string str_A(s_A.str());
+         static std::string create_infos_one_matrix(const Matrix<T>* const A, const std::string& p_function) {
+                    std::stringstream s_A;   s_A   << (void*)A;  std::string str_A(s_A.str());
                     std::stringstream s_A_m; s_A_m << (void*)A->matrix; std::string str_A_m(s_A_m.str());
-                    return "matrix: ["      + str_A + ", " +
-                               "I:"         + std::to_string(A->I) + ", " +
-                               "J:"         + std::to_string(A->J) + ", " +
-                               "matrix:"    + str_A_m +
-                               "transpose:" + std::to_string(A->transpose) +
-                           "]";
+                    return "in function " + p_function + ":\n" +
+                           "    matrix: ["       + str_A + "\n" +
+                           "        I:         " + std::to_string(A->I) + "\n" +
+                           "        J:         " + std::to_string(A->J) + "\n" +
+                           "        matrix:    " + str_A_m + "\n" +
+                           "        transpose: " + std::to_string(A->transpose) + "\n" +
+                           "    ]";
                 }
-         static std::string create_infos_two_matrices(const Matrix<T>* A, const Matrix<T>* B) {
-                    std::stringstream s_A;   s_A   << (void*)A;         std::string str_A(s_A.str());
-                    std::stringstream s_B;   s_B   << (void*)B;         std::string str_B(s_B.str());
-                    std::stringstream s_A_m; s_A_m << (void*)A->matrix; std::string str_A_m(s_A_m.str());
-                    std::stringstream s_B_m; s_B_m << (void*)B->matrix; std::string str_B_m(s_B_m.str());
-                    return "A: [" + str_A + ", " +
-                                   "I:"         + std::to_string(A->I) + ", " +
-                                   "J:"         + std::to_string(A->J) + ", " +
-                                   "matrix:"    + str_A_m +
-                                   "transpose:" + std::to_string(A->transpose) +
-                                "] " +
-                           "B: ["               + str_B + ", " +
-                                   "I:"         + std::to_string(B->I) + ", " +
-                                   "J:"         + std::to_string(B->J) + ", " +
-                                   "matrix:"    + str_B_m +
-                                   "transpose:" + std::to_string(B->transpose) +
-                                "]";
+         static std::string create_infos_two_matrices(const Matrix<T>* const A, const Matrix<T>* const B, const std::string& p_function) {
+                    std::stringstream s_A;   s_A   << (void*)(A);         std::string str_A(s_A.str());
+                    std::stringstream s_B;   s_B   << (void*)(B);         std::string str_B(s_B.str());
+                    std::stringstream s_A_m; s_A_m << (void*)(A->matrix); std::string str_A_m(s_A_m.str());
+                    std::stringstream s_B_m; s_B_m << (void*)(B->matrix); std::string str_B_m(s_B_m.str());
+                    return "in function " + p_function + ":\n" +
+                           "    A: [" + str_A + "\n" +
+                           "           I:         " + std::to_string(A->I) + "\n" +
+                           "            J:         " + std::to_string(A->J) + "\n" +
+                           "            matrix:    " + str_A_m + "\n"
+                           "            transpose: " + std::to_string(A->transpose) + "\n"
+                           "        ]\n" +
+                           "    B: ["                + str_B + "\n" +
+                           "            I:         " + std::to_string(B->I) + "\n" +
+                           "            J:         " + std::to_string(B->J) + "\n" +
+                           "            matrix:    " + str_B_m + "\n"
+                           "            transpose: " + std::to_string(B->transpose) + "\n"
+                           "        ]";
                 }
             
         virtual const char* what()      const throw() { return description.c_str(); }
@@ -217,9 +217,8 @@ class Matrix {
 
             private:
 
-                std::string description;   /* the description of the error */
-                std::string function;      /* the declaration of the function where it happened */
-                std::string infos;         /* informations about the matrices involved in the exception */
+                const std::string description;   /* the description of the error */
+                const std::string infos;         /* informations about the matrices involved in the exception */
 
         };
 
@@ -242,7 +241,7 @@ Matrix<T>::Matrix() :
 Initializes the variables and creates the matrix of coefficients.
 */
 template<typename T>
-Matrix<T>::Matrix(int I, int J) :
+Matrix<T>::Matrix(const int I, const int J) :
     I(I),
     J(J),
     matrix{0},
@@ -257,20 +256,20 @@ If set to false, this new matrix acts like a pointer that points
 to the same matrix of coefficients of matrix B.
 */
 template<typename T>
-Matrix<T>::Matrix(const Matrix<T>& B, bool deep_copy) :
+Matrix<T>::Matrix(const Matrix<T>& B, const bool deep_copy) :
     I(B.I),
     J(B.J),
     matrix{0} {
     if(deep_copy) { create_matrix(); copy_matrix(&B); transpose = B.transpose; }
-    else          { matrix=B.matrix; transpose = B.transpose; }
+    else          { matrix=B.matrix;                  transpose = B.transpose; }
 }
 template<typename T>
-Matrix<T>::Matrix(const Matrix<T>* B, bool deep_copy) :
+Matrix<T>::Matrix(const Matrix<T>* B, const bool deep_copy) :
     I(B->I),
     J(B->J),
     matrix{0} {
     if(deep_copy) { create_matrix(); copy_matrix(B); transpose = B->transpose; }
-    else          { matrix=B->matrix; transpose = B->transpose; }
+    else          { matrix=B->matrix;                transpose = B->transpose; }
 }
 
 /*
@@ -278,7 +277,7 @@ Allows to set the size. Should be used if a matrix is created with
 no size parameters. This is not a resizing method!
 */
 template<typename T>
-void Matrix<T>::set_dimensions(int p_I, int p_J) {
+void Matrix<T>::set_dimensions(const int p_I, const int p_J) {
     I = p_I;
     J = p_J;
     free();
@@ -289,7 +288,7 @@ void Matrix<T>::set_dimensions(int p_I, int p_J) {
 Copies the coefficients matrix.
 */
 template<typename T>
-void Matrix<T>::copy_matrix(const Matrix<T>* B) {
+void Matrix<T>::copy_matrix(const Matrix<T>* const B) {
     for(int i=0 ; i<I ; i++) {
         for(int j=0 ; j<J ; j++) {
             matrix[i*J + j] = B->operator()(i, j);
@@ -314,13 +313,13 @@ Matrix<T>& Matrix<T>::operator=(const Matrix<T>& B) {
 Comparison operator.
 */
 template<typename T>
-bool Matrix<T>::operator==(const Matrix<T>& B) const {
+const bool Matrix<T>::operator==(const Matrix<T>& B) const {
     if(transpose) {
         if(J!=B.get_I() || I!=B.get_J()) {
             return false;
         }
-        int BI = B.get_I();
-        int BJ = B.get_J();
+        const int BI = B.get_I();
+        const int BJ = B.get_J();
         if(!B.transpose) {
             for(int i=0 ; i<J ; i++) {
                 for(int j=0 ; j<I ; j++) {
@@ -345,8 +344,8 @@ bool Matrix<T>::operator==(const Matrix<T>& B) const {
         if(I!=B.get_I() || J!=B.get_J()) {
             return false;
         }
-        int BI = B.get_I();
-        int BJ = B.get_J();
+        const int BI = B.get_I();
+        const int BJ = B.get_J();
         if(!B.transpose) {
             for(int i=0 ; i<I ; i++) {
                 for(int j=0 ; j<J ; j++) {
@@ -369,11 +368,14 @@ bool Matrix<T>::operator==(const Matrix<T>& B) const {
     }
 }
 template<typename T>
-bool Matrix<T>::operator==(const Matrix<T>* B) const {
+const bool Matrix<T>::operator==(const Matrix<T>* const B) const {
     if(this==B) {
         return true;
     }
-    return *this==*B;
+    else {
+        *this==*B;
+        return *this;
+    }
 }
 
 /*
@@ -398,7 +400,7 @@ Matrix<T>::~Matrix() {
 Returns the sigmoid function of a number.
 */
 template<typename T>
-T Matrix<T>::sigmoid(T x) {
+const T Matrix<T>::sigmoid(const T x) {
     return 1/(1+exp(-x));
 }
 
@@ -423,11 +425,10 @@ void Matrix<T>::create_matrix() {
         matrix = new T[I*J];
     }
     catch(std::exception exc) {
-        std::string description = "Unable to allocate memory for the matrix: " + std::string(exc.what());
-        std::string function    = "void Matrix<T>::create_matrix()";
-        std::string infos       = Exception::create_infos_one_matrix(this);
-        Exception   e(description, function, infos);
-        throw e;
+        const std::string description = "Unable to allocate memory for the matrix: " + std::string(exc.what());
+        const std::string function    = "void Matrix<T>::create_matrix()";
+        const std::string infos       = Exception::create_infos_one_matrix(this, function);
+        throw Exception(description, infos);
     }
 }
 
@@ -435,7 +436,7 @@ void Matrix<T>::create_matrix() {
 Fills the matrix with a scalar.
 */
 template<typename T>
-void Matrix<T>::fill(T alpha) {
+void Matrix<T>::fill(const T alpha) {
     for(int i=0 ; i<I*J ; i++) {
         matrix[i] = alpha;
     }
@@ -450,11 +451,10 @@ template<typename T>
 void Matrix<T>::identity() {
     fill(0);
     if(I!=J) {
-        std::string description = "Unable to create identity matrix, this is not a square matrix.";
-        std::string function    = "void Matrix<T>::fill_identity()";
-        std::string infos       = "matrix: [" << std::to_string(this) << ", I:" << I << ", J:" << J << ", matrix:" << matrix << "transpose:" << transpose << "]";
-        Exception   e(description, function, infos);
-        throw e;
+        const std::string description = "Unable to create identity matrix, this is not a square matrix.";
+        const std::string function    = "void Matrix<T>::fill_identity()";
+        const std::string infos       = Exception::create_infos_one_matrix(this, function);
+        throw Exception(description, infos);
     }
     for(int i=0 ; i<I ; i++) {
         matrix[i*(I+1)] = 1;
@@ -492,7 +492,7 @@ void Matrix<T>::print() const {
 Returns the matrix coefficient at row i, column j.
 */
 template<typename T>
-T Matrix<T>::operator()(int i, int j) const {
+T Matrix<T>::operator()(const int i, const int j) const {
     if(!transpose) {
         return matrix[i*J + j];
     }
@@ -505,7 +505,7 @@ T Matrix<T>::operator()(int i, int j) const {
 Returns a reference to the matrix coefficient at row i, column j.
 */
 template<typename T>
-T& Matrix<T>::operator()(int i, int j) {
+T& Matrix<T>::operator()(const int i, const int j) {
     if(!transpose) {
         return matrix[i*J + j];
     }
@@ -518,13 +518,13 @@ T& Matrix<T>::operator()(int i, int j) {
 Multiplication of a matrix by a scalar.
 */
 template<typename T>
-Matrix<T> Matrix<T>::operator*(T lambda) const {
+Matrix<T> Matrix<T>::operator*(const T lambda) const {
     Matrix<T> result(this, true);
     result *= lambda;
     return result;
 }
 template<typename T>
-void Matrix<T>::operator*=(T lambda) {
+void Matrix<T>::operator*=(const T lambda) {
     for(int i=0 ; i<I*J ; i++) {
         matrix[i] *= lambda;
     }
@@ -537,16 +537,15 @@ template<typename T>
 void Matrix<T>::operator*=(const Matrix& B) {
     if(!transpose) {
         if(B.get_I()!=J) {
-            std::string desc     = "Unable to multiply these two matrices (A*B): dimensions don't match.";
-            std::string function = "void Matrix<T>::operator*=(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception   e(desc, function, infos);
-            throw e;
+            const std::string desc     = "Unable to multiply these two matrices (A*B): dimensions don't match.";
+            const std::string function = "void Matrix<T>::operator*=(const Matrix& B)";
+            const std::string infos    = Exception::create_infos_two_matrices(this, &B, function);
+            throw Exception(desc, infos);
         }
         Matrix res(I, B.get_J());
         res.fill(0);
-        int BI = B.get_I();
-        int BJ = B.get_J();
+        const int BI = B.get_I();
+        const int BJ = B.get_J();
         if(!B.transpose) {
             for(int i=0 ; i<I ; i++) {
                 for(int k=0 ; k<BI ; k++) {
@@ -570,16 +569,15 @@ void Matrix<T>::operator*=(const Matrix& B) {
     }
     else {
         if(B.get_I()!=I) {
-            std::string desc     = "Unable to multiply these two matrices (A*B): dimensions don't match.";
-            std::string function = "void Matrix<T>::operator*=(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception    e(desc, function, infos);
-            throw e;
+            const std::string desc     = "Unable to multiply these two matrices (A*B): dimensions don't match.";
+            const std::string function = "void Matrix<T>::operator*=(const Matrix& B)";
+            const std::string infos    = Exception::create_infos_two_matrices(this, &B, function);
+            throw Exception(desc, infos);
         }
         Matrix res(J, B.get_J());
         res.fill(0);
-        int BI = B.get_I();
-        int BJ = B.get_J();
+        const int BI = B.get_I();
+        const int BJ = B.get_J();
         if(!B.transpose) {
             for(int i=0 ; i<J ; i++) {
                 for(int k=0 ; k<BI ; k++) {
@@ -610,16 +608,15 @@ template<typename T>
 Matrix<T> Matrix<T>::operator*(const Matrix& B) const {
     if(!transpose) {
         if(B.get_I()!=J) {
-            std::string desc     = "Unable to multiply these two matrices (A*B): dimensions don't match.";
-            std::string function = "void Matrix<T>::operator*=(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception   e(desc, function, infos);
-            throw e;
+            const std::string desc     = "Unable to multiply these two matrices (A*B): dimensions don't match.";
+            const std::string function = "void Matrix<T>::operator*=(const Matrix& B)";
+            const std::string infos    = Exception::create_infos_two_matrices(this, &B, function);
+            throw Exception(desc, infos);
         }
         Matrix res(I, B.get_J());
         res.fill(0);
-        int BI = B.get_I();
-        int BJ = B.get_J();
+        const int BI = B.get_I();
+        const int BJ = B.get_J();
         if(!B.transpose) {
             for(int i=0 ; i<I ; i++) {
                 for(int k=0 ; k<BI ; k++) {
@@ -642,16 +639,15 @@ Matrix<T> Matrix<T>::operator*(const Matrix& B) const {
     }
     else {
         if(B.get_I()!=I) {
-            std::string desc     = "Unable to multiply these two matrices (A*B): dimensions don't match.";
-            std::string function = "void Matrix<T>::operator*=(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception    e(desc, function, infos);
-            throw e;
+            const std::string desc     = "Unable to multiply these two matrices (A*B): dimensions don't match.";
+            const std::string function = "void Matrix<T>::operator*=(const Matrix& B)";
+            const std::string infos    = Exception::create_infos_two_matrices(this, &B, function);
+            throw Exception(desc, infos);
         }
         Matrix res(J, B.get_J());
         res.fill(0);
-        int BI = B.get_I();
-        int BJ = B.get_J();
+        const int BI = B.get_I();
+        const int BJ = B.get_J();
         if(!B.transpose) {
             for(int i=0 ; i<J ; i++) {
                 for(int k=0 ; k<BI ; k++) {
@@ -685,14 +681,13 @@ template<typename T>
 void Matrix<T>::operator+=(const Matrix& B) {
     if(!transpose) {
         if(B.get_I()!=I || B.get_J()!=J) {
-            std::string desc     = "Unable to add these two matrices (A+B): dimensions don't match.";
-            std::string function = "void Matrix<T>::operator+=(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception   e(desc, function, infos);
-            throw e;
+            const std::string desc     = "Unable to add these two matrices (A+B): dimensions don't match.";
+            const std::string function = "void Matrix<T>::operator+=(const Matrix& B)";
+            const std::string infos    = Exception::create_infos_two_matrices(this, &B, function);
+            throw Exception(desc, infos);
         }
-        int BI = B.get_I();
-        int BJ = B.get_J();
+        const int BI = B.get_I();
+        const int BJ = B.get_J();
         if(!B.transpose) {
             for(int i=0 ; i<I ; i++) {
                 for(int j=0 ; j<J ; j++) {
@@ -710,14 +705,13 @@ void Matrix<T>::operator+=(const Matrix& B) {
     }
     else {
         if(B.get_I()!=J || B.get_J()!=I) {
-            std::string desc     = "Unable to add these two matrices (A+B): dimensions don't match.";
-            std::string function = "void Matrix<T>::operator+=(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception   e(desc, function, infos);
-            throw e;
+            const std::string desc     = "Unable to add these two matrices (A+B): dimensions don't match.";
+            const std::string function = "void Matrix<T>::operator+=(const Matrix& B)";
+            const std::string infos    = Exception::create_infos_two_matrices(this, &B, function);
+            throw Exception(desc, infos);
         }
-        int BI = B.get_I();
-        int BJ = B.get_J();
+        const int BI = B.get_I();
+        const int BJ = B.get_J();
         if(!B.transpose) {
             for(int i=0 ; i<J ; i++) {
                 for(int j=0 ; j<I ; j++) {
@@ -735,7 +729,7 @@ void Matrix<T>::operator+=(const Matrix& B) {
     }
 }
 template<typename T>
-void Matrix<T>::operator+=(const Matrix* B) {
+void Matrix<T>::operator+=(const Matrix* const B) {
     *this += *B;
 }
 template<typename T>
@@ -745,7 +739,7 @@ Matrix<T> Matrix<T>::operator+(const Matrix& B) const {
     return result;
 }
 template<typename T>
-Matrix<T> Matrix<T>::operator+(const Matrix* B) const {
+Matrix<T> Matrix<T>::operator+(const Matrix* const B) const {
     Matrix result(this, true);
     result += *B;
     return result;
@@ -758,14 +752,13 @@ template<typename T>
 void Matrix<T>::operator-=(const Matrix& B) {
     if(!transpose) {
         if(B.get_I()!=I || B.get_J()!=J) {
-            std::string desc     = "Unable to substract these two matrices (A-B): dimensions don't match.";
-            std::string function = "void Matrix<T>::operator-=(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception   e(desc, function, infos);
-            throw e;
+            const std::string desc     = "Unable to substract these two matrices (A-B): dimensions don't match.";
+            const std::string function = "void Matrix<T>::operator-=(const Matrix& B)";
+            const std::string infos    = Exception::create_infos_two_matrices(this, &B, function);
+            throw Exception(desc, infos);
         }
-        int BI = B.get_I();
-        int BJ = B.get_J();
+        const int BI = B.get_I();
+        const int BJ = B.get_J();
         if(!B.transpose) {
             for(int i=0 ; i<I ; i++) {
                 for(int j=0 ; j<J ; j++) {
@@ -783,14 +776,13 @@ void Matrix<T>::operator-=(const Matrix& B) {
     }
     else {
         if(B.get_I()!=J || B.get_J()!=I) {
-            std::string desc     = "Unable to substract these two matrices (A-B): dimensions don't match.";
-            std::string function = "void Matrix<T>::operator-=(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception   e(desc, function, infos);
-            throw e;
+            const std::string desc     = "Unable to substract these two matrices (A-B): dimensions don't match.";
+            const std::string function = "void Matrix<T>::operator-=(const Matrix& B)";
+            const std::string infos    = Exception::create_infos_two_matrices(this, &B, function);
+            throw Exception(desc, infos);
         }
-        int BI = B.get_I();
-        int BJ = B.get_J();
+        const int BI = B.get_I();
+        const int BJ = B.get_J();
         if(!B.transpose) {
             for(int i=0 ; i<J ; i++) {
                 for(int j=0 ; j<I ; j++) {
@@ -808,7 +800,7 @@ void Matrix<T>::operator-=(const Matrix& B) {
     }
 }
 template<typename T>
-void Matrix<T>::operator-=(const Matrix* B) {
+void Matrix<T>::operator-=(const Matrix* const B) {
     *this -= *B;
 }
 template<typename T>
@@ -818,7 +810,7 @@ Matrix<T> Matrix<T>::operator-(const Matrix& B) const {
     return result;
 }
 template<typename T>
-Matrix<T> Matrix<T>::operator-(const Matrix* B) const {
+Matrix<T> Matrix<T>::operator-(const Matrix* const B) const {
     Matrix<T> result(this, true);
     result -= *B;
     return result;
@@ -828,21 +820,20 @@ Matrix<T> Matrix<T>::operator-(const Matrix* B) const {
 Element wise product of two matrices (Hadamard product).
 */
 template<typename T>
-void Matrix<T>::element_wise_product(const Matrix* B) {
+void Matrix<T>::element_wise_product(const Matrix* const B) {
     element_wise_product(*B);
 }
 template<typename T>
 void Matrix<T>::element_wise_product(const Matrix& B) {
     if(!transpose) {
         if(B.get_I()!=I || B.get_J()!=J) {
-            std::string desc     = "Unable to perform Hadamard product with these two matrices (A°B): dimensions don't match.";
-            std::string function = "void Matrix<T>::self_element_wise_product(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception   e(desc, function, infos);
-            throw e;
+            const std::string desc     = "Unable to perform Hadamard product with these two matrices (A°B): dimensions don't match.";
+            const std::string function = "void Matrix<T>::self_element_wise_product(const Matrix& B)";
+            const std::string infos    = Exception::create_infos_two_matrices(this, &B, function);
+            throw Exception(desc, infos);
         }
-        int BI = B.get_I();
-        int BJ = B.get_J();
+        const int BI = B.get_I();
+        const int BJ = B.get_J();
         if(!B.transpose) {
             for(int i=0 ; i<I ; i++) {
                 for(int j=0 ; j<J ; j++) {
@@ -860,14 +851,13 @@ void Matrix<T>::element_wise_product(const Matrix& B) {
     }
     else {
         if(B.get_I()!=J || B.get_J()!=I) {
-            std::string desc     = "Unable to perform Hadamard product with these two matrices (A°B): dimensions don't match.";
-            std::string function = "void Matrix<T>::self_element_wise_product(const Matrix& B)";
-            std::string infos    = Exception::create_infos_two_matrices(this, &B);
-            Exception   e(desc, function, infos);
-            throw e;
+            const std::string desc     = "Unable to perform Hadamard product with these two matrices (A°B): dimensions don't match.";
+            const std::string function = "void Matrix<T>::self_element_wise_product(const Matrix& B)";
+            const std::string infos    = Exception::create_infos_two_matrices(this, &B, function);
+            throw Exception(desc, infos);
         }
-        int BI = B.get_I();
-        int BJ = B.get_J();
+        const int BI = B.get_I();
+        const int BJ = B.get_J();
         if(!B.transpose) {
             for(int i=0 ; i<J ; i++) {
                 for(int j=0 ; j<I ; j++) {
