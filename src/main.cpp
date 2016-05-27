@@ -167,14 +167,3 @@ const bool check_errors(Parameters* const p) {
         return true;
     return false;
 }
-
-
-
-
-
-
-
-
-
-
-
