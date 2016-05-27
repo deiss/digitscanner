@@ -108,49 +108,49 @@ class Matrix {
         Matrix(const Matrix* const, const bool=false);
         ~Matrix();
     
-        void    set_dimensions(const int, const int);
+        void       set_dimensions(const int, const int);
     
-        Matrix& operator=(const Matrix& B);
+        Matrix&    operator=(const Matrix& B);
     
         const bool operator==(const Matrix& B) const;
         const bool operator==(const Matrix* const B) const;
     
-        const int get_I() const { if(transpose) return J; else return I; }
-        const int get_J() const { if(transpose) return I; else return J; }
+        const int  get_I() const { if(transpose) return J; else return I; }
+        const int  get_J() const { if(transpose) return I; else return J; }
     
-        T       operator()(const int, const int)  const;
-        T&      operator()(const int, const int);
+        T          operator()(const int, const int)  const;
+        T&         operator()(const int, const int);
     
-        void    operator*=(const T);
-        Matrix  operator*(const T)   const;
+        void       operator*=(const T);
+        Matrix     operator*(const T)   const;
     
-        void    operator*=(const Matrix&);
-        void    operator*=(const Matrix* const);
-        Matrix  operator*(const Matrix&)         const;
-        Matrix  operator*(const Matrix* const)   const;
+        void       operator*=(const Matrix&);
+        void       operator*=(const Matrix* const);
+        Matrix     operator*(const Matrix&)         const;
+        Matrix     operator*(const Matrix* const)   const;
     
-        void    operator+=(const Matrix&);
-        void    operator+=(const Matrix* const);
-        Matrix  operator+(const Matrix&)         const;
-        Matrix  operator+(const Matrix* const)   const;
+        void       operator+=(const Matrix&);
+        void       operator+=(const Matrix* const);
+        Matrix     operator+(const Matrix&)         const;
+        Matrix     operator+(const Matrix* const)   const;
     
-        void    operator-=(const Matrix&);
-        void    operator-=(const Matrix* const);
-        Matrix  operator-(const Matrix&)         const;
-        Matrix  operator-(const Matrix* const)   const;
+        void       operator-=(const Matrix&);
+        void       operator-=(const Matrix* const);
+        Matrix     operator-(const Matrix&)         const;
+        Matrix     operator-(const Matrix* const)   const;
     
-        void    element_wise_product(const Matrix* const);
-        void    element_wise_product(const Matrix&);
-        void    sigmoid();
+        void       element_wise_product(const Matrix* const);
+        void       element_wise_product(const Matrix&);
+        void       sigmoid();
     
-        void    self_transpose();
-        Matrix  create_transpose() const;
+        void       self_transpose();
+        Matrix     create_transpose() const;
     
-        void    fill(const T);
-        void    identity();
+        void       fill(const T);
+        void       identity();
  
-        void    free();
-        void    print() const;
+        void       free();
+        void       print() const;
     
     private:
     
