@@ -175,8 +175,8 @@ void Parameters::print_text(const std::string& text, const bool start_on_new_lin
         std::string value_num_str = word.substr(2);
         int         value_num     = stoi(value_num_str);
         if(value_num>0) {
-            if(word.size()>3) word = "<" + underline(p->values_names.at(value_num-1)) + ">" + word.substr(3);
-            else              word = "<" + underline(p->values_names.at(value_num-1)) + ">";
+            if(word.size()>3) word = "<" + underline(p->values_names.at(static_cast<std::size_t>(value_num-1))) + ">" + word.substr(3);
+            else              word = "<" + underline(p->values_names.at(static_cast<std::size_t>(value_num-1))) + ">";
             #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
                 in_par_val = true;
             #endif
