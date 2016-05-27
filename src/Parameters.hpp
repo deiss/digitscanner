@@ -1,4 +1,6 @@
 /*
+
+    This class is part of another project Help80 also available on Github.
     
 ************************************************************************************************
  

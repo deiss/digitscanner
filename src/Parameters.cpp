@@ -1,4 +1,8 @@
 /*
+
+This class is part of another project Help80 also available on Github.
+ 
+ 
 DigitScanner - Copyright (C) 2016 - Olivier Deiss - olivier.deiss@gmail.com
 
 DigitScanner is a C++ tool to create, train and test feedforward neural
